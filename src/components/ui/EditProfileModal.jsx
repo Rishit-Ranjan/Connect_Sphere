@@ -30,9 +30,9 @@ const EditProfileModal = ({ user, onSave, onClose }) => {
         }
     };
     return (<div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
-            <div className="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0 animate-fade-in-scale border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0 animate-fade-in-scale border border-gray-200/50 dark:border-slate-700/50">
                 {/* Header */}
-                <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-center p-6 border-b border-gray-200/50 dark:border-slate-700/50">
                     <h2 className="text-xl font-bold text-gray-800 dark:text-white">Edit Profile</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                         <XIcon className="h-6 w-6"/>
@@ -52,12 +52,12 @@ const EditProfileModal = ({ user, onSave, onClose }) => {
                     </div>
                     <div>
                         <label htmlFor="name" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Name</label>
-                        <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} className="block w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-2 border-transparent focus:border-primary rounded-lg shadow-sm focus:outline-none focus:ring-0 transition disabled:opacity-50" placeholder="Your name" disabled={isSaving}/>
+                        <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} className="block w-full px-4 py-3 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 text-gray-800 dark:text-gray-200 border-2 border-transparent focus:border-primary rounded-lg shadow-sm focus:outline-none focus:ring-0 transition disabled:opacity-50" placeholder="Your name" disabled={isSaving}/>
                     </div>
                 </div>
                 
                 {/* Footer */}
-                <div className="flex justify-end space-x-4 p-6 bg-gray-50 dark:bg-secondary/50 rounded-b-2xl">
+                <div className="flex justify-end space-x-4 p-6 bg-gradient-to-r from-gray-50/80 to-blue-50/80 dark:from-slate-700/50 dark:to-slate-700/30 rounded-b-2xl border-t border-gray-200/50 dark:border-slate-700/50">
                     <button onClick={onClose} className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-200/80 rounded-full hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition-colors duration-200">
                         Cancel
                     </button>

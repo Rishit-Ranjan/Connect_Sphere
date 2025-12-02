@@ -33,10 +33,10 @@ const SettingsModal = ({ onClose, currentUser, onUpdateUser }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-white dark:bg-secondary w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-[600px] animate-slide-up">
+            <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-[600px] animate-slide-up">
 
                 {/* Sidebar */}
-                <div className="w-full md:w-1/3 bg-gray-50 dark:bg-gray-800/50 p-6 border-r border-gray-100 dark:border-gray-700">
+                <div className="w-full md:w-1/3 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700/50 dark:to-slate-700/30 p-6 border-r border-gray-100/50 dark:border-slate-700/50">
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Settings</h2>
                     <nav className="space-y-2">
                         <button
@@ -82,7 +82,7 @@ const SettingsModal = ({ onClose, currentUser, onUpdateUser }) => {
                                         type="password"
                                         value={oldPassword}
                                         onChange={(e) => setOldPassword(e.target.value)}
-                                        className="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-2 rounded-lg bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 border border-gray-200/50 dark:border-slate-600/50 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                                         required
                                     />
                                 </div>
@@ -92,7 +92,7 @@ const SettingsModal = ({ onClose, currentUser, onUpdateUser }) => {
                                         type="password"
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
-                                        className="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-2 rounded-lg bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 border border-gray-200/50 dark:border-slate-600/50 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                                         required
                                     />
                                 </div>
@@ -102,7 +102,7 @@ const SettingsModal = ({ onClose, currentUser, onUpdateUser }) => {
                                         type="password"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-2 rounded-lg bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 border border-gray-200/50 dark:border-slate-600/50 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                                         required
                                     />
                                 </div>
@@ -122,7 +122,7 @@ const SettingsModal = ({ onClose, currentUser, onUpdateUser }) => {
                         <div className="space-y-6 animate-fade-in">
                             <h3 className="text-xl font-bold text-gray-800 dark:text-white">Privacy Settings</h3>
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                                <div className="flex items-center justify-between p-4 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700/50 dark:to-slate-700/30 rounded-xl border border-gray-100/50 dark:border-slate-600/50">
                                     <div>
                                         <p className="font-semibold text-gray-800 dark:text-white">Private Account</p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">Only followers can see your posts and photos.</p>

@@ -17,7 +17,7 @@ const ProfilePage = ({ profileUser, currentUser, allPosts, onBack, onDeletePost,
         }
     };
     return (<div className="w-full">
-            <div className="bg-white dark:bg-secondary rounded-lg shadow-md overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden">
                 {/* Profile Header */}
                 <div className="relative">
                      <div className="h-48 bg-gradient-to-r from-indigo-400 to-purple-500">
@@ -64,7 +64,7 @@ const ProfilePage = ({ profileUser, currentUser, allPosts, onBack, onDeletePost,
             {/* User's Posts */}
             <div className="mt-6 space-y-4">
                 <h3 className="text-xl font-bold text-gray-800 dark:text-white px-2">Posts</h3>
-                {userPosts.length > 0 ? (userPosts.map(post => <PostCard key={post.id} post={post} currentUser={currentUser} onDeletePost={onDeletePost} onViewProfile={onViewProfile} onToggleLike={onToggleLike} onAddComment={onAddComment}/>)) : (<div className="bg-white dark:bg-secondary rounded-lg shadow-md p-8 text-center text-gray-500 dark:text-gray-400">
+                {userPosts.length > 0 ? (userPosts.map(post => <PostCard key={post.id} post={post} currentUser={currentUser} onDeletePost={onDeletePost} onViewProfile={onViewProfile} onToggleLike={onToggleLike} onAddComment={onAddComment}/>)) : (<div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-8 text-center text-gray-500 dark:text-gray-400">
                         <p>{profileUser.name} hasn't posted anything yet.</p>
                     </div>)}
             </div>

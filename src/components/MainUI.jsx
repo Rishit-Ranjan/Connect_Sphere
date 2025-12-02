@@ -375,7 +375,7 @@ const MainUI = ({
         }} />)}
         {isManageRoomModalOpen && (<ManageRoomModal room={isManageRoomModalOpen} allUsers={users} currentUser={currentUser} onClose={() => setIsManageRoomModalOpen(null)} onSaveMembers={onManageRoomMembers} onSaveSettings={onUpdateRoomSettings} onDeleteRoom={onDeleteRoom} />)}
         {isSettingsModalOpen && (<SettingsModal currentUser={currentUser} onUpdateUser={onUpdateUser} onClose={() => setIsSettingsModalOpen(false)} />)}
-        <div className="min-h-screen bg-gray-50 dark:bg-dark text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-dark text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
             <div className="container mx-auto grid grid-cols-12 gap-6 p-2 md:p-4">
                 {/* Left Sidebar */}
                 <aside className="col-span-2 lg:col-span-2 hidden sm:block">

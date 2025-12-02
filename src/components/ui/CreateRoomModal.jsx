@@ -24,8 +24,8 @@ const CreateRoomModal = ({ onCreateRoom, onClose }) => {
     };
     const isSubmitDisabled = !roomName.trim() || (privacy === 'password_protected' && password.length < 4) || isCreating;
     return (<div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md transform animate-fade-in-scale flex flex-col max-h-[90vh]">
-                <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md transform animate-fade-in-scale flex flex-col max-h-[90vh]">
+                <div className="flex justify-between items-center p-6 border-b border-gray-200/50 dark:border-slate-700/50">
                     <h2 className="text-xl font-bold text-gray-800 dark:text-white">Create a New Room</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                         <XIcon className="h-6 w-6"/>
@@ -49,20 +49,20 @@ const CreateRoomModal = ({ onCreateRoom, onClose }) => {
                     </div>
                     <div>
                         <label htmlFor="roomName" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Room Name</label>
-                        <input type="text" id="roomName" value={roomName} onChange={(e) => setRoomName(e.target.value)} className="block w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50" placeholder="e.g., #gaming, #project-alpha" disabled={isCreating}/>
+                        <input type="text" id="roomName" value={roomName} onChange={(e) => setRoomName(e.target.value)} className="block w-full px-4 py-3 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 text-gray-800 dark:text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50" placeholder="e.g., #gaming, #project-alpha" disabled={isCreating}/>
                     </div>
                     {privacy === 'password_protected' && (<div className="animate-fade-in-scale space-y-4">
                             <div>
                                 <label htmlFor="password" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Room Password</label>
-                                <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="block w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50" placeholder="Min. 4 characters" disabled={isCreating}/>
+                                <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="block w-full px-4 py-3 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 text-gray-800 dark:text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50" placeholder="Min. 4 characters" disabled={isCreating}/>
                             </div>
-                             <div className="bg-gray-100 dark:bg-gray-700/50 p-3 rounded-lg text-sm text-gray-600 dark:text-gray-400">
+                             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-700/50 dark:to-slate-700/30 p-3 rounded-lg text-sm text-gray-600 dark:text-gray-400 border border-blue-200/50 dark:border-slate-600/50">
                                 <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-1">For Demo</h4>
                                 <p>You can join the existing 'Design Lounge' room using the password: <strong>design</strong></p>
                              </div>
                         </div>)}
                 </div>
-                <div className="flex justify-end space-x-4 p-6 bg-gray-50 dark:bg-secondary/50 rounded-b-2xl mt-auto">
+                <div className="flex justify-end space-x-4 p-6 bg-gradient-to-r from-gray-50/80 to-blue-50/80 dark:from-slate-700/50 dark:to-slate-700/30 rounded-b-2xl mt-auto border-t border-gray-200/50 dark:border-slate-700/50">
                     <button onClick={onClose} className="px-6 py-2.5 text-sm font-semibold rounded-full hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500">Cancel</button>
                     <button onClick={handleSubmit} disabled={isSubmitDisabled} className="px-6 py-2.5 text-sm font-semibold text-white bg-primary rounded-full hover:bg-indigo-700 disabled:opacity-50 flex justify-center items-center w-32">
                         {isCreating ? <SpinnerIcon className="animate-spin h-5 w-5 text-white"/> : 'Create Room'}

@@ -8,11 +8,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#6366f1', // Indigo 500
-        secondary: '#1e293b', // Slate 800
-        accent: '#d946ef', // Fuchsia 500
-        dark: '#0f172a', // Slate 900
-        light: '#f8fafc', // Slate 50
+        primary: '#5865f2', // Blurple (Discord-inspired)
+        secondary: '#2f3136', // Dark gray
+        accent: '#faa61a', // Warm gold
+        dark: '#1a1a2e', // Deep navy
+        light: '#f5f7fa', // Soft white
+        'dark-alt': '#0f3460', // Deep blue
       },
       fontFamily: {
         sans: ['Outfit', 'Inter', 'sans-serif'],

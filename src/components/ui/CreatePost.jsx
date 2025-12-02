@@ -51,7 +51,7 @@ const CreatePost = ({ onAddPost, currentUser }) => {
     };
 
     return (
-        <div className="bg-white/80 dark:bg-secondary/80 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 mb-8 transition-all hover:shadow-2xl">
+        <div className="bg-white/85 dark:bg-slate-800/70 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-white/40 dark:border-slate-700/50 mb-8 transition-all hover:shadow-2xl hover:bg-white/95 dark:hover:bg-slate-800/80">
             <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
                     <UserAvatar user={currentUser} className="h-12 w-12 ring-2 ring-primary/20" />
@@ -60,7 +60,7 @@ const CreatePost = ({ onAddPost, currentUser }) => {
                     <textarea
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
-                        className="w-full p-4 border-none rounded-xl bg-gray-50 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary/50 transition-all resize-none text-lg placeholder:text-gray-400"
+                        className="w-full p-4 border-none rounded-xl bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary/50 transition-all resize-none text-lg placeholder:text-gray-400"
                         rows={3}
                         placeholder={`What's on your mind, ${currentUser.name}?`}
                         disabled={isSubmitting}
