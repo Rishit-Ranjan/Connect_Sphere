@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getDatabase } from "firebase/database";
 
 // Your web app's Firebase configuration
 // For security, these values are loaded from environment variables
@@ -19,5 +20,6 @@ const app = initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
 const db = getFirestore(app);
+const rtdb = getDatabase(app); // Realtime Database for presence
 
-export { auth, db };
+export { auth, db, rtdb };

@@ -235,7 +235,7 @@ const MainUI = ({
                 </div>
             </div>);
         }
-        if (activeView === 'resources') {
+        if (activeView === 'resources') { // This is the ResourceUploadForm
             return (<div className="animate-fade-in">
                 <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200 flex items-center"><FolderIcon className="h-6 w-6 mr-3 text-primary" /> Resource Hub</h2>
                 <ResourceUploadForm onAddPost={onAddPost} />
@@ -282,7 +282,13 @@ const MainUI = ({
                         {isGroup ? <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center"><UsersIcon className="h-6 w-6 text-primary" /></div> : isRoom ? <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center"><HashtagIcon className="h-6 w-6 text-green-500" /></div> : <UserAvatar user={chatAvatar} />}
                         <div>
                             <p className="font-semibold text-gray-800 dark:text-white">{chatName}</p>
-                            {isGroup || isRoom ? <p className="text-xs text-gray-400">{activeChat.participants.length} members</p> : <p className="text-xs text-green-500">Online</p>}
+                            {isGroup || isRoom ? (
+                                <p className="text-xs text-gray-400">{activeChat.participants.length} members</p>
+                            ) : (
+                                <p className={`text-xs font-medium ${chatPartner?.isOnline ? 'text-green-500' : 'text-gray-400'}`}>
+                                    {chatPartner?.isOnline ? 'Online' : 'Offline'}
+                                </p>
+                            )}
                         </div>
                     </div>
                     {(isGroupAdmin || isRoomAdmin) && (
@@ -421,7 +427,7 @@ const MainUI = ({
             {!notification.read && <div className="w-2.5 h-2.5 bg-primary rounded-full self-center flex-shrink-0"></div>}
         </button>);
     };
-    const ResourceUploadForm = ({ onAddPost }) => {
+    const ResourceUploadForm = ({ onAddPost }) => { // This is the ResourceUploadForm
         const [file, setFile] = useState(null);
         const [isUploading, setIsUploading] = useState(false);
         const fileInputRef = useRef(null);
@@ -441,10 +447,8 @@ const MainUI = ({
             // Here, we'll simulate it with a blob URL.
             const fileUrl = URL.createObjectURL(file);
     
-            // The logic in App.jsx will see fileUrl is present but content is not,
-            // and will correctly categorize this as a resource.
-            await onAddPost({
-                fileUrl: fileUrl,
+            await onAddPost({ 
+                fileUrl: fileUrl, 
                 fileName: file.name,
                 content: '' 
             });

@@ -4,9 +4,10 @@ import MainUI from './components/MainUI';
 import ProfileSelectionScreen from './components/ProfileSelectionScreen';
 import WelcomeScreen from './components/WelcomeScreen';
 import FloatingChatbot from './components/FloatingChatbot'; 
-import { auth, db } from './services/firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where, runTransaction, deleteDoc } from 'firebase/firestore';
+import { auth, db, rtdb } from './services/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser as deleteAuthUser } from 'firebase/auth';
+import { ref, onValue, set, onDisconnect, serverTimestamp as rtdbServerTimestamp } from "firebase/database";
+import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where, runTransaction, deleteDoc, writeBatch } from 'firebase/firestore';
  
 import * as cryptoService from './services/cryptoService';
 const App = () => {
@@ -32,16 +33,46 @@ const App = () => {
     });
 
     // Fetch all users from Firestore on initial load
+    // This is now a real-time listener to get user status updates
     useEffect(() => {
-        const fetchUsers = async () => {
-            const usersCollectionRef = collection(db, "users");
-            const querySnapshot = await getDocs(usersCollectionRef);
+        const usersCollectionRef = collection(db, "users");
+        const unsubscribe = onSnapshot(usersCollectionRef, (querySnapshot) => {
             const usersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setUsers(usersList);
-            console.log("Fetched all users from Firestore.");
-        };
-        fetchUsers();
+            console.log("Real-time user data update received.");
+        });
+        return () => unsubscribe();
     }, []);
+
+    // Real-time presence system using Realtime Database
+    useEffect(() => {
+        if (!currentUser) return;
+
+        const userStatusDatabaseRef = ref(rtdb, '/status/' + currentUser.id);
+        const userStatusFirestoreRef = doc(db, '/users/' + currentUser.id);
+
+        const isOfflineForDatabase = {
+            isOnline: false,
+            last_seen: rtdbServerTimestamp(),
+        };
+
+        const isOnlineForDatabase = {
+            isOnline: true,
+            last_seen: rtdbServerTimestamp(),
+        };
+
+        const connectedRef = ref(rtdb, '.info/connected');
+        const unsubscribe = onValue(connectedRef, (snap) => {
+            if (snap.val() === true) {
+                onDisconnect(userStatusDatabaseRef).set(isOfflineForDatabase).then(() => {
+                    set(userStatusDatabaseRef, isOnlineForDatabase);
+                    updateDoc(userStatusFirestoreRef, { isOnline: true });
+                });
+            }
+        });
+
+        return () => unsubscribe();
+    }, [currentUser]);
 
     // Fetch posts from Firestore and hydrate them with user data
     useEffect(() => {
@@ -126,6 +157,59 @@ const App = () => {
         return () => unsubscribe();
     }, [currentUser, users]);
 
+    // Listen for status changes in Realtime Database and sync to Firestore
+    useEffect(() => {
+        if (users.length === 0) return;
+
+        const statusRef = ref(rtdb, 'status');
+        const unsubscribe = onValue(statusRef, (snapshot) => {
+            const statuses = snapshot.val();
+            if (!statuses) return;
+            users.forEach(user => {
+                const firestoreUserRef = doc(db, 'users', user.id);
+                const onlineStatus = statuses[user.id]?.isOnline || false;
+                if (user.isOnline !== onlineStatus) {
+                    updateDoc(firestoreUserRef, { isOnline: onlineStatus });
+                }
+            });
+        });
+        return () => unsubscribe();
+    }, [users]);
+
+    // Real-time listener for notifications
+    useEffect(() => {
+        if (!currentUser || users.length === 0) {
+            setNotifications([]);
+            return;
+        }
+
+        const notificationsCollectionRef = collection(db, "notifications");
+        const q = query(notificationsCollectionRef, where("recipientId", "==", currentUser.id), orderBy("timestamp", "desc"));
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const notificationsList = querySnapshot.docs.map(doc => {
+                const notificationData = doc.data();
+
+                // Hydrate the triggering user's data
+                const triggeringUser = users.find(u => u.id === notificationData.triggeringUserId) || { id: notificationData.triggeringUserId, name: 'Unknown User', avatar: '' };
+
+                return {
+                    id: doc.id,
+                    ...notificationData,
+                    timestamp: notificationData.timestamp?.toDate().toLocaleString() || 'Just now',
+                    triggeringUser,
+                    // The post object is not hydrated here to keep it simple,
+                    // as it's only used for navigation. The postId is sufficient.
+                };
+            });
+            setNotifications(notificationsList);
+            console.log("Real-time notification update received from Firestore.");
+        });
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    }, [currentUser, users]);
+
     useEffect(() => {
         const handleOnline = () => setIsOnline(true);
         const handleOffline = () => setIsOnline(false);
@@ -177,7 +261,6 @@ const App = () => {
         return () => unsubscribe(); // Cleanup subscription on unmount
     }, []); // Empty dependency array ensures this runs only once
 
-    const simulateNetwork = (delay = 500) => new Promise(res => setTimeout(res, delay));
     const handleToggleTheme = () => {
         setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
     };
@@ -220,13 +303,26 @@ const App = () => {
             console.error("Error creating notification:", error);
         }
     };
-    const markNotificationsAsRead = () => {
+    const markNotificationsAsRead = async () => {
         if (!currentUser)
             return;
-        setNotifications(prev => prev.map(n => n.recipientId === currentUser.id ? { ...n, read: true } : n));
+        
+        const unreadNotifications = notifications.filter(n => !n.read);
+        if (unreadNotifications.length === 0) return;
+
+        try {
+            const batch = writeBatch(db);
+            unreadNotifications.forEach(notification => {
+                const notificationRef = doc(db, "notifications", notification.id);
+                batch.update(notificationRef, { read: true });
+            });
+            await batch.commit();
+            // The onSnapshot listener will automatically update the UI.
+        } catch (error) {
+            console.error("Error marking notifications as read:", error);
+        }
     };
     const handleLogin = async (credentials) => {
-        await simulateNetwork();
         try {
             const userCredential = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
             // onAuthStateChanged will handle setting the current user
@@ -239,7 +335,6 @@ const App = () => {
         }
     };
     const handleSignup = async (userData) => {
-        await simulateNetwork();
         try {
             // 1. Create user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
@@ -257,6 +352,7 @@ const App = () => {
                 status: 'active',
                 followers: [],
                 following: [],
+                isOnline: false, // Add presence field
                 emailNotifications: true, // Default setting for new users
             };
 
@@ -309,17 +405,24 @@ const App = () => {
             return;
 
         // If it has a file but no content, treat it as a resource
-        if (postData.fileUrl && !postData.content) {
-            // TODO: Implement resource creation in Firestore
-            console.log("Resource creation logic needs to be implemented.");
+        if (postData.fileUrl && !postData.content) { // This is a resource upload
             const newResource = {
                 id: Date.now(),
                 author: currentUser,
                 fileName: postData.fileName,
                 fileUrl: postData.fileUrl,
-                timestamp: 'Just now',
-            };
-            setResources(prev => [newResource, ...prev]);
+                timestamp: 'Just now', // Local timestamp for non-persistent resource
+                // No Firestore interaction here
+            }; 
+            try {
+                // This was trying to use newResourceData which doesn't exist in this scope.
+                // Since resources are not persistent, we only update local state.
+                // The onSnapshot listener for resources (to be implemented) will update the UI.
+                // For now, we'll manually add to local state for immediate feedback.
+                setResources(prev => [newResource, ...prev]);
+            } catch (error) {
+                console.error("Error adding resource to Firestore:", error);
+            }
         } else { // Otherwise, treat it as a post
             const newPost = {
                 authorId: currentUser.id,
@@ -351,8 +454,35 @@ const App = () => {
             }
         }
     };
-    const deleteResource = async (resourceId) => {
-        await simulateNetwork();
+    // Real-time listener for resources (similar to posts and chats) - REMOVED as resources are not persistent
+    // Real-time listener for resources (similar to posts and chats)
+    useEffect(() => {
+        if (users.length === 0) return;
+
+        const resourcesCollectionRef = collection(db, "resources");
+        const q = query(resourcesCollectionRef, orderBy("timestamp", "desc"));
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const resourcesList = querySnapshot.docs.map(doc => {
+                const resourceData = doc.data();
+                const author = users.find(u => u.id === resourceData.authorId);
+                return {
+                    id: doc.id,
+                    ...resourceData,
+                    timestamp: resourceData.timestamp?.toDate().toLocaleString() || 'Just now',
+                    author: author || { id: resourceData.authorId, name: 'Unknown User', avatar: '' },
+                };
+            });
+            setResources(resourcesList);
+            console.log("Real-time resource update received from Firestore.");
+        });
+
+        return () => unsubscribe();
+    }, [users]);
+
+    const deleteResource = async (resourceId) => { // Reverted to local state
+        // No Firestore interaction as resources are not persistent
+        // This will only remove it from the current session's view
         setResources(prev => prev.filter(r => r.id !== resourceId));
     };
     const deletePost = async (postId) => {
@@ -360,6 +490,7 @@ const App = () => {
         // The UI already hides the button for users without permission.
         try {
             const postRef = doc(db, "posts", postId);
+            // TODO: Delete associated image/file from Firebase Storage if any
             await deleteDoc(postRef);
             // The onSnapshot listener will automatically update the UI.
         } catch (error) {
@@ -372,19 +503,25 @@ const App = () => {
             alert("You cannot delete your own account.");
             return;
         }
-        await simulateNetwork();
-        // Also remove user's crypto keys from local storage
-        localStorage.removeItem(`private_key_${userId}`);
-        localStorage.removeItem(`public_key_${userId}`);
-        setPosts(prevPosts => prevPosts.filter(p => p.author.id !== userId));
-        setChats(prevChats => prevChats.filter(c => c.participants.some(p => p.id === userId)));
-        setUsers(prevUsers => prevUsers
-            .filter(u => u.id !== userId)
-            .map(u => ({
-                ...u,
-                followers: u.followers.filter(id => id !== userId),
-                following: u.following.filter(id => id !== userId),
-            })));
+        try {
+            // 1. Delete user document from Firestore (this part remains as it's a Firestore operation)
+            await deleteDoc(doc(db, "users", userId));
+
+            // 2. Delete user from Firebase Authentication (requires Cloud Function for security)
+            // For now, we'll just delete the Firestore document.
+            // A real-world app would have a Cloud Function triggered by Firestore delete
+            // to also delete the Auth user.
+
+            // 3. Clean up local storage for crypto keys (if they exist)
+            localStorage.removeItem(`private_key_${userId}`);
+            localStorage.removeItem(`public_key_${userId}`);
+
+            // The onSnapshot listeners for users, posts, chats will handle UI updates.
+            console.log(`User ${userId} deleted from Firestore.`);
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            alert("Failed to delete user. Please try again.");
+        }
     };
     const addMessage = async (chatId, message, plaintextForNotification) => {
         const chat = chats.find(c => c.id === chatId); // Find chat from local state
@@ -477,40 +614,38 @@ const App = () => {
     const handleCreateRoom = async (name, privacy, password) => {
         if (!currentUser || !name.trim())
             return;
-        await simulateNetwork();
-        const newRoom = {
-            id: Date.now(),
-            name,
-            type: 'room',
-            roomPrivacy: privacy,
-            password: password,
-            participants: [currentUser],
-            messages: [],
-            unreadCounts: { [currentUser.id]: 0 },
-            adminId: currentUser.id,
-            messagingPermission: 'all',
-            mediaSharePermission: 'all',
-        };
-        setChats(prev => [newRoom, ...prev]);
+        try {
+            await addDoc(collection(db, "chats"), newRoom);
+            // The onSnapshot listener will handle the UI update.
+        } catch (error) {
+            console.error("Error creating room:", error);
+            alert("Failed to create room. Please try again.");
+        }
     };
     const handleJoinRoom = async (chatId, passwordInput) => {
         if (!currentUser)
             return false;
-        await simulateNetwork();
-        const room = chats.find(c => c.id === chatId);
+        // Fetch the room directly from Firestore to ensure latest data
+        const roomDocRef = doc(db, "chats", chatId);
+        const roomDocSnap = await getDoc(roomDocRef);
+
+        if (!roomDocSnap.exists()) {
+            console.error("Room not found:", chatId);
+            return false;
+        }
+
+        const room = { id: roomDocSnap.id, ...roomDocSnap.data() };
+
+        // Check if room is password protected and password matches
         if (!room || room.type !== 'room' || room.roomPrivacy !== 'password_protected') {
             return false;
         }
         if (room.password === passwordInput) {
-            setChats(prevChats => prevChats.map(chat => {
-                if (chat.id === chatId) {
-                    if (!chat.participants.some(p => p.id === currentUser.id)) {
-                        const newUnreadCounts = { ...chat.unreadCounts, [currentUser.id]: 0 };
-                        return { ...chat, participants: [...chat.participants, currentUser], unreadCounts: newUnreadCounts };
-                    }
-                }
-                return chat;
-            }));
+            // Add the current user to the room's participants in Firestore
+            await updateDoc(roomDocRef, {
+                participantIds: arrayUnion(currentUser.id)
+            });
+            // The onSnapshot listener will handle the UI update.
             return true;
         }
         return false;
@@ -518,41 +653,67 @@ const App = () => {
     const handleManageRoomMembers = async (chatId, newMemberList) => {
         if (!currentUser)
             return;
-        await simulateNetwork();
-        setChats(prevChats => prevChats.map(chat => {
-            if (chat.id === chatId && chat.type === 'room' && chat.adminId === currentUser.id) {
-                // Ensure the admin is always in the member list
-                const adminIsPresent = newMemberList.some(m => m.id === currentUser.id);
-                const finalMemberList = adminIsPresent ? newMemberList : [currentUser, ...newMemberList];
-                const newUnreadCounts = { ...chat.unreadCounts };
-                finalMemberList.forEach(member => {
-                    if (newUnreadCounts[member.id] === undefined) {
-                        newUnreadCounts[member.id] = 0;
-                    }
-                });
-                return { ...chat, participants: finalMemberList, unreadCounts: newUnreadCounts };
+        const chatRef = doc(db, "chats", chatId);
+        try {
+            // Fetch current chat data to ensure admin check is accurate
+            const chatDoc = await getDoc(chatRef);
+            if (!chatDoc.exists() || chatDoc.data().adminId !== currentUser.id) {
+                alert("You are not authorized to manage this room.");
+                return;
             }
-            return chat;
-        }));
+
+            const currentParticipantIds = chatDoc.data().participantIds || [];
+            const newParticipantIds = newMemberList.map(m => m.id);
+            const finalParticipantIds = [...new Set([chatDoc.data().adminId, ...newParticipantIds])]; // Ensure admin is always present
+
+            const batch = writeBatch(db);
+            batch.update(chatRef, { participantIds: finalParticipantIds });
+
+            // Update unread counts for new members
+            finalParticipantIds.forEach(id => {
+                if (!currentParticipantIds.includes(id)) {
+                    batch.update(chatRef, { [`unreadCounts.${id}`]: 0 });
+                }
+            });
+            await batch.commit();
+            console.log("Room members updated in Firestore.");
+        } catch (error) {
+            console.error("Error managing room members:", error);
+            alert("Failed to manage room members. Please try again.");
+        }
     };
     const handleUpdateRoomSettings = async (chatId, settings) => {
         if (!currentUser)
             return;
-        await simulateNetwork();
-        setChats(prevChats => prevChats.map(chat => {
-            if (chat.id === chatId && chat.type === 'room' && chat.adminId === currentUser.id) {
-                return { ...chat, ...settings };
+        const chatRef = doc(db, "chats", chatId);
+        try {
+            const chatDoc = await getDoc(chatRef);
+            if (!chatDoc.exists() || chatDoc.data().adminId !== currentUser.id) {
+                alert("You are not authorized to update this room's settings.");
+                return;
             }
-            return chat;
-        }));
+            await updateDoc(chatRef, settings);
+            console.log("Room settings updated in Firestore.");
+        } catch (error) {
+            console.error("Error updating room settings:", error);
+            alert("Failed to update room settings. Please try again.");
+        }
     };
     const handleDeleteRoom = async (chatId) => {
         if (!currentUser)
             return;
-        await simulateNetwork();
-        const room = chats.find(c => c.id === chatId);
-        if (room && room.type === 'room' && room.adminId === currentUser.id) {
-            setChats(prev => prev.filter(c => c.id !== chatId));
+        const chatRef = doc(db, "chats", chatId);
+        try {
+            const chatDoc = await getDoc(chatRef);
+            if (!chatDoc.exists() || chatDoc.data().adminId !== currentUser.id) {
+                alert("You are not authorized to delete this room.");
+                return;
+            }
+            await deleteDoc(chatRef);
+            console.log("Room deleted from Firestore.");
+        } catch (error) {
+            console.error("Error deleting room:", error);
+            alert("Failed to delete room. Please try again.");
         }
     };
     const handleMarkChatAsRead = (chatId) => {
@@ -561,8 +722,11 @@ const App = () => {
         setChats(prevChats => prevChats.map(chat => {
             if (chat.id === chatId) {
                 const newUnreadCounts = { ...chat.unreadCounts };
-                newUnreadCounts[currentUser.id] = 0;
-                return { ...chat, unreadCounts: newUnreadCounts };
+                newUnreadCounts[currentUser.id] = 0;                
+                // Update Firestore for unread counts
+                updateDoc(doc(db, "chats", chatId), {
+                    [`unreadCounts.${currentUser.id}`]: 0
+                });
             }
             return chat;
         }));
@@ -596,13 +760,26 @@ const App = () => {
         })));
     };
     const handleToggleUserStatus = async (userId) => {
-        await simulateNetwork();
-        setUsers(prevUsers => prevUsers.map(u => {
-            if (u.id === userId) {
-                return { ...u, status: u.status === 'active' ? 'revoked' : 'active' };
-            }
-            return u;
-        }));
+        if (!currentUser || currentUser.role !== 'admin') {
+            alert("You are not authorized to change user status.");
+            return;
+        }
+        if (currentUser.id === userId) {
+            alert("You cannot change your own status.");
+            return;
+        }
+        const userRef = doc(db, "users", userId);
+        try {
+            const userDoc = await getDoc(userRef);
+            if (!userDoc.exists()) throw new Error("User not found.");
+            const currentStatus = userDoc.data().status;
+            const newStatus = currentStatus === 'active' ? 'revoked' : 'active';
+            await updateDoc(userRef, { status: newStatus });
+            console.log(`User ${userId} status toggled to ${newStatus}.`);
+        } catch (error) {
+            console.error("Error toggling user status:", error);
+            alert("Failed to toggle user status. Please try again.");
+        }
     };
     const handleToggleFollow = async (targetUserId) => {
         if (!currentUser)
