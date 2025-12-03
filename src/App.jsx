@@ -3,7 +3,11 @@ import AuthScreen from './components/LoginScreen';
 import MainUI from './components/MainUI';
 import ProfileSelectionScreen from './components/ProfileSelectionScreen';
 import WelcomeScreen from './components/WelcomeScreen';
-import FloatingChatbot from './components/FloatingChatbot';
+import FloatingChatbot from './components/FloatingChatbot'; 
+import { auth, db } from './services/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion } from 'firebase/firestore';
+ 
 import * as cryptoService from './services/cryptoService';
 // --- MOCK DATA ---
 const adminUser = {
@@ -43,37 +47,6 @@ const thirdUser = {
     following: [1, 2],
 };
 const initialUsers = [adminUser, participantUser, thirdUser];
-const initialPosts = [
-    {
-        id: 1,
-        author: participantUser,
-        content: 'Just finished a great book! "The Midnight Library" by Matt Haig. Highly recommend it to anyone looking for a thought-provoking read. What are you all reading?',
-        timestamp: '2 hours ago',
-        likedBy: [1],
-        comments: [
-            { id: 1, author: adminUser, content: "Excellent choice. A very impactful book.", timestamp: '30 mins ago' },
-        ],
-    },
-    {
-        id: 2,
-        author: adminUser,
-        content: 'Campus coffee shop has a new seasonal latte! 🍂 It\'s a must-try. Perfect for these chilly mornings.',
-        imageUrl: 'https://picsum.photos/seed/latte/600/400',
-        timestamp: '5 hours ago',
-        likedBy: [2],
-        comments: [],
-    },
-    {
-        id: 3,
-        author: adminUser,
-        content: 'Excited to announce our new project collaboration feature launching next week! Get ready to build amazing things together. #ProjectLaunch #Collaboration',
-        imageUrl: 'https://picsum.photos/seed/work/600/400',
-        timestamp: '1 day ago',
-        likedBy: [],
-        comments: [],
-        isAnnouncement: true,
-    }
-];
 const initialChats = [
     {
         id: 1,
@@ -124,9 +97,9 @@ const initialChats = [
 ];
 // --- END MOCK DATA ---
 const App = () => {
-    const [currentUser, setCurrentUser] = useState(null);
-    const [users, setUsers] = useState(initialUsers);
-    const [posts, setPosts] = useState(initialPosts);
+    const [currentUser, setCurrentUser] = useState(undefined); // Use undefined to represent loading state
+    const [users, setUsers] = useState([]);
+    const [posts, setPosts] = useState([]);
     const [resources, setResources] = useState([]); // For the Resource Hub
     const [chats, setChats] = useState(initialChats);
     const [notifications, setNotifications] = useState([]);
@@ -144,33 +117,62 @@ const App = () => {
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         return prefersDark ? 'dark' : 'light';
     });
-    // E2EE Key Generation on App Load for mock users
+
+    // Fetch all users from Firestore on initial load
     useEffect(() => {
-        const setupInitialKeys = async () => {
-            let needsUpdate = false;
-            const updatedUsers = await Promise.all(users.map(async (user) => {
-                if (!user.publicKeyJwk) {
-                    const existingPrivateKey = await cryptoService.getPrivateKey(user.id);
-                    if (!existingPrivateKey) {
-                        console.log(`Generating E2EE keys for mock user: ${user.name}`);
-                        const { publicKeyJwk } = await cryptoService.generateAndStoreKeyPair(user.id);
-                        needsUpdate = true;
-                        return { ...user, publicKeyJwk };
-                    }
-                    else {
-                        const publicKeyJwk = await cryptoService.getPublicKey(user.id);
-                        needsUpdate = true;
-                        return { ...user, publicKeyJwk };
-                    }
-                }
-                return user;
-            }));
-            if (needsUpdate) {
-                setUsers(updatedUsers);
-            }
+        const fetchUsers = async () => {
+            const usersCollectionRef = collection(db, "users");
+            const querySnapshot = await getDocs(usersCollectionRef);
+            const usersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setUsers(usersList);
+            console.log("Fetched all users from Firestore.");
         };
-        setupInitialKeys();
-    }, [users]);
+        fetchUsers();
+    }, []);
+
+    // Fetch posts from Firestore and hydrate them with user data
+    useEffect(() => {
+        // Don't set up listener until users are loaded, as we need them for hydration
+        if (users.length === 0) return;
+
+        const postsCollectionRef = collection(db, "posts");
+        const q = query(postsCollectionRef, orderBy("timestamp", "desc"));
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const postsList = querySnapshot.docs.map(doc => {
+                const postData = doc.data();
+
+                // Find the full author object from the users list
+                const author = users.find(u => u.id === postData.authorId);
+
+                // Hydrate comments with their author objects
+                const comments = (postData.comments || []).map(comment => {
+                    const commentAuthor = users.find(u => u.id === comment.authorId);
+                    return {
+                        ...comment,
+                        author: commentAuthor || { name: 'Unknown User', avatar: '' } // Fallback
+                    };
+                });
+
+                // Fallback for author if user not found (e.g., deleted user)
+                const finalAuthor = author || { id: postData.authorId, name: 'Unknown User', avatar: '' };
+
+                return {
+                    id: doc.id,
+                    ...postData,
+                    timestamp: postData.timestamp?.toDate().toLocaleString() || 'Just now',
+                    author: finalAuthor,
+                    comments: comments
+                };
+            });
+            setPosts(postsList);
+            console.log("Real-time post update received from Firestore.");
+        });
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    }, [users]); // This effect depends on the users list
+
     useEffect(() => {
         const handleOnline = () => setIsOnline(true);
         const handleOffline = () => setIsOnline(false);
@@ -190,26 +192,59 @@ const App = () => {
         }
         localStorage.setItem('theme', theme);
     }, [theme]);
+
+    // Listen for Firebase auth state changes
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is signed in, see docs for a list of available properties
+                // https://firebase.google.com/docs/reference/js/firebase.User
+                console.log("Firebase user signed in:", user.uid);
+                
+                // Fetch user profile from Firestore
+                const userDocRef = doc(db, "users", user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+
+                if (userDocSnap.exists()) {
+                    const userData = userDocSnap.data();
+                    const userWithKeys = await ensureUserKeyPair(userData);
+                    setCurrentUser(userWithKeys);
+                } else {
+                    // This case might happen if a user is authenticated but their Firestore doc is missing
+                    console.error("No user document found in Firestore for UID:", user.uid);
+                    setCurrentUser(null); 
+                }
+            } else {
+                // User is signed out
+                setCurrentUser(null);
+                setAuthStep('select_profile');
+            }
+        });
+
+        return () => unsubscribe(); // Cleanup subscription on unmount
+    }, []); // Empty dependency array ensures this runs only once
+
     const simulateNetwork = (delay = 500) => new Promise(res => setTimeout(res, delay));
     const handleToggleTheme = () => {
         setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
     };
-    const ensureUserKeyPair = async (user) => {
+    const ensureUserKeyPair = async (user) => { 
         if (user.publicKeyJwk)
             return user;
+
         let privateKey = await cryptoService.getPrivateKey(user.id);
+        let updatedUser = { ...user };
+
         if (!privateKey) {
             const { publicKeyJwk } = await cryptoService.generateAndStoreKeyPair(user.id);
-            const updatedUser = { ...user, publicKeyJwk };
-            setUsers(prev => prev.map(u => u.id === user.id ? updatedUser : u));
-            return updatedUser;
+            updatedUser.publicKeyJwk = publicKeyJwk;
         }
         else {
             const publicKeyJwk = await cryptoService.getPublicKey(user.id);
-            const updatedUser = { ...user, publicKeyJwk };
-            setUsers(prev => prev.map(u => u.id === user.id ? updatedUser : u));
-            return updatedUser;
+            updatedUser.publicKeyJwk = publicKeyJwk;
         }
+        await handleUpdateUser(updatedUser);
+        return updatedUser;
     };
     const addNotification = (recipientId, type, triggeringUser, post, messageContent) => {
         if (recipientId === triggeringUser.id)
@@ -233,39 +268,59 @@ const App = () => {
     };
     const handleLogin = async (credentials) => {
         await simulateNetwork();
-        const user = users.find(u => u.email.toLowerCase() === credentials.email.toLowerCase() && u.password === credentials.password);
-        if (user && user.status === 'active') {
-            const userWithKeys = await ensureUserKeyPair(user);
-            setCurrentUser(userWithKeys);
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+            // onAuthStateChanged will handle setting the current user
+            console.log("Firebase login successful for:", userCredential.user.email);
             return true;
+        } catch (error) {
+            console.error("Firebase Login Error:", error.message);
+            alert(`Login failed: ${error.message}`);
+            return false;
         }
-        return false;
     };
     const handleSignup = async (userData) => {
         await simulateNetwork();
-        const existingUser = users.find(u => u.email.toLowerCase() === userData.email.toLowerCase());
-        if (existingUser) {
-            alert("An account with this email already exists.");
+        try {
+            // 1. Create user in Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+            const user = userCredential.user;
+            console.log("Firebase signup successful for:", user.email);
+
+            // 2. Create user profile document in Firestore
+            const newUser = {
+                id: user.uid, // Use Firebase UID as the document ID
+                name: userData.name,
+                email: userData.email,
+                gender: userData.gender,
+                avatar: `https://picsum.photos/seed/${userData.name.toLowerCase()}/100`,
+                role: 'participant', // Default role
+                status: 'active',
+                followers: [],
+                following: [],
+            };
+
+            // 3. Generate and add E2EE keys
+            const { publicKeyJwk } = await cryptoService.generateAndStoreKeyPair(newUser.id);
+            newUser.publicKeyJwk = publicKeyJwk;
+
+            // 4. Save the new user object to Firestore
+            await setDoc(doc(db, "users", user.uid), newUser);
+
+            // 5. Update local state (optional, as onAuthStateChanged will also fire)
+            setUsers(prev => [...prev, newUser]);
+            
+            // onAuthStateChanged will handle setting the current user
+            return true;
+        } catch (error) {
+            console.error("Firebase Signup Error:", error.message);
+            alert(`Signup failed: ${error.message}`);
             return false;
         }
-        const newUser = {
-            ...userData,
-            id: Date.now(),
-            avatar: `https://picsum.photos/seed/${userData.name.toLowerCase()}/100`,
-            role: 'participant',
-            status: 'active',
-            followers: [],
-            following: [],
-        };
-        const { publicKeyJwk } = await cryptoService.generateAndStoreKeyPair(newUser.id);
-        newUser.publicKeyJwk = publicKeyJwk;
-        setUsers(prev => [...prev, newUser]);
-        return true;
     };
-    const handleLogout = () => {
-        setCurrentUser(null);
+    const handleLogout = async () => { 
+        await signOut(auth);
         setViewingProfile(null);
-        setAuthStep('select_profile');
         setAuthFlow(null);
     };
     const handleRoleSelect = (role) => {
@@ -293,34 +348,51 @@ const App = () => {
     const handleBackToFeed = () => {
         setViewingProfile(null);
     };
-    const addPost = async (newPost) => {
+    const addPost = async (postData) => {
         if (!currentUser)
             return;
-        await simulateNetwork();
+
         // If it has a file but no content, treat it as a resource
-        if (newPost.fileUrl && !newPost.content) {
+        if (postData.fileUrl && !postData.content) {
+            // TODO: Implement resource creation in Firestore
+            console.log("Resource creation logic needs to be implemented.");
             const newResource = {
                 id: Date.now(),
                 author: currentUser,
-                fileName: newPost.fileName,
-                fileUrl: newPost.fileUrl,
+                fileName: postData.fileName,
+                fileUrl: postData.fileUrl,
                 timestamp: 'Just now',
             };
             setResources(prev => [newResource, ...prev]);
         } else { // Otherwise, treat it as a post
-            const post = {
-                id: Date.now(),
-                author: currentUser,
-                content: newPost.content,
-                imageUrl: newPost.imageUrl,
-                fileName: newPost.fileName,
-                fileUrl: newPost.fileUrl,
-                timestamp: 'Just now',
+            const newPost = {
+                authorId: currentUser.id,
+                content: postData.content,
+                imageUrl: postData.imageUrl || null,
+                timestamp: serverTimestamp(), // Use server timestamp for consistency
                 likedBy: [],
                 comments: [],
-                isAnnouncement: newPost.isAnnouncement && currentUser.role === 'admin',
+                isAnnouncement: postData.isAnnouncement && currentUser.role === 'admin',
             };
-            setPosts([post, ...posts]);
+
+            // Optimistic UI update: Add post to local state immediately
+            const tempId = `temp_${Date.now()}`;
+            const optimisticPost = {
+                ...newPost,
+                id: tempId,
+                author: currentUser,
+                timestamp: new Date().toLocaleString(),
+            };
+            setPosts(prevPosts => [optimisticPost, ...prevPosts]);
+
+            try {
+                await addDoc(collection(db, "posts"), newPost);
+            } catch (error) {
+                console.error("Error adding post to Firestore: ", error);
+                // Revert optimistic update on error
+                setPosts(prevPosts => prevPosts.filter(p => p.id !== tempId));
+                alert("Failed to create post. Please try again.");
+            }
         }
     };
     const deleteResource = async (resourceId) => {
@@ -508,8 +580,14 @@ const App = () => {
     const handleUpdateUser = async (updatedData) => {
         if (!currentUser)
             return;
-        await simulateNetwork();
-        const updatedUser = { ...currentUser, ...updatedData };
+        
+        // Use the incoming data as the source of truth for the update
+        const updatedUser = updatedData;
+        
+        // Persist changes to Firestore
+        const userDocRef = doc(db, "users", updatedUser.id);
+        await setDoc(userDocRef, updatedUser, { merge: true }); // Use merge: true to avoid overwriting
+
         setCurrentUser(updatedUser);
         setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
         setPosts(prevPosts => prevPosts.map(p => ({
@@ -592,27 +670,35 @@ const App = () => {
     const handleAddComment = async (postId, content) => {
         if (!currentUser)
             return;
-        await simulateNetwork();
-        let targetPost;
-        const newPosts = posts.map(p => {
-            if (p.id === postId) {
-                const newComment = {
-                    id: Date.now(),
-                    author: currentUser,
-                    content,
-                    timestamp: 'Just now',
-                };
-                targetPost = { ...p, comments: [...p.comments, newComment] };
-                return targetPost;
+
+        const newComment = {
+            id: Date.now(), // Using timestamp for a simple unique ID
+            authorId: currentUser.id,
+            content,
+            timestamp: serverTimestamp(),
+        };
+
+        try {
+            const postRef = doc(db, "posts", postId);
+            await updateDoc(postRef, {
+                comments: arrayUnion(newComment)
+            });
+
+            // The onSnapshot listener will handle the UI update.
+            // We can still send a notification.
+            const targetPost = posts.find(p => p.id === postId);
+            if (targetPost) {
+                addNotification(targetPost.author.id, 'comment', currentUser, targetPost);
             }
-            return p;
-        });
-        setPosts(newPosts);
-        if (targetPost) {
-            addNotification(targetPost.author.id, 'comment', currentUser, targetPost);
+        } catch (error) {
+            console.error("Error adding comment: ", error);
+            alert("Failed to add comment. Please try again.");
         }
     };
-    if (!currentUser) {
+    if (currentUser === undefined) { // Show a loading screen while auth state is being determined
+        return <div className="w-screen h-screen flex items-center justify-center bg-light dark:bg-dark text-dark dark:text-light">Loading...</div>;
+    }
+    if (!currentUser) { // Now, if user is null, show auth flow
         if (authStep === 'select_profile') {
             return <ProfileSelectionScreen adminUser={adminUser} onSelectRole={handleRoleSelect} />;
         }
