@@ -325,11 +325,31 @@ const App = () => {
     const handleLogin = async (credentials) => {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
-            // onAuthStateChanged will handle setting the current user
-            console.log("Firebase login successful for:", userCredential.user.email);
+            const user = userCredential.user;
+
+            // Fetch user profile from Firestore to verify their role against the login flow.
+            const userDocRef = doc(db, "users", user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (!userDocSnap.exists()) {
+                await signOut(auth); // Sign out user who exists in Auth but not in Firestore
+                throw new Error("User data not found. Please contact support.");
+            }
+
+            const userData = userDocSnap.data();
+
+            // Enforce role-based login flow
+            if (authFlow === 'admin' && userData.role !== 'admin') {
+                await signOut(auth);
+                throw new Error("Access Denied. Only admin users can log in through this module.");
+            }
+
+            // If login is successful and role is correct, onAuthStateChanged will handle the rest.
+            console.log(`Firebase login successful for ${userData.role}:`, user.email);
             return true;
         } catch (error) {
-            console.error("Firebase Login Error:", error.message);
+            console.error("Login Error:", error.message);
+            // Use the error message directly for more specific feedback
             alert(`Login failed: ${error.message}`);
             return false;
         }
