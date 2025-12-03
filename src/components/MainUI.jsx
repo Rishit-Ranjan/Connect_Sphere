@@ -51,7 +51,6 @@ const MainUI = ({
     onMarkChatAsRead
 }) => {
     const [activeView, setActiveView] = useState('feed');
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
@@ -397,7 +396,6 @@ const MainUI = ({
         return acc;
     }, 0);
     return (<>
-        {isEditModalOpen && (<EditProfileModal user={currentUser} onSave={onUpdateUser} onClose={() => setIsEditModalOpen(false)} />)}
         {isCreateGroupModalOpen && (<CreateGroupModal currentUser={currentUser} users={users} onCreateGroup={onCreateGroup} onClose={() => setIsCreateGroupModalOpen(false)} />)}
         {isCreateRoomModalOpen && (<CreateRoomModal onCreateRoom={onCreateRoom} onClose={() => setIsCreateRoomModalOpen(false)} />)}
         {isJoinRoomModalOpen && (<JoinRoomModal roomName={isJoinRoomModalOpen.name || 'this room'} onClose={() => setIsJoinRoomModalOpen(null)} onJoin={async (password) => {
@@ -471,12 +469,6 @@ const MainUI = ({
                                             </button>
                                         </li>
                                         <li>
-                                            <button onClick={() => { setIsEditModalOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">
-                                                <EditIcon className="h-5 w-5" />
-                                                <span className="font-semibold">Edit Profile</span>
-                                            </button>
-                                        </li>
-                                        <li>
                                             <button onClick={() => { setIsSettingsModalOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">
                                                 <Cog6ToothIcon className="h-5 w-5" />
                                                 <span className="font-semibold">Settings</span>
@@ -504,7 +496,7 @@ const MainUI = ({
 
                 {/* Main Content */}
                 <main className="col-span-12 sm:col-span-10 lg:col-span-7 h-[calc(100vh-5rem)] sm:h-[calc(100vh-2rem)] overflow-y-auto pr-2">
-                    {viewingProfile ? (<ProfilePage profileUser={viewingProfile} currentUser={currentUser} allPosts={posts} onBack={onBackToFeed} onDeletePost={onDeletePost} onViewProfile={onViewProfile} onToggleFollow={onToggleFollow} onToggleLike={onToggleLike} onAddComment={onAddComment} onStartChat={(user) => {
+                    {viewingProfile ? (<ProfilePage profileUser={viewingProfile} currentUser={currentUser} allPosts={posts} onBack={onBackToFeed} onDeletePost={onDeletePost} onViewProfile={onViewProfile} onToggleFollow={onToggleFollow} onToggleLike={onToggleLike} onAddComment={onAddComment} onUpdateUser={onUpdateUser} onStartChat={(user) => {
                         const chat = chats.find(c => c.type === 'private' && c.participants.some(p => p.id === user.id));
                         if (chat)
                             handleSelectChat(chat);
