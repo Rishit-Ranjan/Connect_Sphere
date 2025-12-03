@@ -71,7 +71,7 @@ const MainUI = ({
     const chatFileInputRef = useRef(null);
     const userNotifications = notifications.filter(n => n.recipientId === currentUser.id);
     const unreadCount = userNotifications.filter(n => !n.read).length;
-    
+
     // State for chat-specific UI elements, moved to top level to follow Rules of Hooks
     const [isChatMenuOpen, setIsChatMenuOpen] = useState(false);
     const chatMenuRef = useRef(null);
@@ -210,10 +210,12 @@ const MainUI = ({
         }
         if (activeView === 'chat') {
             if (!activeChat) {
-                return (<div className="h-full flex flex-col items-center justify-center bg-white dark:bg-secondary rounded-lg shadow-md text-center p-8">
-                    <MessageIcon className="h-24 w-24 text-gray-300 dark:text-gray-600 mb-4" />
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-white">Your Messages</h3>
-                    <p className="text-gray-500 dark:text-gray-400 mt-2">Select a conversation from the right sidebar to start chatting.</p>
+                return (<div className="h-full flex flex-col items-center justify-center bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-3xl shadow-glass border border-white/20 dark:border-slate-700/30 text-center p-8 animate-fade-in">
+                    <div className="bg-primary/10 p-6 rounded-full mb-6 animate-blob">
+                        <MessageIcon className="h-16 w-16 text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Your Messages</h3>
+                    <p className="text-slate-500 dark:text-slate-400 max-w-xs mx-auto">Select a conversation from the sidebar to start chatting securely.</p>
                 </div>);
             }
             const isGroup = activeChat.type === 'group';
@@ -226,8 +228,8 @@ const MainUI = ({
             const sharedSecret = sharedSecrets.get(activeChat.id);
             const canSendMessage = isRoom ? activeChat.messagingPermission === 'all' || isRoomAdmin : true;
             const canShareMedia = isRoom ? activeChat.mediaSharePermission === 'all' || isRoomAdmin : true;
-            return (<div className="h-full flex flex-col bg-white dark:bg-secondary rounded-xl shadow-lg">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            return (<div className="h-full flex flex-col bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl shadow-glass border border-white/20 dark:border-slate-700/30 overflow-hidden">
+                <div className="p-4 border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
                     <div className="flex items-center space-x-3">
                         {isGroup ? <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center"><UsersIcon className="h-6 w-6 text-primary" /></div> : isRoom ? <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center"><HashtagIcon className="h-6 w-6 text-green-500" /></div> : <UserAvatar user={chatAvatar} />}
                         <div>
@@ -320,8 +322,8 @@ const MainUI = ({
         <button
             onClick={onClick}
             className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${isActive
-                    ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                    : 'text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md'
+                ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-white/80 dark:hover:bg-slate-800/80 hover:shadow-md hover:scale-[1.02]'
                 }`}
         >
             <div className={`transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
@@ -330,10 +332,10 @@ const MainUI = ({
             <span className={`font-semibold hidden lg:inline flex-grow text-left tracking-wide ${isActive ? '' : 'group-hover:text-gray-800 dark:group-hover:text-gray-200'}`}>{label}</span>
             {badgeCount !== undefined && (
                 <span className={`hidden lg:inline-flex items-center justify-center text-xs font-bold rounded-full h-5 min-w-[1.25rem] px-1.5 transition-colors ${isActive
-                        ? 'bg-white text-primary'
-                        : badgeCount > 0
-                            ? 'bg-red-500 text-white shadow-sm'
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
+                    ? 'bg-white text-primary'
+                    : badgeCount > 0
+                        ? 'bg-red-500 text-white shadow-sm'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
                     }`}>
                     {badgeCount > 99 ? '99+' : badgeCount}
                 </span>
@@ -417,9 +419,11 @@ const MainUI = ({
                 {/* Left Sidebar */}
                 <aside className="col-span-2 lg:col-span-2 hidden sm:block z-20">
                     <div className="sticky top-4 flex flex-col h-[calc(100vh-2rem)]">
-                        <div className="flex justify-center lg:justify-start items-center p-2 space-x-2">
-                            <LogoIcon className="h-8 w-8 text-primary" />
-                            <span className="text-2xl font-bold hidden lg:inline text-gray-800 dark:text-white">Connect</span>
+                        <div className="flex justify-center lg:justify-start items-center p-2 space-x-3 mb-6">
+                            <div className="bg-primary/10 p-2 rounded-xl">
+                                <LogoIcon className="h-8 w-8 text-primary" />
+                            </div>
+                            <span className="text-2xl font-bold hidden lg:inline bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">Connect</span>
                         </div>
                         <nav className="space-y-2 mt-4">
                             <NavItem icon={<HomeIcon className="h-6 w-6" />} label="Home" isActive={activeView === 'feed' && !viewingProfile} onClick={() => { setActiveView('feed'); onBackToFeed(); }} />
@@ -452,8 +456,8 @@ const MainUI = ({
                         </nav>
                         <div className="flex-grow"></div>
                         <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-auto">
-                            <button onClick={onToggleTheme} className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
-                                {theme === 'light' ? <MoonIcon className="h-6 w-6" /> : <SunIcon className="h-6 w-6" />}
+                            <button onClick={onToggleTheme} className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-slate-500 dark:text-slate-400 hover:bg-white/80 dark:hover:bg-slate-800/80 hover:shadow-md transition-all duration-300 group" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+                                {theme === 'light' ? <MoonIcon className="h-6 w-6 group-hover:text-primary transition-colors" /> : <SunIcon className="h-6 w-6 group-hover:text-accent transition-colors" />}
                                 <span className="font-semibold hidden lg:inline">
                                     {theme === 'light' ? 'Dark' : 'Light'} Mode
                                 </span>
@@ -482,7 +486,7 @@ const MainUI = ({
                                         </li>
                                     </ul>
                                 </div>)}
-                                <button onClick={() => setIsProfileMenuOpen(prev => !prev)} className="flex items-center space-x-3 p-2 w-full hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg transition-colors">
+                                <button onClick={() => setIsProfileMenuOpen(prev => !prev)} className="flex items-center space-x-3 p-2 w-full hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-2xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 mt-4">
                                     <UserAvatar user={currentUser} />
                                     <div className="hidden lg:inline text-left">
                                         <p className="font-semibold text-sm">{currentUser.name}</p>
@@ -508,7 +512,7 @@ const MainUI = ({
                 {/* Right Sidebar */}
                 <aside className="col-span-3 hidden lg:block">
                     <div className="sticky top-4 space-y-6">
-                        <div className="bg-white/60 dark:bg-secondary/60 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-5">
+                        <div className="glass rounded-3xl p-5 animate-slide-in-right">
                             <h3 className="font-bold text-lg mb-4 text-gray-800 dark:text-white">
                                 {isSearching ? 'Search Results' : (currentUser.role === 'admin' ? 'Manage Users' : 'Discover People')}
                             </h3>
@@ -550,7 +554,7 @@ const MainUI = ({
                                 </p>)}
                             </div>
                         </div>
-                        <div className="bg-white/60 dark:bg-secondary/60 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-5">
+                        <div className="glass rounded-3xl p-5 animate-slide-in-right animation-delay-2000">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="font-bold text-lg text-gray-800 dark:text-white">Messages</h3>
                                 <div className="flex items-center space-x-1">
@@ -568,7 +572,7 @@ const MainUI = ({
                                     const isGroup = chat.type === 'group';
                                     const isRoom = chat.type === 'room';
                                     const chatPartner = !isGroup && !isRoom ? chat.participants.find(p => p.id !== currentUser.id) : null;
-                                    return (<button key={chat.id} onClick={() => handleSelectChat(chat)} className={`w-full flex items-center space-x-3 p-2 rounded-lg transition text-left ${activeChat?.id === chat.id ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
+                                    return (<button key={chat.id} onClick={() => handleSelectChat(chat)} className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all text-left group ${activeChat?.id === chat.id ? 'bg-primary/10 border border-primary/20' : 'hover:bg-slate-100 dark:hover:bg-slate-700/50 border border-transparent'}`}>
                                         {isGroup ? <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0"><UsersIcon className="h-6 w-6 text-primary" /></div> : isRoom ? <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0"><HashtagIcon className="h-6 w-6 text-green-500" /></div> : <UserAvatar user={chatPartner} />}
                                         <div className="flex-1 overflow-hidden">
                                             <p className={`font-semibold text-sm truncate ${unreadCount > 0 ? 'font-bold text-gray-900 dark:text-white' : ''}`}>
@@ -586,7 +590,7 @@ const MainUI = ({
                             </div>
                         </div>
                         {joinableRooms.length > 0 && (
-                            <div className="bg-white/60 dark:bg-secondary/60 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-5">
+                            <div className="glass rounded-3xl p-5 animate-slide-in-right animation-delay-4000">
                                 <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-4">Discover Rooms</h3>
                                 <div className="space-y-2">
                                     {joinableRooms.map(room => (<div key={room.id} className="flex items-center justify-between">
@@ -610,8 +614,8 @@ const MainUI = ({
                     <button onClick={() => { onViewProfile(currentUser); }} className="p-3 rounded-2xl text-gray-500"><UserIcon className="h-7 w-7" /></button>
                     <button onClick={onLogout} className="p-3 rounded-2xl text-gray-500"><LogoutIcon className="h-7 w-7" /></button>
                 </nav>
-            </div>
-        </div>
+            </div >
+        </div >
     </>);
 };
 export default MainUI;

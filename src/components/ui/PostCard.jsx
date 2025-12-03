@@ -33,7 +33,7 @@ const PostCard = ({ post, currentUser, onDeletePost, onViewProfile, onToggleLike
     };
 
     return (
-        <div className="bg-white/85 dark:bg-slate-800/70 backdrop-blur-lg rounded-2xl shadow-lg border border-white/40 dark:border-slate-700/50 overflow-hidden transition-all hover:shadow-2xl hover:bg-white/95 dark:hover:bg-slate-800/80 hover:border-blue-300/50 dark:hover:border-blue-500/30">
+        <div className="glass rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-glass-sm hover:scale-[1.01] mb-6">
             <div className="p-5">
                 <div className="flex items-start justify-between">
                     <button onClick={() => onViewProfile(post.author)} className="flex items-center space-x-3 group">

@@ -326,10 +326,10 @@ const App = () => {
         setUsers(prevUsers => prevUsers
             .filter(u => u.id !== userId)
             .map(u => ({
-            ...u,
-            followers: u.followers.filter(id => id !== userId),
-            following: u.following.filter(id => id !== userId),
-        })));
+                ...u,
+                followers: u.followers.filter(id => id !== userId),
+                following: u.following.filter(id => id !== userId),
+            })));
     };
     const addMessage = (chatId, message, plaintextForNotification) => {
         const chat = chats.find(c => c.id === chatId);
@@ -595,16 +595,16 @@ const App = () => {
     };
     if (!currentUser) {
         if (authStep === 'select_profile') {
-            return <ProfileSelectionScreen adminUser={adminUser} onSelectRole={handleRoleSelect}/>;
+            return <ProfileSelectionScreen adminUser={adminUser} onSelectRole={handleRoleSelect} />;
         }
         if (authStep === 'welcome') {
-            return <WelcomeScreen onLoginClick={handleGoToLogin} onSignupClick={handleGoToSignup} onBack={handleBackToProfileSelect} authFlow={authFlow}/>;
+            return <WelcomeScreen onLoginClick={handleGoToLogin} onSignupClick={handleGoToSignup} onBack={handleBackToProfileSelect} authFlow={authFlow} />;
         }
-        return <AuthScreen initialView={initialAuthView} onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow}/>;
+        return <AuthScreen initialView={initialAuthView} onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow} />;
     }
     return (<>
-      <MainUI currentUser={currentUser} users={users} posts={posts} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead}/>
-      <FloatingChatbot currentUser={currentUser} isOnline={isOnline}/>
+        <MainUI activeChat={_activeChat} onSetActiveChat={_setActiveChat} currentUser={currentUser} users={users} posts={posts} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} />
+        <FloatingChatbot currentUser={currentUser} isOnline={isOnline} />
     </>);
 };
 export default App;
