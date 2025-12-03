@@ -81,17 +81,10 @@ Contributions are what make the open-source community such an amazing place to l
 2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
 3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
-
-Happy coding!
-=======<br/><br/>
+5.  Open a Pull Request<br/><br/>
 
 <img width="1858" height="959" alt="image" src="https://github.com/user-attachments/assets/f14778c9-18c2-4143-bde3-852b745f3608" /><br/><br/>
 
-<img width="1864" height="946" alt="image" src="https://github.com/user-attachments/assets/1bfb955f-9010-4be3-929a-76b494e11fb0" />
+**Participant User**
+<img width="1864" height="973" alt="image" src="https://github.com/user-attachments/assets/4e912e26-b777-4dbb-9cd8-77230c507ba3" />
+
