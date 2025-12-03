@@ -336,6 +336,13 @@ const App = () => {
     };
     const handleSignup = async (userData) => {
         try {
+            // Enforce one admin rule
+            if (authFlow === 'admin') {
+                const adminExists = users.some(u => u.role === 'admin');
+                if (adminExists) {
+                    throw new Error("An admin account already exists. Only one admin is allowed.");
+                }
+            }
             // 1. Create user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
             const user = userCredential.user;
@@ -348,7 +355,7 @@ const App = () => {
                 email: userData.email,
                 gender: userData.gender,
                 avatar: `https://picsum.photos/seed/${userData.name.toLowerCase()}/100`,
-                role: 'participant', // Default role
+                role: authFlow === 'admin' ? 'admin' : 'participant',
                 status: 'active',
                 followers: [],
                 following: [],

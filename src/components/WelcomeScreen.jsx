@@ -76,7 +76,7 @@ const WelcomeScreen = ({ onLoginClick, onSignupClick, onSetAuthFlow }) => {
             <button onClick={onLoginClick} className="w-full py-3 px-4 font-semibold text-white bg-primary rounded-full hover:bg-indigo-700 transition-transform transform hover:scale-105">
               Log In
             </button>
-            {selection === 'participant' && (<button onClick={onSignupClick} className="w-full py-3 px-4 font-semibold text-primary dark:text-indigo-400 bg-primary/10 dark:bg-primary/20 rounded-full hover:bg-primary/20 dark:hover:bg-primary/30 transition-transform transform hover:scale-105">
+            {(selection === 'participant' || selection === 'admin') && (<button onClick={onSignupClick} className="w-full py-3 px-4 font-semibold text-primary dark:text-indigo-400 bg-primary/10 dark:bg-primary/20 rounded-full hover:bg-primary/20 dark:hover:bg-primary/30 transition-transform transform hover:scale-105">
               Sign Up
             </button>)}
           </div>
