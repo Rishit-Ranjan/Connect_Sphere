@@ -10,10 +10,10 @@ import { ref, onValue, set, onDisconnect, serverTimestamp as rtdbServerTimestamp
 import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where, runTransaction, deleteDoc, writeBatch } from 'firebase/firestore';
  
 import * as cryptoService from './services/cryptoService';
+import { usePosts } from './usePosts';
 const App = () => {
     const [currentUser, setCurrentUser] = useState(undefined); // Use undefined to represent loading state
     const [users, setUsers] = useState([]);
-    const [posts, setPosts] = useState([]);
     const [resources, setResources] = useState([]); // For the Resource Hub
     const [chats, setChats] = useState([]);
     const [notifications, setNotifications] = useState([]); // TODO: Migrate to Firestore
@@ -35,14 +35,18 @@ const App = () => {
     // Fetch all users from Firestore on initial load
     // This is now a real-time listener to get user status updates
     useEffect(() => {
+        if (!currentUser) {
+            setUsers([]); // Clear users when logged out
+            return;
+        }
         const usersCollectionRef = collection(db, "users");
         const unsubscribe = onSnapshot(usersCollectionRef, (querySnapshot) => {
             const usersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setUsers(usersList);
             console.log("Real-time user data update received.");
-        });
+        }, (error) => { console.error("Error fetching users:", error); }); // Added error handling
         return () => unsubscribe();
-    }, []);
+    }, [currentUser]);
 
     // Real-time presence system using Realtime Database
     useEffect(() => {
@@ -73,49 +77,6 @@ const App = () => {
 
         return () => unsubscribe();
     }, [currentUser]);
-
-    // Fetch posts from Firestore and hydrate them with user data
-    useEffect(() => {
-        // Don't set up listener until users are loaded, as we need them for hydration
-        if (users.length === 0) return;
-
-        const postsCollectionRef = collection(db, "posts");
-        const q = query(postsCollectionRef, orderBy("timestamp", "desc"));
-
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const postsList = querySnapshot.docs.map(doc => {
-                const postData = doc.data();
-
-                // Find the full author object from the users list
-                const author = users.find(u => u.id === postData.authorId);
-
-                // Hydrate comments with their author objects
-                const comments = (postData.comments || []).map(comment => {
-                    const commentAuthor = users.find(u => u.id === comment.authorId);
-                    return {
-                        ...comment,
-                        author: commentAuthor || { name: 'Unknown User', avatar: '' } // Fallback
-                    };
-                });
-
-                // Fallback for author if user not found (e.g., deleted user)
-                const finalAuthor = author || { id: postData.authorId, name: 'Unknown User', avatar: '' };
-
-                return {
-                    id: doc.id,
-                    ...postData,
-                    timestamp: postData.timestamp?.toDate().toLocaleString() || 'Just now',
-                    author: finalAuthor,
-                    comments: comments
-                };
-            });
-            setPosts(postsList);
-            console.log("Real-time post update received from Firestore.");
-        });
-
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
-    }, [users]); // This effect depends on the users list
 
     // Real-time listener for chats
     useEffect(() => {
@@ -391,7 +352,7 @@ const App = () => {
             await setDoc(doc(db, "users", user.uid), newUser);
 
             // 5. Update local state (optional, as onAuthStateChanged will also fire)
-            setUsers(prev => [...prev, newUser]);
+            // The real-time listener for users will handle this update.
             
             // onAuthStateChanged will handle setting the current user
             return true;
@@ -421,6 +382,8 @@ const App = () => {
     const handleSetAuthFlow = (flow) => {
         setAuthFlow(flow);
     };
+    // Call the usePosts hook and pass dependencies
+    const { posts, addPost: addPostToDb, deletePost, handleToggleLike, handleAddComment, handleDeleteComment } = usePosts(currentUser, users, addNotification);
     const handleViewProfile = (user) => {
         setViewingProfile(user);
     };
@@ -431,54 +394,17 @@ const App = () => {
         if (!currentUser)
             return;
 
-        // If it has a file but no content, treat it as a resource
         if (postData.fileUrl && !postData.content) { // This is a resource upload
             const newResource = {
                 id: Date.now(),
                 author: currentUser,
                 fileName: postData.fileName,
                 fileUrl: postData.fileUrl,
-                timestamp: 'Just now', // Local timestamp for non-persistent resource
-                // No Firestore interaction here
+                timestamp: 'Just now',
             }; 
-            try {
-                // This was trying to use newResourceData which doesn't exist in this scope.
-                // Since resources are not persistent, we only update local state.
-                // The onSnapshot listener for resources (to be implemented) will update the UI.
-                // For now, we'll manually add to local state for immediate feedback.
-                setResources(prev => [newResource, ...prev]);
-            } catch (error) {
-                console.error("Error adding resource to Firestore:", error);
-            }
+            setResources(prev => [newResource, ...prev]);
         } else { // Otherwise, treat it as a post
-            const newPost = {
-                authorId: currentUser.id,
-                content: postData.content,
-                imageUrl: postData.imageUrl || null,
-                timestamp: serverTimestamp(), // Use server timestamp for consistency
-                likedBy: [],
-                comments: [],
-                isAnnouncement: postData.isAnnouncement && currentUser.role === 'admin',
-            };
-
-            // Optimistic UI update: Add post to local state immediately
-            const tempId = `temp_${Date.now()}`;
-            const optimisticPost = {
-                ...newPost,
-                id: tempId,
-                author: currentUser,
-                timestamp: new Date().toLocaleString(),
-            };
-            setPosts(prevPosts => [optimisticPost, ...prevPosts]);
-
-            try {
-                await addDoc(collection(db, "posts"), newPost);
-            } catch (error) {
-                console.error("Error adding post to Firestore: ", error);
-                // Revert optimistic update on error
-                setPosts(prevPosts => prevPosts.filter(p => p.id !== tempId));
-                alert("Failed to create post. Please try again.");
-            }
+            addPostToDb(postData);
         }
     };
     // Real-time listener for resources (similar to posts and chats) - REMOVED as resources are not persistent
@@ -511,19 +437,6 @@ const App = () => {
         // No Firestore interaction as resources are not persistent
         // This will only remove it from the current session's view
         setResources(prev => prev.filter(r => r.id !== resourceId));
-    };
-    const deletePost = async (postId) => {
-        // Authorization is handled by Firestore Security Rules.
-        // The UI already hides the button for users without permission.
-        try {
-            const postRef = doc(db, "posts", postId);
-            // TODO: Delete associated image/file from Firebase Storage if any
-            await deleteDoc(postRef);
-            // The onSnapshot listener will automatically update the UI.
-        } catch (error) {
-            console.error("Error deleting post:", error);
-            alert("Failed to delete post. Please try again.");
-        }
     };
     const deleteUser = async (userId) => {
         if (!currentUser || currentUser.role !== 'admin' || currentUser.id === userId) {
@@ -770,15 +683,6 @@ const App = () => {
         await setDoc(userDocRef, updatedUser, { merge: true }); // Use merge: true to avoid overwriting
 
         setCurrentUser(updatedUser);
-        setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-        setPosts(prevPosts => prevPosts.map(p => ({
-            ...p,
-            author: p.author.id === updatedUser.id ? updatedUser : p.author,
-            comments: p.comments.map(c => ({
-                ...c,
-                author: c.author.id === updatedUser.id ? updatedUser : c.author,
-            }))
-        })));
         // Note: Chat messages sender objects won't update retroactively, which is fine.
         // New messages will use the updated user object.
         setChats(prevChats => prevChats.map(chat => ({
@@ -845,97 +749,6 @@ const App = () => {
         } catch (e) {
             console.error("Follow/unfollow transaction failed: ", e);
             alert("Could not update follow status. Please try again.");
-        }
-    };
-    const handleToggleLike = async (postId) => {
-        if (!currentUser)
-            return;
-
-        const postRef = doc(db, "posts", postId);
-        const post = posts.find(p => p.id === postId);
-
-        if (!post) {
-            console.error("Post not found for liking:", postId);
-            return;
-        }
-
-        const isLiked = post.likedBy.includes(currentUser.id);
-
-        try {
-            if (isLiked) {
-                // User is unliking the post
-                await updateDoc(postRef, {
-                    likedBy: arrayRemove(currentUser.id)
-                });
-            } else {
-                // User is liking the post
-                await updateDoc(postRef, {
-                    likedBy: arrayUnion(currentUser.id)
-                });
-                // Send notification only when liking, not unliking
-                addNotification(post.author.id, 'like', currentUser, post);
-            }
-            // The onSnapshot listener will automatically update the UI.
-        } catch (error) {
-            console.error("Error toggling like: ", error);
-            alert("Failed to update like status. Please try again.");
-        }
-    };
-    const handleAddComment = async (postId, content) => {
-        if (!currentUser)
-            return;
-
-        const newComment = {
-            id: Date.now(), // Using timestamp for a simple unique ID
-            authorId: currentUser.id,
-            content,
-            timestamp: serverTimestamp(),
-        };
-
-        try {
-            const postRef = doc(db, "posts", postId);
-            await updateDoc(postRef, {
-                comments: arrayUnion(newComment)
-            });
-
-            // The onSnapshot listener will handle the UI update.
-            // We can still send a notification.
-            const targetPost = posts.find(p => p.id === postId);
-            if (targetPost) {
-                addNotification(targetPost.author.id, 'comment', currentUser, targetPost);
-            }
-        } catch (error) {
-            console.error("Error adding comment: ", error);
-            alert("Failed to add comment. Please try again.");
-        }
-    };
-    const handleDeleteComment = async (postId, commentId) => {
-        if (!currentUser) return;
-
-        const post = posts.find(p => p.id === postId);
-        if (!post) return;
-
-        const commentToDelete = post.comments.find(c => c.id === commentId);
-        if (!commentToDelete) return;
-
-        // Authorization: only comment author or admin can delete
-        if (commentToDelete.author.id !== currentUser.id && currentUser.role !== 'admin') {
-            alert("You don't have permission to delete this comment.");
-            return;
-        }
-
-        try {
-            const postRef = doc(db, "posts", postId);
-            // We need to remove the comment object exactly as it is stored in Firestore.
-            // The local state has a hydrated `author` object, but Firestore has `authorId`.
-            const commentAsInDb = { ...commentToDelete, author: undefined, authorId: commentToDelete.author.id };
-            delete commentAsInDb.author; // Ensure the author object is not part of the payload
-
-            await updateDoc(postRef, { comments: arrayRemove(commentAsInDb) });
-            // The onSnapshot listener will automatically update the UI.
-        } catch (error) {
-            console.error("Error deleting comment: ", error);
-            alert("Failed to delete comment. Please try again.");
         }
     };
     if (currentUser === undefined) { // Show a loading screen while auth state is being determined
