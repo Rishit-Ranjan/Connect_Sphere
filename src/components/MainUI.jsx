@@ -47,6 +47,7 @@ const MainUI = ({
     onBackToFeed,
     onToggleFollow,
     onToggleLike,
+    onDeleteComment, // New prop
     onAddComment,
     onToggleTheme,
     onMarkNotificationsAsRead,
@@ -507,7 +508,7 @@ const MainUI = ({
             }
         }} />)}
         {isManageRoomModalOpen && (<ManageRoomModal room={isManageRoomModalOpen} allUsers={users} currentUser={currentUser} onClose={() => setIsManageRoomModalOpen(null)} onSaveMembers={onManageRoomMembers} onSaveSettings={onUpdateRoomSettings} onDeleteRoom={onDeleteRoom} />)}
-        {viewingPost && <PostDetailModal post={viewingPost} currentUser={currentUser} onClose={() => setViewingPost(null)} onAddComment={onAddComment} />}
+        {viewingPost && <PostDetailModal post={viewingPost} currentUser={currentUser} onClose={() => setViewingPost(null)} onAddComment={onAddComment} onDeleteComment={onDeleteComment} />}
         {isSettingsModalOpen && (<SettingsModal currentUser={currentUser} onUpdateUser={onUpdateUser} onClose={() => setIsSettingsModalOpen(false)} />)}
         <div className="min-h-screen bg-light dark:bg-dark text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
             <div className="container mx-auto grid grid-cols-12 gap-4 md:gap-6 p-2 md:p-4">
@@ -734,7 +735,7 @@ const MainUI = ({
         </div >
     </>);
 };
-const PostDetailModal = ({ post, currentUser, onClose, onAddComment }) => {
+const PostDetailModal = ({ post, currentUser, onClose, onAddComment, onDeleteComment }) => {
     const [comment, setComment] = useState('');
     const modalRef = useRef(null);
 
@@ -781,11 +782,18 @@ const PostDetailModal = ({ post, currentUser, onClose, onAddComment }) => {
                 <div className="p-4 border-t dark:border-gray-700 space-y-4 overflow-y-auto">
                     {post.comments.map(c => (
                         <div key={c.id} className="flex items-start space-x-3">
-                            <UserAvatar user={c.author} className="h-8 w-8" />
+                            <UserAvatar user={c.author} className="h-8 w-8 flex-shrink-0" />
                             <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-xl flex-1">
                                 <p className="font-semibold text-sm">{c.author.name}</p>
                                 <p className="text-sm text-gray-800 dark:text-gray-200">{c.content}</p>
                             </div>
+                            {(currentUser.id === c.author.id || currentUser.role === 'admin') && (
+                                <button 
+                                    onClick={() => onDeleteComment(post.id, c.id)}
+                                    className="p-2 text-gray-400 rounded-full opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-opacity"
+                                    title="Delete comment"
+                                ><TrashIcon className="h-4 w-4" /></button>
+                            )}
                         </div>
                     ))}
                 </div>

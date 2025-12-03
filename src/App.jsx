@@ -6,7 +6,7 @@ import WelcomeScreen from './components/WelcomeScreen';
 import FloatingChatbot from './components/FloatingChatbot'; 
 import { auth, db } from './services/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
  
 import * as cryptoService from './services/cryptoService';
 // --- MOCK DATA ---
@@ -650,21 +650,35 @@ const App = () => {
     const handleToggleLike = async (postId) => {
         if (!currentUser)
             return;
-        await simulateNetwork(250);
-        let targetPost;
-        const newPosts = posts.map(p => {
-            if (p.id === postId) {
-                const likedBy = p.likedBy.includes(currentUser.id)
-                    ? p.likedBy.filter(id => id !== currentUser.id)
-                    : [...p.likedBy, currentUser.id];
-                targetPost = { ...p, likedBy };
-                return targetPost;
+
+        const postRef = doc(db, "posts", postId);
+        const post = posts.find(p => p.id === postId);
+
+        if (!post) {
+            console.error("Post not found for liking:", postId);
+            return;
+        }
+
+        const isLiked = post.likedBy.includes(currentUser.id);
+
+        try {
+            if (isLiked) {
+                // User is unliking the post
+                await updateDoc(postRef, {
+                    likedBy: arrayRemove(currentUser.id)
+                });
+            } else {
+                // User is liking the post
+                await updateDoc(postRef, {
+                    likedBy: arrayUnion(currentUser.id)
+                });
+                // Send notification only when liking, not unliking
+                addNotification(post.author.id, 'like', currentUser, post);
             }
-            return p;
-        });
-        setPosts(newPosts);
-        if (targetPost && targetPost.likedBy.includes(currentUser.id)) {
-            addNotification(targetPost.author.id, 'like', currentUser, targetPost);
+            // The onSnapshot listener will automatically update the UI.
+        } catch (error) {
+            console.error("Error toggling like: ", error);
+            alert("Failed to update like status. Please try again.");
         }
     };
     const handleAddComment = async (postId, content) => {
@@ -695,6 +709,35 @@ const App = () => {
             alert("Failed to add comment. Please try again.");
         }
     };
+    const handleDeleteComment = async (postId, commentId) => {
+        if (!currentUser) return;
+
+        const post = posts.find(p => p.id === postId);
+        if (!post) return;
+
+        const commentToDelete = post.comments.find(c => c.id === commentId);
+        if (!commentToDelete) return;
+
+        // Authorization: only comment author or admin can delete
+        if (commentToDelete.author.id !== currentUser.id && currentUser.role !== 'admin') {
+            alert("You don't have permission to delete this comment.");
+            return;
+        }
+
+        try {
+            const postRef = doc(db, "posts", postId);
+            // We need to remove the comment object exactly as it is stored in Firestore.
+            // The local state has a hydrated `author` object, but Firestore has `authorId`.
+            const commentAsInDb = { ...commentToDelete, author: undefined, authorId: commentToDelete.author.id };
+            delete commentAsInDb.author; // Ensure the author object is not part of the payload
+
+            await updateDoc(postRef, { comments: arrayRemove(commentAsInDb) });
+            // The onSnapshot listener will automatically update the UI.
+        } catch (error) {
+            console.error("Error deleting comment: ", error);
+            alert("Failed to delete comment. Please try again.");
+        }
+    };
     if (currentUser === undefined) { // Show a loading screen while auth state is being determined
         return <div className="w-screen h-screen flex items-center justify-center bg-light dark:bg-dark text-dark dark:text-light">Loading...</div>;
     }
@@ -708,7 +751,7 @@ const App = () => {
         return <AuthScreen initialView={initialAuthView} onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow} />;
     }
     return (<>
-        <MainUI activeChat={_activeChat} onSetActiveChat={_setActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} />
+        <MainUI activeChat={_activeChat} onSetActiveChat={_setActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} />
         <FloatingChatbot currentUser={currentUser} isOnline={isOnline} />
     </>);
 };
