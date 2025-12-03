@@ -19,7 +19,7 @@ const ProfilePage = ({ profileUser, currentUser, allPosts, onBack, onDeletePost,
             setIsFollowingLoading(false);
         }
     };
-    return (<div className="w-full">
+    return (<div className="w-full max-w-4xl mx-auto p-4">
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden">
             {/* Profile Header */}
             <div className="relative">
@@ -55,7 +55,7 @@ const ProfilePage = ({ profileUser, currentUser, allPosts, onBack, onDeletePost,
                         </button>
                     </div>)}
                     {(currentUser.id === profileUser.id || currentUser.role === 'admin') && (
-                        <button onClick={() => setIsEditModalOpen(true)} className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition text-gray-700 dark:text-gray-300 font-semibold">
+                        <button onClick={() => setIsEditModalOpen(true)} className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition text-gray-700 dark:text-gray-300 font-semibold w-full sm:w-auto text-center">
                             <EditIcon className="h-4 w-4" />
                             <span>Edit Profile</span>
                         </button>
