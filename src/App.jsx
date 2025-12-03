@@ -6,7 +6,7 @@ import WelcomeScreen from './components/WelcomeScreen';
 import FloatingChatbot from './components/FloatingChatbot'; 
 import { auth, db } from './services/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where } from 'firebase/firestore';
  
 import * as cryptoService from './services/cryptoService';
 // --- MOCK DATA ---
@@ -47,61 +47,13 @@ const thirdUser = {
     following: [1, 2],
 };
 const initialUsers = [adminUser, participantUser, thirdUser];
-const initialChats = [
-    {
-        id: 1,
-        type: 'private',
-        participants: [adminUser, participantUser],
-        messages: [], // Messages will be empty initially for E2EE
-        unreadCounts: { [adminUser.id]: 0, [participantUser.id]: 0 },
-    },
-    {
-        id: 2,
-        name: 'Project Team',
-        type: 'group',
-        participants: [adminUser, participantUser, thirdUser],
-        messages: [
-            { id: 101, senderId: adminUser.id, content: { text: "Welcome to the team channel!" }, timestamp: "Yesterday" },
-            { id: 102, senderId: thirdUser.id, content: { text: "Hey everyone! Ready to get started." }, timestamp: "10 hours ago" }
-        ],
-        unreadCounts: { [adminUser.id]: 0, [participantUser.id]: 1, [thirdUser.id]: 0 },
-        adminId: adminUser.id
-    },
-    {
-        id: 3,
-        name: 'Design Lounge',
-        type: 'room',
-        roomPrivacy: 'password_protected',
-        password: 'design',
-        participants: [adminUser],
-        messages: [],
-        unreadCounts: { [adminUser.id]: 0 },
-        adminId: adminUser.id,
-        messagingPermission: 'all',
-        mediaSharePermission: 'all',
-    },
-    {
-        id: 4,
-        name: 'Announcements',
-        type: 'room',
-        roomPrivacy: 'invite_only',
-        participants: [adminUser, thirdUser],
-        messages: [
-            { id: 103, senderId: adminUser.id, content: { text: "Welcome to the Announcements channel. Only admins can post here." }, timestamp: "Yesterday" }
-        ],
-        unreadCounts: { [adminUser.id]: 0, [thirdUser.id]: 0 },
-        adminId: adminUser.id,
-        messagingPermission: 'admin_only',
-        mediaSharePermission: 'admin_only',
-    }
-];
 // --- END MOCK DATA ---
 const App = () => {
     const [currentUser, setCurrentUser] = useState(undefined); // Use undefined to represent loading state
     const [users, setUsers] = useState([]);
     const [posts, setPosts] = useState([]);
     const [resources, setResources] = useState([]); // For the Resource Hub
-    const [chats, setChats] = useState(initialChats);
+    const [chats, setChats] = useState([]);
     const [notifications, setNotifications] = useState([]);
     const [viewingProfile, setViewingProfile] = useState(null);
     const [_activeChat, _setActiveChat] = useState(null); // State lifted from MainUI
@@ -172,6 +124,46 @@ const App = () => {
         // Cleanup subscription on unmount
         return () => unsubscribe();
     }, [users]); // This effect depends on the users list
+
+    // Real-time listener for chats
+    useEffect(() => {
+        if (!currentUser || users.length === 0) {
+            setChats([]);
+            return;
+        }
+
+        const chatsCollectionRef = collection(db, "chats");
+        // Query for chats where the current user is a participant
+        const q = query(chatsCollectionRef, where("participantIds", "array-contains", currentUser.id));
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const chatsList = querySnapshot.docs.map(doc => {
+                const chatData = doc.data();
+
+                // Hydrate participant data
+                const participants = chatData.participantIds.map(id => {
+                    return users.find(u => u.id === id) || { id, name: 'Unknown User', avatar: '' };
+                });
+
+                // Hydrate message sender data
+                const messages = (chatData.messages || []).map(msg => ({
+                    ...msg,
+                    timestamp: msg.timestamp?.toDate().toLocaleString() || 'Just now',
+                }));
+
+                return {
+                    id: doc.id,
+                    ...chatData,
+                    participants,
+                    messages,
+                };
+            });
+            setChats(chatsList);
+            console.log("Real-time chat update received from Firestore.");
+        });
+
+        return () => unsubscribe();
+    }, [currentUser, users]);
 
     useEffect(() => {
         const handleOnline = () => setIsOnline(true);
@@ -422,67 +414,93 @@ const App = () => {
                 following: u.following.filter(id => id !== userId),
             })));
     };
-    const addMessage = (chatId, message, plaintextForNotification) => {
-        const chat = chats.find(c => c.id === chatId);
+    const addMessage = async (chatId, message, plaintextForNotification) => {
+        const chat = chats.find(c => c.id === chatId); // Find chat from local state
         if (!chat || !currentUser)
             return;
-        setChats(prevChats => prevChats.map(c => {
-            if (c.id === chatId) {
-                const newUnreadCounts = { ...c.unreadCounts };
-                // For groups, increment for all OTHER participants
-                c.participants.forEach(p => {
-                    if (p.id !== currentUser.id) {
-                        newUnreadCounts[p.id] = (newUnreadCounts[p.id] || 0) + 1;
-                    }
-                });
-                return { ...c, messages: [...c.messages, message], unreadCounts: newUnreadCounts };
-            }
-            return c;
-        }));
-        // Notify all OTHER participants
-        chat.participants.forEach(p => {
-            if (p.id !== currentUser.id) {
-                const messageText = plaintextForNotification ?? (message.content?.text);
-                addNotification(p.id, 'message', currentUser, undefined, messageText);
-            }
-        });
+
+        const messageWithTimestamp = {
+            ...message,
+            timestamp: serverTimestamp()
+        };
+
+        try {
+            const chatRef = doc(db, "chats", chatId);
+            await updateDoc(chatRef, {
+                messages: arrayUnion(messageWithTimestamp)
+                // Note: Handling unread counts server-side with cloud functions is more robust,
+                // but for now, we'll rely on the client to update its own state.
+            });
+
+            // The onSnapshot listener will handle the UI update for the sender.
+            // We can still send notifications to other participants.
+            chat.participants.forEach(p => {
+                if (p.id !== currentUser.id) {
+                    const messageText = plaintextForNotification ?? (message.content?.text);
+                    addNotification(p.id, 'message', currentUser, undefined, messageText);
+                }
+            });
+        } catch (error) {
+            console.error("Error sending message: ", error);
+            alert("Failed to send message. Please try again.");
+        }
     };
-    const handleStartChat = (participant) => {
+    const handleStartChat = async (participant) => {
         if (!currentUser || currentUser.id === participant.id)
             return;
+
+        // Check if a private chat already exists
         const existingChat = chats.find(c => c.type === 'private' &&
             c.participants.length === 2 &&
             c.participants.some(p => p.id === currentUser.id) &&
             c.participants.some(p => p.id === participant.id));
-        if (!existingChat) {
-            const newChat = {
-                id: Date.now(),
+
+        if (existingChat) {
+            // If chat exists, just switch to it
+            _setActiveChat(existingChat);
+            return;
+        }
+
+        // If not, create a new chat document in Firestore
+        try {
+            const newChatData = {
                 type: 'private',
-                participants: [currentUser, participant],
+                participantIds: [currentUser.id, participant.id],
                 messages: [],
-                unreadCounts: { [currentUser.id]: 0, [participant.id]: 0 }
+                unreadCounts: { [currentUser.id]: 0, [participant.id]: 0 },
+                createdAt: serverTimestamp(),
             };
-            setChats(prevChats => [...prevChats, newChat]);
+            const chatDocRef = await addDoc(collection(db, "chats"), newChatData);
+            // The onSnapshot listener will add the new chat to the state.
+            console.log("Created new private chat with ID:", chatDocRef.id);
+        } catch (error) {
+            console.error("Error starting chat:", error);
+            alert("Could not start a new chat. Please try again.");
         }
     };
     const handleCreateGroup = async (name, members) => {
         if (!currentUser || !name.trim() || members.length === 0)
             return;
-        await simulateNetwork();
-        const allParticipants = [currentUser, ...members.filter(m => m.id !== currentUser.id)];
-        const newGroupChat = {
-            id: Date.now(),
-            name,
-            type: 'group',
-            participants: allParticipants,
-            messages: [],
-            unreadCounts: allParticipants.reduce((acc, user) => {
-                acc[user.id] = 0;
-                return acc;
-            }, {}),
-            adminId: currentUser.id,
-        };
-        setChats(prev => [newGroupChat, ...prev]);
+        
+        const allParticipantIds = [currentUser.id, ...members.map(m => m.id)];
+        const uniqueParticipantIds = [...new Set(allParticipantIds)];
+
+        try {
+            const newGroupData = {
+                name,
+                type: 'group',
+                participantIds: uniqueParticipantIds,
+                messages: [],
+                unreadCounts: uniqueParticipantIds.reduce((acc, id) => ({ ...acc, [id]: 0 }), {}),
+                adminId: currentUser.id,
+                createdAt: serverTimestamp(),
+            };
+            await addDoc(collection(db, "chats"), newGroupData);
+            // onSnapshot will handle UI update
+        } catch (error) {
+            console.error("Error creating group:", error);
+            alert("Failed to create group. Please try again.");
+        }
     };
     const handleCreateRoom = async (name, privacy, password) => {
         if (!currentUser || !name.trim())
