@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import AuthScreen from './components/LoginScreen';
 import MainUI from './components/MainUI';
+import ProfileSelectionScreen from './components/ProfileSelectionScreen';
+import WelcomeScreen from './components/WelcomeScreen';
 import FloatingChatbot from './components/FloatingChatbot'; 
 import { auth, db } from './services/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where, runTransaction } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where, runTransaction, deleteDoc } from 'firebase/firestore';
  
 import * as cryptoService from './services/cryptoService';
 const App = () => {
@@ -15,6 +17,9 @@ const App = () => {
     const [chats, setChats] = useState([]);
     const [notifications, setNotifications] = useState([]); // TODO: Migrate to Firestore
     const [viewingProfile, setViewingProfile] = useState(null);
+    const [authStep, setAuthStep] = useState('welcome'); // 'welcome', 'auth'
+    const [initialAuthView, setInitialAuthView] = useState('login');
+    const [authFlow, setAuthFlow] = useState(null); // Can be 'admin' or 'participant'
     const [_activeChat, _setActiveChat] = useState(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [theme, setTheme] = useState(() => {
@@ -165,6 +170,7 @@ const App = () => {
             } else {
                 // User is signed out
                 setCurrentUser(null);
+                setAuthStep('welcome'); // Reset to welcome screen on logout
             }
         });
 
@@ -193,20 +199,26 @@ const App = () => {
         await handleUpdateUser(updatedUser);
         return updatedUser;
     };
-    const addNotification = (recipientId, type, triggeringUser, post, messageContent) => {
+    const addNotification = async (recipientId, type, triggeringUser, post, messageContent) => {
         if (recipientId === triggeringUser.id)
             return;
+
+        // Prepare data for Firestore. Store IDs instead of large objects.
         const newNotification = {
-            id: Date.now(),
             recipientId,
             type,
-            triggeringUser,
-            post,
+            triggeringUserId: triggeringUser.id,
+            postId: post ? post.id : null,
             messageContent,
             read: false,
-            timestamp: 'Just now',
+            timestamp: serverTimestamp(),
         };
-        setNotifications(prev => [newNotification, ...prev]);
+
+        try {
+            await addDoc(collection(db, "notifications"), newNotification);
+        } catch (error) {
+            console.error("Error creating notification:", error);
+        }
     };
     const markNotificationsAsRead = () => {
         if (!currentUser)
@@ -245,6 +257,7 @@ const App = () => {
                 status: 'active',
                 followers: [],
                 following: [],
+                emailNotifications: true, // Default setting for new users
             };
 
             // 3. Generate and add E2EE keys
@@ -267,7 +280,23 @@ const App = () => {
     };
     const handleLogout = async () => { 
         await signOut(auth);
-        // The onAuthStateChanged listener will handle the rest
+        setViewingProfile(null);
+        setAuthFlow(null);
+        // The onAuthStateChanged listener will also set authStep
+    };
+    const handleGoToLogin = () => {
+        setInitialAuthView('login');
+        setAuthStep('auth');
+    };
+    const handleGoToSignup = () => {
+        setInitialAuthView('signup');
+        setAuthStep('auth');
+    };
+    const handleBackToWelcome = () => {
+        setAuthStep('welcome');
+    };
+    const handleSetAuthFlow = (flow) => {
+        setAuthFlow(flow);
     };
     const handleViewProfile = (user) => {
         setViewingProfile(user);
@@ -327,8 +356,16 @@ const App = () => {
         setResources(prev => prev.filter(r => r.id !== resourceId));
     };
     const deletePost = async (postId) => {
-        await simulateNetwork();
-        setPosts(posts.filter(p => p.id !== postId));
+        // Authorization is handled by Firestore Security Rules.
+        // The UI already hides the button for users without permission.
+        try {
+            const postRef = doc(db, "posts", postId);
+            await deleteDoc(postRef);
+            // The onSnapshot listener will automatically update the UI.
+        } catch (error) {
+            console.error("Error deleting post:", error);
+            alert("Failed to delete post. Please try again.");
+        }
     };
     const deleteUser = async (userId) => {
         if (!currentUser || currentUser.role !== 'admin' || currentUser.id === userId) {
@@ -701,7 +738,10 @@ const App = () => {
         return <div className="w-screen h-screen flex items-center justify-center bg-light dark:bg-dark text-dark dark:text-light">Loading...</div>;
     }
     if (!currentUser) { // Now, if user is null, show auth flow
-        return <AuthScreen onLogin={handleLogin} onSignup={handleSignup} />;
+        if (authStep === 'welcome') {
+            return <WelcomeScreen onLoginClick={handleGoToLogin} onSignupClick={handleGoToSignup} onSetAuthFlow={handleSetAuthFlow} />;
+        }
+        return <AuthScreen initialView={initialAuthView} onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow} />;
     }
     return (<>
         <MainUI activeChat={_activeChat} onSetActiveChat={_setActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} />
