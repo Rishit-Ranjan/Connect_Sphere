@@ -1,65 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import AuthScreen from './components/LoginScreen';
 import MainUI from './components/MainUI';
-import ProfileSelectionScreen from './components/ProfileSelectionScreen';
-import WelcomeScreen from './components/WelcomeScreen';
 import FloatingChatbot from './components/FloatingChatbot'; 
 import { auth, db } from './services/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where, runTransaction } from 'firebase/firestore';
  
 import * as cryptoService from './services/cryptoService';
-// --- MOCK DATA ---
-const adminUser = {
-    id: 1,
-    name: 'Admin User',
-    email: 'admin@connectsphere.com',
-    password: 'adminpassword',
-    gender: 'prefer_not_to_say',
-    avatar: 'https://picsum.photos/seed/admin/100',
-    role: 'admin',
-    status: 'active',
-    followers: [2, 3],
-    following: [2, 3]
-};
-const participantUser = {
-    id: 2,
-    name: 'Participant User',
-    email: 'user@connectsphere.com',
-    password: 'userpassword',
-    gender: 'female',
-    avatar: 'https://picsum.photos/seed/participant/100',
-    role: 'participant',
-    status: 'active',
-    followers: [1],
-    following: [1, 3]
-};
-const thirdUser = {
-    id: 3,
-    name: 'Alex Doe',
-    email: 'alex@connectsphere.com',
-    password: 'alexpassword',
-    gender: 'other',
-    avatar: 'https://picsum.photos/seed/alex/100',
-    role: 'participant',
-    status: 'active',
-    followers: [1, 2],
-    following: [1, 2],
-};
-const initialUsers = [adminUser, participantUser, thirdUser];
-// --- END MOCK DATA ---
 const App = () => {
     const [currentUser, setCurrentUser] = useState(undefined); // Use undefined to represent loading state
     const [users, setUsers] = useState([]);
     const [posts, setPosts] = useState([]);
     const [resources, setResources] = useState([]); // For the Resource Hub
     const [chats, setChats] = useState([]);
-    const [notifications, setNotifications] = useState([]);
+    const [notifications, setNotifications] = useState([]); // TODO: Migrate to Firestore
     const [viewingProfile, setViewingProfile] = useState(null);
-    const [_activeChat, _setActiveChat] = useState(null); // State lifted from MainUI
-    const [authStep, setAuthStep] = useState('select_profile');
-    const [initialAuthView, setInitialAuthView] = useState('login');
-    const [authFlow, setAuthFlow] = useState(null);
+    const [_activeChat, _setActiveChat] = useState(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [theme, setTheme] = useState(() => {
         const storedTheme = localStorage.getItem('theme');
@@ -209,7 +165,6 @@ const App = () => {
             } else {
                 // User is signed out
                 setCurrentUser(null);
-                setAuthStep('select_profile');
             }
         });
 
@@ -312,27 +267,7 @@ const App = () => {
     };
     const handleLogout = async () => { 
         await signOut(auth);
-        setViewingProfile(null);
-        setAuthFlow(null);
-    };
-    const handleRoleSelect = (role) => {
-        setAuthFlow(role);
-        setAuthStep('welcome');
-    };
-    const handleGoToLogin = () => {
-        setInitialAuthView('login');
-        setAuthStep('auth');
-    };
-    const handleGoToSignup = () => {
-        setInitialAuthView('signup');
-        setAuthStep('auth');
-    };
-    const handleBackToProfileSelect = () => {
-        setAuthStep('select_profile');
-        setAuthFlow(null);
-    };
-    const handleBackToWelcome = () => {
-        setAuthStep('welcome');
+        // The onAuthStateChanged listener will handle the rest
     };
     const handleViewProfile = (user) => {
         setViewingProfile(user);
@@ -637,32 +572,38 @@ const App = () => {
             return;
         if (currentUser.id === targetUserId)
             return;
-        await simulateNetwork();
-        let updatedUsers = users.map(u => ({
-            ...u, 
-            followers: [...u.followers],
-            following: [...u.following],
-        }));
-        let updatedCurrentUser = updatedUsers.find(u => u.id === currentUser.id);
-        let targetUser = updatedUsers.find(u => u.id === targetUserId);
-        const isFollowing = updatedCurrentUser.following.includes(targetUserId);
-        if (isFollowing) {
-            updatedCurrentUser.following = updatedCurrentUser.following.filter(id => id !== targetUserId);
-            targetUser.followers = targetUser.followers.filter(id => id !== currentUser.id);
-        }
-        else {
-            updatedCurrentUser.following.push(targetUserId);
-            targetUser.followers.push(currentUser.id);
-        }
-        setUsers(updatedUsers);
-        setCurrentUser(updatedCurrentUser);
-        if (viewingProfile) {
-            if (viewingProfile.id === updatedCurrentUser.id) {
-                setViewingProfile(updatedCurrentUser);
-            }
-            else if (viewingProfile.id === targetUser.id) {
-                setViewingProfile(targetUser);
-            }
+
+        const currentUserRef = doc(db, "users", currentUser.id);
+        const targetUserRef = doc(db, "users", targetUserId);
+
+        try {
+            await runTransaction(db, async (transaction) => {
+                const currentUserDoc = await transaction.get(currentUserRef);
+                const targetUserDoc = await transaction.get(targetUserRef);
+
+                if (!currentUserDoc.exists() || !targetUserDoc.exists()) {
+                    throw "One or both users not found.";
+                }
+
+                const isFollowing = currentUserDoc.data().following.includes(targetUserId);
+
+                if (isFollowing) {
+                    // Unfollow
+                    transaction.update(currentUserRef, { following: arrayRemove(targetUserId) });
+                    transaction.update(targetUserRef, { followers: arrayRemove(currentUser.id) });
+                } else {
+                    // Follow
+                    transaction.update(currentUserRef, { following: arrayUnion(targetUserId) });
+                    transaction.update(targetUserRef, { followers: arrayUnion(currentUser.id) });
+                }
+            });
+            // The onSnapshot listener for users will update the UI automatically.
+            // To make it feel instant, we can optimistically update the local state.
+            // This part is complex and can be added later for UX improvement.
+            console.log("Follow/unfollow transaction successful.");
+        } catch (e) {
+            console.error("Follow/unfollow transaction failed: ", e);
+            alert("Could not update follow status. Please try again.");
         }
     };
     const handleToggleLike = async (postId) => {
@@ -760,13 +701,7 @@ const App = () => {
         return <div className="w-screen h-screen flex items-center justify-center bg-light dark:bg-dark text-dark dark:text-light">Loading...</div>;
     }
     if (!currentUser) { // Now, if user is null, show auth flow
-        if (authStep === 'select_profile') {
-            return <ProfileSelectionScreen adminUser={adminUser} onSelectRole={handleRoleSelect} />;
-        }
-        if (authStep === 'welcome') {
-            return <WelcomeScreen onLoginClick={handleGoToLogin} onSignupClick={handleGoToSignup} onBack={handleBackToProfileSelect} authFlow={authFlow} />;
-        }
-        return <AuthScreen initialView={initialAuthView} onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow} />;
+        return <AuthScreen onLogin={handleLogin} onSignup={handleSignup} />;
     }
     return (<>
         <MainUI activeChat={_activeChat} onSetActiveChat={_setActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} />
