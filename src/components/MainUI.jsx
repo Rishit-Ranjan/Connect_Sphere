@@ -72,6 +72,12 @@ const MainUI = ({
     const chatFileInputRef = useRef(null);
     const userNotifications = notifications.filter(n => n.recipientId === currentUser.id);
     const unreadCount = userNotifications.filter(n => !n.read).length;
+    
+    // State for chat-specific UI elements, moved to top level to follow Rules of Hooks
+    const [isChatMenuOpen, setIsChatMenuOpen] = useState(false);
+    const chatMenuRef = useRef(null);
+    const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
+    const attachmentMenuRef = useRef(null);
     const sortedChats = [...chats].filter(c => c.participants.some(p => p.id === currentUser.id)).sort((a, b) => (b.messages[b.messages.length - 1]?.id ?? 0) - (a.messages[a.messages.length - 1]?.id ?? 0));
     const joinableRooms = chats.filter(c => c.type === 'room' && c.roomPrivacy === 'password_protected' && !c.participants.some(p => p.id === currentUser.id));
     const handleChatImageSelect = (e) => {
@@ -151,7 +157,20 @@ const MainUI = ({
         if (chat.unreadCounts[currentUser.id] > 0) {
             onMarkChatAsRead(chat.id);
         }
+        // Close menus when switching chats
+        setIsChatMenuOpen(false);
+        setIsAttachmentMenuOpen(false);
     };
+
+    // Click outside handler for chat menus
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (chatMenuRef.current && !chatMenuRef.current.contains(event.target)) setIsChatMenuOpen(false);
+            if (attachmentMenuRef.current && !attachmentMenuRef.current.contains(event.target)) setIsAttachmentMenuOpen(false);
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    })
     // When chats array changes, if the active chat is deleted, close it.
     useEffect(() => {
         if (activeChat) {
@@ -206,13 +225,9 @@ const MainUI = ({
             const isGroupAdmin = isGroup && activeChat.adminId === currentUser.id;
             const isRoomAdmin = isRoom && activeChat.adminId === currentUser.id;
             const sharedSecret = sharedSecrets.get(activeChat.id);
-            const canSendMessage = isRoom
-                ? activeChat.messagingPermission === 'all' || isRoomAdmin
-                : true;
-            const canShareMedia = isRoom
-                ? activeChat.mediaSharePermission === 'all' || isRoomAdmin
-                : true;
-            return (<div className="h-full flex flex-col bg-white dark:bg-secondary rounded-lg shadow-md">
+            const canSendMessage = isRoom ? activeChat.messagingPermission === 'all' || isRoomAdmin : true;
+            const canShareMedia = isRoom ? activeChat.mediaSharePermission === 'all' || isRoomAdmin : true;
+            return (<div className="h-full flex flex-col bg-white dark:bg-secondary rounded-xl shadow-lg">
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                         {isGroup ? <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center"><UsersIcon className="h-6 w-6 text-primary" /></div> : isRoom ? <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center"><HashtagIcon className="h-6 w-6 text-green-500" /></div> : <UserAvatar user={chatAvatar} />}
@@ -221,22 +236,32 @@ const MainUI = ({
                             {isGroup || isRoom ? <p className="text-xs text-gray-400">{activeChat.participants.length} members</p> : <p className="text-xs text-green-500">Online</p>}
                         </div>
                     </div>
-                    <div className="flex items-center space-x-1">
-                        {isGroupAdmin && (
-                            <button
-                                onClick={() => { if (window.confirm(`Are you sure you want to delete the group "${activeChat.name}"? This cannot be undone.`)) onDeleteGroup(activeChat.id); }}
-                                className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition"
-                                title="Delete Group"
-                            >
-                                <TrashIcon className="h-5 w-5" />
-                            </button>
-                        )}
-                        {isRoomAdmin && (
-                            <button onClick={() => setIsManageRoomModalOpen(activeChat)} className="p-2 text-gray-400 hover:text-primary rounded-full hover:bg-primary/10 transition" title="Manage Room">
+                    {(isGroupAdmin || isRoomAdmin) && (
+                        <div ref={chatMenuRef} className="relative">
+                            <button onClick={() => setIsChatMenuOpen(p => !p)} className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
                                 <Cog6ToothIcon className="h-6 w-6" />
                             </button>
-                        )}
-                    </div>
+                            {isChatMenuOpen && (
+                                <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 z-10 p-2">
+                                    {isRoomAdmin && (
+                                        <button onClick={() => { setIsManageRoomModalOpen(activeChat); setIsChatMenuOpen(false); }} className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">
+                                            <Cog6ToothIcon className="h-5 w-5" />
+                                            <span>Manage Room</span>
+                                        </button>
+                                    )}
+                                    {isGroupAdmin && (
+                                        <button
+                                            onClick={() => { if (window.confirm(`Are you sure you want to delete the group "${activeChat.name}"? This cannot be undone.`)) { onDeleteGroup(activeChat.id); } setIsChatMenuOpen(false); }}
+                                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                                        >
+                                            <TrashIcon className="h-5 w-5" />
+                                            <span>Delete Group</span>
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
                 <div className="flex-1 p-4 overflow-y-auto space-y-4">
                     {activeChat.type === 'private' && !sharedSecret && <div className="text-center text-xs text-gray-400 italic">Establishing secure connection...</div>}
@@ -258,19 +283,33 @@ const MainUI = ({
                             </button>
                         </div>)}
 
-                        <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="relative flex items-center bg-gray-100 dark:bg-gray-700 rounded-full">
-                            <button type="button" onClick={() => chatImageInputRef.current?.click()} className="p-3 text-gray-500 hover:text-primary transition rounded-full disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Attach image" disabled={!canShareMedia}>
-                                <PhotoIcon className="h-6 w-6" />
-                            </button>
+                        <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="relative flex items-center">
+                            <div ref={attachmentMenuRef} className="relative">
+                                <button type="button" onClick={() => setIsAttachmentMenuOpen(p => !p)} className="p-3 text-gray-500 hover:text-primary transition rounded-full disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Attach file" disabled={!canShareMedia}>
+                                    <PlusIcon className="h-6 w-6" />
+                                </button>
+                                {isAttachmentMenuOpen && (
+                                    <div className="absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 z-10 p-2">
+                                        <button type="button" onClick={() => { chatImageInputRef.current?.click(); setIsAttachmentMenuOpen(false); }} className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">
+                                            <PhotoIcon className="h-5 w-5" />
+                                            <span>Image</span>
+                                        </button>
+                                        <button type="button" onClick={() => { chatFileInputRef.current?.click(); setIsAttachmentMenuOpen(false); }} className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">
+                                            <PaperclipIcon className="h-5 w-5" />
+                                            <span>File</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
                             <input type="file" accept="image/*" ref={chatImageInputRef} onChange={handleChatImageSelect} className="hidden" disabled={!canShareMedia} />
                             <input type="file" ref={chatFileInputRef} onChange={handleChatFileSelect} className="hidden" disabled={!canShareMedia} />
-                            <button type="button" onClick={() => chatFileInputRef.current?.click()} className="p-3 text-gray-500 hover:text-primary transition rounded-full disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Attach file" disabled={!canShareMedia}>
-                                <PaperclipIcon className="h-6 w-6" />
-                            </button>
-                            <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} className="flex-1 bg-transparent pr-12 pl-1 py-3 focus:outline-none text-gray-800 dark:text-gray-200 disabled:placeholder:text-gray-400" placeholder={!canSendMessage ? 'Only admins can send messages' : (isGroup || isRoom ? `Message #${chatName}` : `Type an encrypted message...`)} disabled={isSending || (activeChat.type === 'private' && !sharedSecret) || !canSendMessage} />
-                            <button type="submit" disabled={isSending || (activeChat.type === 'private' && !sharedSecret) || (!message.trim() && !attachedImage && !attachedFile)} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-primary text-white hover:bg-indigo-700 disabled:opacity-50 transition" aria-label="Send message">
-                                <SendIcon className="h-6 w-6" />
-                            </button>
+                            <div className="relative flex-1">
+                                <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-700 rounded-full py-3 pl-4 pr-12 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300 disabled:placeholder:text-gray-400" placeholder={!canSendMessage ? 'Only admins can send messages' : (isGroup || isRoom ? `Message #${chatName}` : `Type an encrypted message...`)} disabled={isSending || (activeChat.type === 'private' && !sharedSecret) || !canSendMessage} />
+                                <button type="submit" disabled={isSending || (activeChat.type === 'private' && !sharedSecret) || (!message.trim() && !attachedImage && !attachedFile)} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-primary text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" aria-label="Send message">
+                                    <SendIcon className="h-5 w-5" />
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -364,7 +403,7 @@ const MainUI = ({
         {isJoinRoomModalOpen && (<JoinRoomModal roomName={isJoinRoomModalOpen.name || 'this room'} onClose={() => setIsJoinRoomModalOpen(null)} onJoin={async (password) => {
             const success = await onJoinRoom(isJoinRoomModalOpen.id, password);
             if (success) {
-                handleSelectChat(isJoinRoomModalOpen);
+                handleSelectChat(chats.find(c => c.id === isJoinRoomModalOpen.id)); // Use updated chat object
                 setIsJoinRoomModalOpen(null);
                 return true;
             }
@@ -375,14 +414,14 @@ const MainUI = ({
         }} />)}
         {isManageRoomModalOpen && (<ManageRoomModal room={isManageRoomModalOpen} allUsers={users} currentUser={currentUser} onClose={() => setIsManageRoomModalOpen(null)} onSaveMembers={onManageRoomMembers} onSaveSettings={onUpdateRoomSettings} onDeleteRoom={onDeleteRoom} />)}
         {isSettingsModalOpen && (<SettingsModal currentUser={currentUser} onUpdateUser={onUpdateUser} onClose={() => setIsSettingsModalOpen(false)} />)}
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-dark text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
-            <div className="container mx-auto grid grid-cols-12 gap-6 p-2 md:p-4">
+        <div className="min-h-screen bg-light dark:bg-dark text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
+            <div className="container mx-auto grid grid-cols-12 gap-4 md:gap-6 p-2 md:p-4">
                 {/* Left Sidebar */}
-                <aside className="col-span-2 lg:col-span-2 hidden sm:block">
+                <aside className="col-span-2 lg:col-span-2 hidden sm:block z-20">
                     <div className="sticky top-4 flex flex-col h-[calc(100vh-2rem)]">
                         <div className="flex justify-center lg:justify-start items-center p-2 space-x-2">
                             <LogoIcon className="h-8 w-8 text-primary" />
-                            <span className="text-2xl font-bold hidden lg:inline">Connect</span>
+                            <span className="text-2xl font-bold hidden lg:inline text-gray-800 dark:text-white">Connect</span>
                         </div>
                         <nav className="space-y-2 mt-4">
                             <NavItem icon={<HomeIcon className="h-6 w-6" />} label="Home" isActive={activeView === 'feed' && !viewingProfile} onClick={() => { setActiveView('feed'); onBackToFeed(); }} />
@@ -464,7 +503,7 @@ const MainUI = ({
                 </aside>
 
                 {/* Main Content */}
-                <main className="col-span-12 sm:col-span-10 lg:col-span-7 h-[calc(100vh-2rem)] overflow-y-auto pr-2">
+                <main className="col-span-12 sm:col-span-10 lg:col-span-7 h-[calc(100vh-5rem)] sm:h-[calc(100vh-2rem)] overflow-y-auto pr-2">
                     {viewingProfile ? (<ProfilePage profileUser={viewingProfile} currentUser={currentUser} allPosts={posts} onBack={onBackToFeed} onDeletePost={onDeletePost} onViewProfile={onViewProfile} onToggleFollow={onToggleFollow} onToggleLike={onToggleLike} onAddComment={onAddComment} onStartChat={(user) => {
                         const chat = chats.find(c => c.type === 'private' && c.participants.some(p => p.id === user.id));
                         if (chat)
@@ -477,7 +516,7 @@ const MainUI = ({
                 {/* Right Sidebar */}
                 <aside className="col-span-3 hidden lg:block">
                     <div className="sticky top-4 space-y-6">
-                        <div className="bg-white/80 dark:bg-secondary/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-5">
+                        <div className="bg-white/60 dark:bg-secondary/60 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-5">
                             <h3 className="font-bold text-lg mb-4 text-gray-800 dark:text-white">
                                 {isSearching ? 'Search Results' : (currentUser.role === 'admin' ? 'Manage Users' : 'Discover People')}
                             </h3>
@@ -519,7 +558,7 @@ const MainUI = ({
                                 </p>)}
                             </div>
                         </div>
-                        <div className="bg-white/80 dark:bg-secondary/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-5">
+                        <div className="bg-white/60 dark:bg-secondary/60 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-5">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="font-bold text-lg text-gray-800 dark:text-white">Messages</h3>
                                 <div className="flex items-center space-x-1">
@@ -555,7 +594,7 @@ const MainUI = ({
                             </div>
                         </div>
                         {joinableRooms.length > 0 && (
-                            <div className="bg-white/80 dark:bg-secondary/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-5">
+                            <div className="bg-white/60 dark:bg-secondary/60 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-5">
                                 <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-4">Discover Rooms</h3>
                                 <div className="space-y-2">
                                     {joinableRooms.map(room => (<div key={room.id} className="flex items-center justify-between">
@@ -573,11 +612,11 @@ const MainUI = ({
                 </aside>
 
                 {/* Mobile Bottom Nav */}
-                <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-secondary border-t border-gray-200 dark:border-gray-700 flex justify-around p-2">
-                    <button onClick={() => { setActiveView('feed'); onBackToFeed(); }} className={`p-2 rounded-full ${activeView === 'feed' && !viewingProfile ? 'text-primary bg-primary/10' : 'text-gray-500'}`}><HomeIcon className="h-7 w-7" /></button>
-                    <button onClick={() => { setActiveView('chat'); onBackToFeed(); }} className={`p-2 rounded-full ${activeView === 'chat' ? 'text-primary bg-primary/10' : 'text-gray-500'}`}><MessageIcon className="h-7 w-7" /></button>
-                    <button onClick={() => { onViewProfile(currentUser); }} className="p-2 rounded-full text-gray-500"><UserIcon className="h-7 w-7" /></button>
-                    <button onClick={onLogout} className="p-2 rounded-full text-gray-500"><LogoutIcon className="h-7 w-7" /></button>
+                <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-secondary/80 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 flex justify-around p-1 z-50">
+                    <button onClick={() => { setActiveView('feed'); onBackToFeed(); }} className={`p-3 rounded-2xl transition-colors ${activeView === 'feed' && !viewingProfile ? 'text-primary bg-primary/10' : 'text-gray-500'}`}><HomeIcon className="h-7 w-7" /></button>
+                    <button onClick={() => { setActiveView('chat'); onBackToFeed(); }} className={`p-3 rounded-2xl transition-colors ${activeView === 'chat' ? 'text-primary bg-primary/10' : 'text-gray-500'}`}><MessageIcon className="h-7 w-7" /></button>
+                    <button onClick={() => { onViewProfile(currentUser); }} className="p-3 rounded-2xl text-gray-500"><UserIcon className="h-7 w-7" /></button>
+                    <button onClick={onLogout} className="p-3 rounded-2xl text-gray-500"><LogoutIcon className="h-7 w-7" /></button>
                 </nav>
             </div>
         </div>

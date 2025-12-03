@@ -42,11 +42,11 @@ const AuthScreen = ({ initialView, onLogin, onSignup, onBack, allowSignupToggle 
     setView('signup');
     setError('');
   };
-  const commonInputClasses = "block w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-2 border-transparent focus:border-primary rounded-lg shadow-sm focus:outline-none focus:ring-0 transition disabled:opacity-50";
+  const commonInputClasses = "block w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-2 border-transparent focus:border-primary rounded-lg shadow-sm focus:outline-none focus:ring-0 transition-all duration-300 disabled:opacity-50";
   return (<div className="min-h-screen bg-light dark:bg-dark flex flex-col items-center justify-center p-4 font-sans transition-colors duration-300">
     <div className="w-full max-w-md mx-auto relative">
-      <button onClick={onBack} className="absolute top-4 left-4 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition z-10 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Go back to welcome screen">
-        <ArrowLeftIcon className="w-6 h-6" />
+      <button onClick={onBack} className="absolute top-4 left-4 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-all duration-300 z-10 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label="Go back to welcome screen">
+        <ArrowLeftIcon className="w-6 h-6"/>
       </button>
       <div className="bg-white dark:bg-secondary shadow-2xl rounded-2xl p-8 space-y-6 overflow-hidden">
         <div className="w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-xl mb-4 overflow-hidden relative group">
@@ -54,7 +54,7 @@ const AuthScreen = ({ initialView, onLogin, onSignup, onBack, allowSignupToggle 
             src="https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&w=800&q=80"
             alt="Security"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
+          /> 
           <div className="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent mix-blend-overlay" />
         </div>
         <div className="flex flex-col items-center space-y-2">
@@ -82,16 +82,16 @@ const AuthScreen = ({ initialView, onLogin, onSignup, onBack, allowSignupToggle 
             <p><strong>Password:</strong> {demoCredentials.pass}</p>
           </div>)}
 
-          <button type="submit" disabled={isLoading} className="w-full py-3 px-4 font-semibold text-white bg-primary rounded-full hover:bg-indigo-700 transition-transform transform hover:scale-105 flex justify-center items-center disabled:opacity-75 disabled:cursor-not-allowed">
+          <button type="submit" disabled={isLoading} className="w-full py-3 px-4 font-semibold text-white bg-primary rounded-full hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 flex justify-center items-center disabled:opacity-75 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary">
             {isLoading ? <SpinnerIcon className="animate-spin h-5 w-5 text-white" /> : 'Log In'}
           </button>
           <div className="space-y-3 text-center text-sm">
-            <button type="button" onClick={() => alert('Password reset functionality is not yet implemented.')} className="font-semibold text-primary hover:underline">
+            <button type="button" onClick={() => alert('Password reset functionality is not yet implemented.')} className="font-semibold text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">
               Forgot Password?
             </button>
             {allowSignupToggle && (<p className="text-gray-500 dark:text-gray-400">
               Don't have an account?{' '}
-              <button type="button" onClick={handleSwitchToSignup} className="font-semibold text-primary hover:underline">
+              <button type="button" onClick={handleSwitchToSignup} className="font-semibold text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">
                 Sign Up
               </button>
             </p>)}
