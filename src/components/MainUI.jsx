@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { HomeIcon, MessageIcon, LogoutIcon, SendIcon, PhotoIcon, TrashIcon, LogoIcon, EditIcon, BanIcon, UserCheckIcon, SunIcon, MoonIcon, BellIcon, PaperclipIcon, UserIcon, SearchIcon, UsersIcon, PlusIcon, XIcon, HashtagIcon, LockClosedIcon, Cog6ToothIcon } from './Icons';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { HomeIcon, MessageIcon, LogoutIcon, SendIcon, PhotoIcon, TrashIcon, LogoIcon, EditIcon, BanIcon, UserCheckIcon, SunIcon, MoonIcon, BellIcon, PaperclipIcon, UserIcon, SearchIcon, UsersIcon, PlusIcon, XIcon, HashtagIcon, LockClosedIcon, Cog6ToothIcon, MegaphoneIcon, FolderIcon, FileTextIcon, UploadCloudIcon, CommentIcon } from './Icons';
 import * as cryptoService from '../services/cryptoService';
 // AI feature removed
 // import { generateReplySuggestions } from '../services/geminiService';
@@ -22,12 +22,14 @@ const MainUI = ({
     currentUser,
     users,
     posts,
+    resources, // New prop
     chats,
     notifications,
     viewingProfile,
     theme,
     onLogout,
     onAddPost,
+    onDeleteResource, // New prop
     onDeletePost,
     onDeleteUser,
     onAddMessage,
@@ -50,13 +52,14 @@ const MainUI = ({
     onMarkNotificationsAsRead,
     onMarkChatAsRead
 }) => {
-    const [activeView, setActiveView] = useState('feed');
+    const [activeView, setActiveView] = useState('feed'); // 'feed', 'chat', 'notices', 'resources'
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
     const [isCreateRoomModalOpen, setIsCreateRoomModalOpen] = useState(false);
     const [isJoinRoomModalOpen, setIsJoinRoomModalOpen] = useState(null);
     const [isManageRoomModalOpen, setIsManageRoomModalOpen] = useState(null);
+    const [viewingPost, setViewingPost] = useState(null); // For post detail modal
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [userSearchQuery, setUserSearchQuery] = useState('');
     const [message, setMessage] = useState('');
@@ -71,6 +74,16 @@ const MainUI = ({
     const chatFileInputRef = useRef(null);
     const userNotifications = notifications.filter(n => n.recipientId === currentUser.id);
     const unreadCount = userNotifications.filter(n => !n.read).length;
+
+    const { announcements, regularPosts } = useMemo(() => {
+        const announcements = posts.filter(p => p.isAnnouncement).sort((a, b) => b.id - a.id);
+        const regularPosts = posts.filter(p => !p.isAnnouncement).sort((a, b) => b.id - a.id);
+        return { announcements, regularPosts };
+    }, [posts]);
+
+    const sortedResources = useMemo(() => {
+        return [...resources].sort((a, b) => b.id - a.id);
+    }, [resources]);
 
     // State for chat-specific UI elements, moved to top level to follow Rules of Hooks
     const [isChatMenuOpen, setIsChatMenuOpen] = useState(false);
@@ -201,10 +214,44 @@ const MainUI = ({
     }, []);
     const mainContent = () => {
         if (activeView === 'feed') {
-            return (<div>
+            return (<div className="animate-fade-in">
                 <CreatePost onAddPost={onAddPost} currentUser={currentUser} />
                 <div className="space-y-4">
-                    {posts.map(post => <PostCard key={post.id} post={post} currentUser={currentUser} onDeletePost={onDeletePost} onViewProfile={onViewProfile} onToggleLike={onToggleLike} onAddComment={onAddComment} />)}
+                    {regularPosts.map(post => <PostCard key={post.id} post={post} currentUser={currentUser} onDeletePost={onDeletePost} onViewProfile={onViewProfile} onToggleLike={onToggleLike} onAddComment={onAddComment} />)}
+                </div>
+            </div>);
+        }
+        if (activeView === 'notices') {
+            return (<div className="animate-fade-in">
+                <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200 flex items-center"><MegaphoneIcon className="h-6 w-6 mr-3 text-primary" /> Notices & Announcements</h2>
+                {currentUser.role === 'admin' && <CreatePost onAddPost={onAddPost} currentUser={currentUser} />}
+                <div className="space-y-4">
+                    {announcements.length > 0 ? (
+                        announcements.map(post => <PostCard key={post.id} post={post} currentUser={currentUser} onDeletePost={onDeletePost} onViewProfile={onViewProfile} onToggleLike={onToggleLike} onAddComment={onAddComment} />)
+                    ) : (
+                        <p className="text-center text-gray-500 dark:text-gray-400 mt-8">No announcements right now.</p>
+                    )}
+                </div>
+            </div>);
+        }
+        if (activeView === 'resources') {
+            return (<div className="animate-fade-in">
+                <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200 flex items-center"><FolderIcon className="h-6 w-6 mr-3 text-primary" /> Resource Hub</h2>
+                <ResourceUploadForm onAddPost={onAddPost} />
+                <div className="space-y-4">
+                    {sortedResources.length > 0 ? (
+                        sortedResources.map(resource => (
+                            <div key={resource.id} className="bg-white dark:bg-secondary p-4 rounded-2xl shadow-sm flex justify-between items-center">
+                                <div className="flex items-center space-x-4">
+                                    <FileTextIcon className="w-8 h-8 text-primary" />
+                                    <div>
+                                        <a href={resource.fileUrl} download={resource.fileName} className="font-semibold text-primary dark:text-accent hover:underline">{resource.fileName}</a>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">Uploaded by {resource.author.name} &bull; {new Date(resource.id).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                                {currentUser.role === 'admin' && <button onClick={() => onDeleteResource(resource.id)} className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition" title={`Delete ${resource.fileName}`}><TrashIcon className="h-5 w-5" /></button>}
+                            </div>))
+                    ) : (<p className="text-center text-gray-500 dark:text-gray-400 mt-8">No resources have been uploaded yet.</p>)}
                 </div>
             </div>);
         }
@@ -373,6 +420,52 @@ const MainUI = ({
             {!notification.read && <div className="w-2.5 h-2.5 bg-primary rounded-full self-center flex-shrink-0"></div>}
         </button>);
     };
+    const ResourceUploadForm = ({ onAddPost }) => {
+        const [file, setFile] = useState(null);
+        const [isUploading, setIsUploading] = useState(false);
+        const fileInputRef = useRef(null);
+    
+        const handleFileChange = (e) => {
+            if (e.target.files && e.target.files[0]) {
+                setFile(e.target.files[0]);
+            }
+        };
+    
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            if (!file) return;
+    
+            setIsUploading(true);
+            // In a real app, you'd upload to a server and get a URL.
+            // Here, we'll simulate it with a blob URL.
+            const fileUrl = URL.createObjectURL(file);
+    
+            // The logic in App.jsx will see fileUrl is present but content is not,
+            // and will correctly categorize this as a resource.
+            await onAddPost({
+                fileUrl: fileUrl,
+                fileName: file.name,
+                content: '' 
+            });
+    
+            setIsUploading(false);
+            setFile(null);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        };
+    
+        return (
+            <div className="bg-white dark:bg-secondary p-4 rounded-2xl shadow-sm mb-6">
+                <form onSubmit={handleSubmit} className="flex items-center space-x-4">
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary dark:file:bg-primary/20 dark:file:text-accent hover:file:bg-primary/20 transition" />
+                    <button type="submit" disabled={!file || isUploading} className="bg-primary text-white px-4 py-2 rounded-full hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2 transition">
+                        <UploadCloudIcon size={18} className="h-5 w-5" /> <span>{isUploading ? 'Uploading...' : 'Upload'}</span>
+                    </button>
+                </form>
+            </div>
+        );
+    };
     const userSearchQueryTrimmed = userSearchQuery.trim().toLowerCase();
     const isSearching = userSearchQueryTrimmed !== '';
     let usersToShow;
@@ -403,6 +496,7 @@ const MainUI = ({
         {isJoinRoomModalOpen && (<JoinRoomModal roomName={isJoinRoomModalOpen.name || 'this room'} onClose={() => setIsJoinRoomModalOpen(null)} onJoin={async (password) => {
             const success = await onJoinRoom(isJoinRoomModalOpen.id, password);
             if (success) {
+                // @ts-ignore
                 handleSelectChat(chats.find(c => c.id === isJoinRoomModalOpen.id)); // Use updated chat object
                 setIsJoinRoomModalOpen(null);
                 return true;
@@ -413,6 +507,7 @@ const MainUI = ({
             }
         }} />)}
         {isManageRoomModalOpen && (<ManageRoomModal room={isManageRoomModalOpen} allUsers={users} currentUser={currentUser} onClose={() => setIsManageRoomModalOpen(null)} onSaveMembers={onManageRoomMembers} onSaveSettings={onUpdateRoomSettings} onDeleteRoom={onDeleteRoom} />)}
+        {viewingPost && <PostDetailModal post={viewingPost} currentUser={currentUser} onClose={() => setViewingPost(null)} onAddComment={onAddComment} />}
         {isSettingsModalOpen && (<SettingsModal currentUser={currentUser} onUpdateUser={onUpdateUser} onClose={() => setIsSettingsModalOpen(false)} />)}
         <div className="min-h-screen bg-light dark:bg-dark text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
             <div className="container mx-auto grid grid-cols-12 gap-4 md:gap-6 p-2 md:p-4">
@@ -427,6 +522,8 @@ const MainUI = ({
                         </div>
                         <nav className="space-y-2 mt-4">
                             <NavItem icon={<HomeIcon className="h-6 w-6" />} label="Home" isActive={activeView === 'feed' && !viewingProfile} onClick={() => { setActiveView('feed'); onBackToFeed(); }} />
+                            <NavItem icon={<MegaphoneIcon className="h-6 w-6" />} label="Notices" isActive={activeView === 'notices'} onClick={() => { setActiveView('notices'); onBackToFeed(); }} />
+                            <NavItem icon={<FolderIcon className="h-6 w-6" />} label="Resources" isActive={activeView === 'resources'} onClick={() => { setActiveView('resources'); onBackToFeed(); }} />
                             <NavItem icon={<MessageIcon className="h-6 w-6" />} label="Messages" isActive={activeView === 'chat'} onClick={() => { setActiveView('chat'); onBackToFeed(); }} badgeCount={totalUnreadMessages} />
                             <div ref={notificationsRef} className="relative">
                                 <NavItem icon={<BellIcon className="h-6 w-6" />} label="Notifications" isActive={isNotificationsOpen} onClick={() => {
@@ -554,6 +651,25 @@ const MainUI = ({
                                 </p>)}
                             </div>
                         </div>
+                        <div className="glass rounded-3xl p-5 animate-slide-in-right animation-delay-1000">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-bold text-lg text-gray-800 dark:text-white">Announcements</h3>
+                                <button onClick={() => { setActiveView('notices'); onBackToFeed(); }} className="text-sm font-semibold text-primary dark:text-accent hover:underline">
+                                    View All
+                                </button>
+                            </div>
+                            <div className="space-y-3 max-h-48 overflow-y-auto">
+                                {announcements.length > 0 ? (announcements.slice(0, 3).map(post => (
+                                    <button key={post.id} onClick={() => setViewingPost(post)} className="w-full text-left p-3 rounded-xl bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors">
+                                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{post.author.name}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{post.content}</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{post.timestamp}</p>
+                                    </button>
+                                ))) : (
+                                    <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No recent announcements.</p>
+                                )}
+                            </div>
+                        </div>
                         <div className="glass rounded-3xl p-5 animate-slide-in-right animation-delay-2000">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="font-bold text-lg text-gray-800 dark:text-white">Messages</h3>
@@ -617,5 +733,72 @@ const MainUI = ({
             </div >
         </div >
     </>);
+};
+const PostDetailModal = ({ post, currentUser, onClose, onAddComment }) => {
+    const [comment, setComment] = useState('');
+    const modalRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (modalRef.current && !modalRef.current.contains(event.target)) {
+                onClose();
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [onClose]);
+
+    const handleCommentSubmit = (e) => {
+        e.preventDefault();
+        if (!comment.trim()) return;
+        onAddComment(post.id, comment);
+        setComment('');
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-fast">
+            <div ref={modalRef} className="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">
+                    <div className="flex items-center space-x-3">
+                        <UserAvatar user={post.author} />
+                        <div>
+                            <p className="font-semibold">{post.author.name}</p>
+                            <p className="text-xs text-gray-500">{post.timestamp}</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><XIcon className="h-6 w-6" /></button>
+                </div>
+
+                <div className="p-4 overflow-y-auto">
+                    <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{post.content}</p>
+                    {post.imageUrl && <img src={post.imageUrl} alt="Post" className="mt-4 rounded-lg w-full" />}
+                    <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 flex items-center space-x-4">
+                        <span>{post.likedBy.length} Likes</span>
+                        <span>{post.comments.length} Comments</span>
+                    </div>
+                </div>
+
+                <div className="p-4 border-t dark:border-gray-700 space-y-4 overflow-y-auto">
+                    {post.comments.map(c => (
+                        <div key={c.id} className="flex items-start space-x-3">
+                            <UserAvatar user={c.author} className="h-8 w-8" />
+                            <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-xl flex-1">
+                                <p className="font-semibold text-sm">{c.author.name}</p>
+                                <p className="text-sm text-gray-800 dark:text-gray-200">{c.content}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="p-4 border-t dark:border-gray-700 mt-auto">
+                    <form onSubmit={handleCommentSubmit} className="flex items-center space-x-3">
+                        <UserAvatar user={currentUser} className="h-8 w-8" />
+                        <input type="text" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Write a comment..." className="w-full bg-gray-100 dark:bg-gray-700 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary" />
+                        <button type="submit" disabled={!comment.trim()} className="p-2 rounded-full bg-primary text-white disabled:opacity-50"><SendIcon className="h-5 w-5" /></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
 };
 export default MainUI;

@@ -101,3 +101,20 @@ export const CameraIcon = (props) => (<svg {...props} fill="none" stroke="curren
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
 </svg>);
+
+export const MegaphoneIcon = (props) => (<svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.983 1A2.002 2.002 0 0010 3v1.382l-4 3.999V12h3v8l4-10H9V3a1 1 0 011.983-.18l.017.18V1zm-3 9.001H5V8.383l3-2.999v3.617zM15 12h3v-1.618l-4-3.999V10h1v2z" />
+</svg>);
+
+export const FolderIcon = (props) => (<svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+</svg>);
+
+export const FileTextIcon = (props) => (<svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+</svg>);
+
+export const UploadCloudIcon = (props) => (<svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-4-4V7a4 4 0 014-4h.586a1 1 0 01.707.293l2 2a1 1 0 001.414 0l2-2a1 1 0 01.707-.293H17a4 4 0 014 4v5a4 4 0 01-4 4H7z" />
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 12v9m0 0l-3-3m3 3l3-3" />
+</svg>);

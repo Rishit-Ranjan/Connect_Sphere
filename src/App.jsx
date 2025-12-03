@@ -71,6 +71,7 @@ const initialPosts = [
         timestamp: '1 day ago',
         likedBy: [],
         comments: [],
+        isAnnouncement: true,
     }
 ];
 const initialChats = [
@@ -126,6 +127,7 @@ const App = () => {
     const [currentUser, setCurrentUser] = useState(null);
     const [users, setUsers] = useState(initialUsers);
     const [posts, setPosts] = useState(initialPosts);
+    const [resources, setResources] = useState([]); // For the Resource Hub
     const [chats, setChats] = useState(initialChats);
     const [notifications, setNotifications] = useState([]);
     const [viewingProfile, setViewingProfile] = useState(null);
@@ -295,18 +297,35 @@ const App = () => {
         if (!currentUser)
             return;
         await simulateNetwork();
-        const post = {
-            id: Date.now(),
-            author: currentUser,
-            content: newPost.content,
-            imageUrl: newPost.imageUrl,
-            fileName: newPost.fileName,
-            fileUrl: newPost.fileUrl,
-            timestamp: 'Just now',
-            likedBy: [],
-            comments: [],
-        };
-        setPosts([post, ...posts]);
+        // If it has a file but no content, treat it as a resource
+        if (newPost.fileUrl && !newPost.content) {
+            const newResource = {
+                id: Date.now(),
+                author: currentUser,
+                fileName: newPost.fileName,
+                fileUrl: newPost.fileUrl,
+                timestamp: 'Just now',
+            };
+            setResources(prev => [newResource, ...prev]);
+        } else { // Otherwise, treat it as a post
+            const post = {
+                id: Date.now(),
+                author: currentUser,
+                content: newPost.content,
+                imageUrl: newPost.imageUrl,
+                fileName: newPost.fileName,
+                fileUrl: newPost.fileUrl,
+                timestamp: 'Just now',
+                likedBy: [],
+                comments: [],
+                isAnnouncement: newPost.isAnnouncement && currentUser.role === 'admin',
+            };
+            setPosts([post, ...posts]);
+        }
+    };
+    const deleteResource = async (resourceId) => {
+        await simulateNetwork();
+        setResources(prev => prev.filter(r => r.id !== resourceId));
     };
     const deletePost = async (postId) => {
         await simulateNetwork();
@@ -524,7 +543,7 @@ const App = () => {
             return;
         await simulateNetwork();
         let updatedUsers = users.map(u => ({
-            ...u,
+            ...u, 
             followers: [...u.followers],
             following: [...u.following],
         }));
@@ -603,7 +622,7 @@ const App = () => {
         return <AuthScreen initialView={initialAuthView} onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow} />;
     }
     return (<>
-        <MainUI activeChat={_activeChat} onSetActiveChat={_setActiveChat} currentUser={currentUser} users={users} posts={posts} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} />
+        <MainUI activeChat={_activeChat} onSetActiveChat={_setActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} />
         <FloatingChatbot currentUser={currentUser} isOnline={isOnline} />
     </>);
 };
