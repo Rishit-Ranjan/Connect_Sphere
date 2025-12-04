@@ -238,7 +238,7 @@ const MainUI = ({
         if (activeView === 'resources') { // This is the ResourceUploadForm
             return (<div className="animate-fade-in">
                 <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200 flex items-center"><FolderIcon className="h-6 w-6 mr-3 text-primary" /> Resource Hub</h2>
-                <ResourceUploadForm onAddPost={onAddPost} />
+                <CreatePost onAddPost={onAddPost} currentUser={currentUser} />
                 <div className="space-y-4">
                     {sortedResources.length > 0 ? (
                         sortedResources.map(resource => (
@@ -246,11 +246,13 @@ const MainUI = ({
                                 <div className="flex items-center space-x-4">
                                     <FileTextIcon className="w-8 h-8 text-primary" />
                                     <div>
-                                        <a href={resource.fileUrl} download={resource.fileName} className="font-semibold text-primary dark:text-accent hover:underline">{resource.fileName}</a>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">Uploaded by {resource.author.name} &bull; {new Date(resource.id).toLocaleDateString()}</p>
+                                        <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary dark:text-accent hover:underline">{resource.fileName}</a>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">Uploaded by {resource.author.name} &bull; {resource.timestamp}</p>
                                     </div>
                                 </div>
-                                {currentUser.role === 'admin' && <button onClick={() => onDeleteResource(resource.id)} className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition" title={`Delete ${resource.fileName}`}><TrashIcon className="h-5 w-5" /></button>}
+                                {(currentUser.id === resource.author.id || currentUser.role === 'admin') && (
+                                    <button onClick={() => onDeleteResource(resource)} className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition" title={`Delete ${resource.fileName}`}><TrashIcon className="h-5 w-5" /></button>
+                                )}
                             </div>))
                     ) : (<p className="text-center text-gray-500 dark:text-gray-400 mt-8">No resources have been uploaded yet.</p>)}
                 </div>
@@ -426,50 +428,6 @@ const MainUI = ({
             </div>
             {!notification.read && <div className="w-2.5 h-2.5 bg-primary rounded-full self-center flex-shrink-0"></div>}
         </button>);
-    };
-    const ResourceUploadForm = ({ onAddPost }) => { // This is the ResourceUploadForm
-        const [file, setFile] = useState(null);
-        const [isUploading, setIsUploading] = useState(false);
-        const fileInputRef = useRef(null);
-    
-        const handleFileChange = (e) => {
-            if (e.target.files && e.target.files[0]) {
-                setFile(e.target.files[0]);
-            }
-        };
-    
-        const handleSubmit = async (e) => {
-            e.preventDefault();
-            if (!file) return;
-    
-            setIsUploading(true);
-            // In a real app, you'd upload to a server and get a URL.
-            // Here, we'll simulate it with a blob URL.
-            const fileUrl = URL.createObjectURL(file);
-    
-            await onAddPost({ 
-                fileUrl: fileUrl, 
-                fileName: file.name,
-                content: '' 
-            });
-    
-            setIsUploading(false);
-            setFile(null);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-        };
-    
-        return (
-            <div className="bg-white dark:bg-secondary p-4 rounded-2xl shadow-sm mb-6">
-                <form onSubmit={handleSubmit} className="flex items-center space-x-4">
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary dark:file:bg-primary/20 dark:file:text-accent hover:file:bg-primary/20 transition" />
-                    <button type="submit" disabled={!file || isUploading} className="bg-primary text-white px-4 py-2 rounded-full hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2 transition">
-                        <UploadCloudIcon size={18} className="h-5 w-5" /> <span>{isUploading ? 'Uploading...' : 'Upload'}</span>
-                    </button>
-                </form>
-            </div>
-        );
     };
     const userSearchQueryTrimmed = userSearchQuery.trim().toLowerCase();
     const isSearching = userSearchQueryTrimmed !== '';

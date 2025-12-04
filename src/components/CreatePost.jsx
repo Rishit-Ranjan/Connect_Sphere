@@ -4,46 +4,53 @@ import UserAvatar from './UserAvatar';
 
 const CreatePost = ({ onAddPost, currentUser }) => {
     const [content, setContent] = useState('');
-    const [image, setImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null); // For image previews
     const [file, setFile] = useState(null);
+    const [fileType, setFileType] = useState(null); // 'image' or 'file'
     const [isAnnouncement, setIsAnnouncement] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const imageInputRef = useRef(null);
     const fileInputRef = useRef(null);
 
     const handleImageSelect = (e) => {
         if (e.target.files && e.target.files[0]) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImage(reader.result);
-                setFile(null);
-            };
-            reader.readAsDataURL(e.target.files[0]);
+            const selectedFile = e.target.files[0];
+            setFile(selectedFile);
+            setImagePreview(URL.createObjectURL(selectedFile));
+            setFileType('image');
         }
     };
 
     const handleFileSelect = (e) => {
         if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]);
-            setImage(null);
+            const selectedFile = e.target.files[0];
+            setFile(selectedFile);
+            setImagePreview(null); // No preview for generic files
+            setFileType('file');
+            setContent(''); // Resources don't have content
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!content.trim() && !image && !file) return;
+        if (!content.trim() && !file) return;
+        setIsSubmitting(true);
 
-        onAddPost({
-            content,
-            imageUrl: image,
-            fileName: file?.name,
-            fileUrl: file ? URL.createObjectURL(file) : null,
-            isAnnouncement: isAnnouncement && currentUser.role === 'admin',
-        });
+        if (fileType === 'file') { // Resource Hub upload
+            await onAddPost(null, file);
+        } else { // Regular post (with or without image)
+            await onAddPost({
+                content,
+                isAnnouncement: isAnnouncement && currentUser.role === 'admin',
+            }, file); // Pass file if it's an image
+        }
 
         setContent('');
-        setImage(null);
+        setImagePreview(null);
         setFile(null);
+        setFileType(null);
         setIsAnnouncement(false);
+        setIsSubmitting(false);
         if (imageInputRef.current) imageInputRef.current.value = '';
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
@@ -57,12 +64,12 @@ const CreatePost = ({ onAddPost, currentUser }) => {
                         <textarea
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
-                            className="w-full bg-transparent focus:outline-none text-lg placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-                            placeholder={`What's on your mind, ${currentUser.name}?`}
+                            className="w-full bg-transparent focus:outline-none text-lg placeholder-gray-500 dark:placeholder-gray-400 resize-none disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                            placeholder={fileType === 'file' ? `Uploading: ${file?.name}` : `What's on your mind, ${currentUser.name}?`}
                             rows="3"
+                            disabled={fileType === 'file'}
                         />
-                        {image && <img src={image} alt="Preview" className="mt-2 rounded-lg max-h-60" />}
-                        {file && <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">Attached: {file.name}</div>}
+                        {imagePreview && <img src={imagePreview} alt="Preview" className="mt-2 rounded-lg max-h-60" />}
                     </div>
                 </div>
                 <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -88,10 +95,10 @@ const CreatePost = ({ onAddPost, currentUser }) => {
                     </div>
                     <button
                         type="submit"
-                        disabled={!content.trim() && !image && !file}
+                        disabled={isSubmitting || (!content.trim() && !file)}
                         className="bg-primary text-white font-semibold px-6 py-2 rounded-full hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
                     >
-                        Post
+                        {isSubmitting ? 'Posting...' : 'Post'}
                     </button>
                 </div>
             </form>

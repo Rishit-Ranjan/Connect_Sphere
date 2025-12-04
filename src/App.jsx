@@ -9,6 +9,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, on
 import { ref, onValue, set, onDisconnect, serverTimestamp as rtdbServerTimestamp } from "firebase/database";
 import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where, runTransaction, deleteDoc, writeBatch } from 'firebase/firestore';
  
+import * as cloudinaryService from './services/cloudinaryService';
 import * as cryptoService from './services/cryptoService';
 import { usePosts } from './usePosts';
 const App = () => {
@@ -390,25 +391,42 @@ const App = () => {
     const handleBackToFeed = () => {
         setViewingProfile(null);
     };
-    const addPost = async (postData) => {
+    const addPost = async (postData, file) => {
         if (!currentUser)
             return;
 
-        if (postData.fileUrl && !postData.content) { // This is a resource upload
-            const newResource = {
-                id: Date.now(),
-                author: currentUser,
-                fileName: postData.fileName,
-                fileUrl: postData.fileUrl,
-                timestamp: 'Just now',
-            }; 
-            setResources(prev => [newResource, ...prev]);
-        } else { // Otherwise, treat it as a post
+        if (file) {
+            try {
+                // 1. Upload file to Cloudinary
+                const uploadResult = await cloudinaryService.uploadFile(file);
+
+                // 2. Check if it's a resource or a post with an image
+                if (postData) { // It's a post with an image
+                    const postWithImageUrl = {
+                        ...postData,
+                        imageUrl: uploadResult.secure_url,
+                    };
+                    addPostToDb(postWithImageUrl);
+                } else { // It's a resource for the hub
+                    const newResource = {
+                        authorId: currentUser.id,
+                        fileName: file.name,
+                        fileUrl: uploadResult.secure_url,
+                        publicId: uploadResult.public_id,
+                        fileType: uploadResult.resource_type,
+                        timestamp: serverTimestamp(),
+                    };
+                    await addDoc(collection(db, "resources"), newResource);
+                }
+            } catch (error) {
+                console.error("Error creating resource:", error);
+                alert("Failed to upload resource. Please try again.");
+            }
+        } else if (postData) { // It's a text-only post
             addPostToDb(postData);
         }
     };
-    // Real-time listener for resources (similar to posts and chats) - REMOVED as resources are not persistent
-    // Real-time listener for resources (similar to posts and chats)
+    // Real-time listener for resources
     useEffect(() => {
         if (users.length === 0) return;
 
@@ -433,10 +451,21 @@ const App = () => {
         return () => unsubscribe();
     }, [users]);
 
-    const deleteResource = async (resourceId) => { // Reverted to local state
-        // No Firestore interaction as resources are not persistent
-        // This will only remove it from the current session's view
-        setResources(prev => prev.filter(r => r.id !== resourceId));
+    const deleteResource = async (resource) => {
+        if (!currentUser || (currentUser.id !== resource.author.id && currentUser.role !== 'admin')) {
+            alert("You are not authorized to delete this resource.");
+            return;
+        }
+        try {
+            // 1. Delete the document from Firestore
+            await deleteDoc(doc(db, "resources", resource.id));
+            // 2. (Optional but recommended) Delete the file from Cloudinary
+            // This requires a secure backend call.
+            await cloudinaryService.deleteFile(resource.publicId);
+        } catch (error) {
+            console.error("Error deleting resource:", error);
+            alert("Failed to delete resource.");
+        }
     };
     const deleteUser = async (userId) => {
         if (!currentUser || currentUser.role !== 'admin' || currentUser.id === userId) {
@@ -761,7 +790,7 @@ const App = () => {
         return <AuthScreen initialView={initialAuthView} onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow} />;
     }
     return (<>
-        <MainUI activeChat={_activeChat} onSetActiveChat={_setActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} />
+        <MainUI activeChat={_activeChat} onSetActiveChat={_setActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead}/>
         <FloatingChatbot currentUser={currentUser} isOnline={isOnline} />
     </>);
 };
