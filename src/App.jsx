@@ -368,10 +368,7 @@ const App = () => {
         try {
             // Enforce one admin rule
             if (authFlow === 'admin') {
-                const adminExists = users.some(u => u.role === 'admin');
-                if (adminExists) {
-                    throw new Error("An admin account already exists. Only one admin is allowed.");
-                }
+                throw new Error("Admin signup is restricted. Please contact the system administrator.");
             }
             // 1. Create user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);

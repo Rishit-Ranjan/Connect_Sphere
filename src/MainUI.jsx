@@ -91,8 +91,8 @@ const ResourceItem = ({ resource, currentUser, onDeleteResource }) => (
                 </p>
             </div>
         </div>
-        {currentUser.role === 'admin' && (
-            <button onClick={() => onDeleteResource(resource.id)} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/20">
+        {(currentUser.id === resource.author.id || currentUser.role === 'admin') && (
+            <button onClick={() => onDeleteResource(resource)} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/20">
                 <Trash2 size={18} />
             </button>
         )}
