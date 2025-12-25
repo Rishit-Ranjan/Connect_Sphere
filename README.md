@@ -83,8 +83,13 @@ Contributions are what make the open-source community such an amazing place to l
 4.  Push to the Branch (`git push origin feature/AmazingFeature`)
 5.  Open a Pull Request<br/><br/>
 
+**Welcome Page**<br/><br/>
 <img width="1858" height="959" alt="image" src="https://github.com/user-attachments/assets/f14778c9-18c2-4143-bde3-852b745f3608" /><br/><br/>
 
-**Participant User**
-<img width="1864" height="973" alt="image" src="https://github.com/user-attachments/assets/4e912e26-b777-4dbb-9cd8-77230c507ba3" />
+**Participant User Module**<br/><br/>
+<img width="1864" height="973" alt="image" src="https://github.com/user-attachments/assets/4e912e26-b777-4dbb-9cd8-77230c507ba3" /><br/><br/>
+
+**System Admin Module**<br/><br/>
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/76730b78-d43c-4f34-9810-35194bf4f31d" />
+
 
