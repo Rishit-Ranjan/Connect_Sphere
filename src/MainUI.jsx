@@ -99,13 +99,38 @@ const ResourceItem = ({ resource, currentUser, onDeleteResource }) => (
     </div>
 );
 
+const UserItem = ({ user, currentUser, onDeleteUser, onToggleUserStatus }) => (
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-3 flex justify-between items-center">
+        <div className="flex items-center">
+            <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full mr-3" />
+            <div>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">{user.name} {user.id === currentUser.id && '(You)'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{user.role} • {user.status}</p>
+            </div>
+        </div>
+        {currentUser.role === 'admin' && user.id !== currentUser.id && (
+            <div className="flex items-center space-x-2">
+                <button onClick={() => onToggleUserStatus(user.id)} className={`px-3 py-1 rounded text-sm font-medium ${user.status === 'active' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : 'bg-green-100 text-green-800 hover:bg-green-200'}`}>
+                    {user.status === 'active' ? 'Suspend' : 'Activate'}
+                </button>
+                <button onClick={() => onDeleteUser(user.id)} className="p-2 text-red-500 hover:bg-red-100 rounded-full" title="Delete User">
+                    <Trash2 size={18} />
+                </button>
+            </div>
+        )}
+    </div>
+);
+
 const MainUI = ({
     currentUser,
+    users,
     posts,
     resources, // New prop
     onAddPost,
     onDeletePost,
     onDeleteResource, // New prop
+    onDeleteUser,
+    onToggleUserStatus,
     onToggleLike,
     onAddComment,
     onLogout,
@@ -147,6 +172,17 @@ const MainUI = ({
                             sortedResources.map(resource => <ResourceItem key={resource.id} resource={resource} currentUser={currentUser} onDeleteResource={onDeleteResource} />)
                         ) : (
                             <p className="text-center text-gray-500 dark:text-gray-400 mt-8">No resources have been uploaded yet.</p>
+                        )}
+                    </div>
+                );
+            case 'users':
+                return (
+                    <div>
+                        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">User Directory</h2>
+                        {users && users.length > 0 ? (
+                            users.map(user => <UserItem key={user.id} user={user} currentUser={currentUser} onDeleteUser={onDeleteUser} onToggleUserStatus={onToggleUserStatus} />)
+                        ) : (
+                            <p className="text-center text-gray-500 dark:text-gray-400 mt-8">No users found.</p>
                         )}
                     </div>
                 );
