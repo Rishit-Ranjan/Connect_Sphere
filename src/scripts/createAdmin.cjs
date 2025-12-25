@@ -8,7 +8,12 @@ try {
 }
 
 try {
-    const serviceAccount = require('./serviceAccountKey.json');
+    let serviceAccount;
+    try {
+        serviceAccount = require('./serviceAccountKey.json');
+    } catch (e) {
+        serviceAccount = require('../../serviceAccountKey.json');
+    }
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
     });
@@ -32,13 +37,25 @@ async function createAdmin() {
     try {
         console.log(`Creating user ${email}...`);
         
-        // 1. Create User in Authentication
-        const userRecord = await auth.createUser({
-            email,
-            password,
-            displayName: name,
-        });
-        console.log(`Successfully created auth user: ${userRecord.uid}`);
+        let userRecord;
+        try {
+            // 1. Create User in Authentication
+            userRecord = await auth.createUser({
+                email,
+                password,
+                displayName: name,
+            });
+            console.log(`Successfully created auth user: ${userRecord.uid}`);
+        } catch (e) {
+            if (e.code === 'auth/email-already-exists') {
+                console.log(`User ${email} already exists. Updating password...`);
+                userRecord = await auth.getUserByEmail(email);
+                await auth.updateUser(userRecord.uid, { password, displayName: name });
+                console.log(`Successfully updated auth user: ${userRecord.uid}`);
+            } else {
+                throw e;
+            }
+        }
 
         // 2. Create User Document in Firestore
         // Note: We don't generate crypto keys here. Your App.jsx's ensureUserKeyPair 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Home, Megaphone, Folder, FileText, Trash2, MessageSquare, Users, User, LogOut, Moon, Sun, ShieldCheck } from 'lucide-react'; // Assuming lucide-react for icons
+import { Home, Megaphone, Folder, FileText, Trash2, MessageSquare, Users, User, LogOut, Moon, Sun, ShieldCheck, Search, ChevronLeft, ChevronRight } from 'lucide-react'; // Assuming lucide-react for icons
 
 // NOTE: These are placeholder components. You should replace them with your actual Post, PostForm, etc. components.
 const Post = ({ post, currentUser, onDeletePost, onToggleLike, onAddComment }) => (
@@ -142,6 +142,9 @@ const MainUI = ({
     // ... other props
 }) => {
     const [activeTab, setActiveTab] = useState('feed'); // 'feed', 'notices', 'resources'
+    const [userSearchTerm, setUserSearchTerm] = useState('');
+    const [userPage, setUserPage] = useState(1);
+    const usersPerPage = 10;
 
     const { announcements, regularPosts } = useMemo(() => {
         const announcements = posts.filter(p => p.isAnnouncement).sort((a, b) => b.id - a.id);
@@ -152,6 +155,19 @@ const MainUI = ({
     const sortedResources = useMemo(() => {
         return [...resources].sort((a, b) => b.id - a.id);
     }, [resources]);
+
+    const { paginatedUsers, totalPages } = useMemo(() => {
+        if (!users) return { paginatedUsers: [], totalPages: 0 };
+        
+        const filtered = users.filter(user => 
+            user.name.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+            (user.email && user.email.toLowerCase().includes(userSearchTerm.toLowerCase()))
+        );
+        
+        const total = Math.ceil(filtered.length / usersPerPage);
+        const paginated = filtered.slice((userPage - 1) * usersPerPage, userPage * usersPerPage);
+        return { paginatedUsers: paginated, totalPages: total };
+    }, [users, userSearchTerm, userPage]);
 
     const renderContent = () => {
         switch (activeTab) {
@@ -182,10 +198,36 @@ const MainUI = ({
                 return (
                     <div>
                         <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">User Directory</h2>
-                        {users && users.length > 0 ? (
-                            users.map(user => <UserItem key={user.id} user={user} currentUser={currentUser} onDeleteUser={onDeleteUser} onToggleUserStatus={onToggleUserStatus} />)
+                        
+                        {/* Search Bar */}
+                        <div className="relative mb-6">
+                            <input
+                                type="text"
+                                placeholder="Search users by name or email..."
+                                value={userSearchTerm}
+                                onChange={(e) => { setUserSearchTerm(e.target.value); setUserPage(1); }}
+                                className="w-full p-3 pl-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                            />
+                            <Search className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
+                        </div>
+
+                        {paginatedUsers.length > 0 ? (
+                            paginatedUsers.map(user => <UserItem key={user.id} user={user} currentUser={currentUser} onDeleteUser={onDeleteUser} onToggleUserStatus={onToggleUserStatus} />)
                         ) : (
-                            <p className="text-center text-gray-500 dark:text-gray-400 mt-8">No users found.</p>
+                            <p className="text-center text-gray-500 dark:text-gray-400 mt-8">No users found matching "{userSearchTerm}".</p>
+                        )}
+
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                            <div className="flex justify-center items-center mt-6 space-x-4">
+                                <button onClick={() => setUserPage(p => Math.max(1, p - 1))} disabled={userPage === 1} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+                                <span className="text-gray-600 dark:text-gray-400">Page {userPage} of {totalPages}</span>
+                                <button onClick={() => setUserPage(p => Math.min(totalPages, p + 1))} disabled={userPage === totalPages} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <ChevronRight className="w-5 h-5" />
+                                </button>
+                            </div>
                         )}
                     </div>
                 );
