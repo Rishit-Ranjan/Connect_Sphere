@@ -3,10 +3,8 @@ import { X, User, Bell, KeyRound } from 'lucide-react';
 
 const SettingsModal = ({ currentUser, onUpdateUser, onClose, onUpdatePassword }) => {
     const modalRef = useRef(null);
-    // Initialize state from currentUser, defaulting to true if undefined
     const [emailNotifications, setEmailNotifications] = useState(currentUser.emailNotifications ?? true);
 
-    // State for password change form
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,7 +23,6 @@ const SettingsModal = ({ currentUser, onUpdateUser, onClose, onUpdatePassword })
     const handleToggle = () => {
         const newValue = !emailNotifications;
         setEmailNotifications(newValue);
-        // Call the update function passed from App.jsx
         onUpdateUser({ ...currentUser, emailNotifications: newValue });
     };
 
@@ -62,7 +59,6 @@ const SettingsModal = ({ currentUser, onUpdateUser, onClose, onUpdatePassword })
                 </div>
 
                 <div className="p-6 space-y-8 overflow-y-auto">
-                    {/* Account Section */}
                     <div>
                         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4 flex items-center">
                             <User className="h-5 w-5 mr-2" />
@@ -77,7 +73,6 @@ const SettingsModal = ({ currentUser, onUpdateUser, onClose, onUpdatePassword })
                         </div>
                     </div>
 
-                    {/* Notifications Section */}
                     <div>
                         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4 flex items-center">
                             <Bell className="h-5 w-5 mr-2" />
@@ -97,7 +92,6 @@ const SettingsModal = ({ currentUser, onUpdateUser, onClose, onUpdatePassword })
                         </div>
                     </div>
 
-                    {/* Change Password Section */}
                     <div>
                         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4 flex items-center">
                             <KeyRound className="h-5 w-5 mr-2" />
@@ -120,6 +114,16 @@ const SettingsModal = ({ currentUser, onUpdateUser, onClose, onUpdatePassword })
                                     type="password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
+                                    className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Confirm New Password</label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
                                     className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
                                     required
                                 />
