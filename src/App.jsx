@@ -297,6 +297,18 @@ const App = () => {
 
         try {
             await addDoc(collection(db, "notifications"), newNotification);
+
+            // Send email notification if enabled by recipient
+            const recipient = users.find(u => u.id === recipientId);
+            if (recipient && recipient.emailNotifications && recipient.email) {
+                await addDoc(collection(db, "mail"), {
+                    to: recipient.email,
+                    message: {
+                        subject: `New Notification: ${type}`,
+                        html: `<p>You received a <strong>${type}</strong> from <strong>${triggeringUser.name}</strong>.</p><p>${messageContent || ''}</p>`
+                    }
+                });
+            }
         } catch (error) {
             console.error("Error creating notification:", error);
         }
