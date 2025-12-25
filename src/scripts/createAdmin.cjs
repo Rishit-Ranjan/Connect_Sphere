@@ -7,11 +7,6 @@ try {
     process.exit(1);
 }
 
-// 1. Go to Firebase Console -> Project Settings -> Service Accounts
-// 2. Click "Generate new private key"
-// 3. Save the file as 'serviceAccountKey.json' in this scripts folder
-// 4. Run: node scripts/createAdmin.js <email> <password> <name>
-
 try {
     const serviceAccount = require('./serviceAccountKey.json');
     admin.initializeApp({
