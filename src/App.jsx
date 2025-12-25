@@ -19,9 +19,9 @@ const App = () => {
     const [chats, setChats] = useState([]);
     const [notifications, setNotifications] = useState([]); // TODO: Migrate to Firestore
     const [viewingProfile, setViewingProfile] = useState(null);
-    const [authStep, setAuthStep] = useState('welcome'); // 'welcome', 'auth'
-    const [initialAuthView, setInitialAuthView] = useState('login');
-    const [authFlow, setAuthFlow] = useState(null); // Can be 'admin' or 'participant'
+    const [authStep, setAuthStep] = useState(() => sessionStorage.getItem('authStep') || 'welcome'); // 'welcome', 'auth'
+    const [initialAuthView, setInitialAuthView] = useState(() => sessionStorage.getItem('initialAuthView') || 'login');
+    const [authFlow, setAuthFlow] = useState(() => sessionStorage.getItem('authFlow') || null); // Can be 'admin' or 'participant'
     const [_activeChat, _setActiveChat] = useState(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [theme, setTheme] = useState(() => {
@@ -32,6 +32,42 @@ const App = () => {
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         return prefersDark ? 'dark' : 'light';
     });
+
+    // Persist Auth UI State
+    useEffect(() => { sessionStorage.setItem('authStep', authStep); }, [authStep]);
+    useEffect(() => { sessionStorage.setItem('initialAuthView', initialAuthView); }, [initialAuthView]);
+    useEffect(() => {
+        if (authFlow) sessionStorage.setItem('authFlow', authFlow);
+        else sessionStorage.removeItem('authFlow');
+    }, [authFlow]);
+
+    // Persist and Sync Active Chat
+    useEffect(() => {
+        const storedChatId = localStorage.getItem('activeChatId');
+        if (chats.length > 0) {
+            if (_activeChat) {
+                // Sync existing active chat with real-time updates
+                const updatedChat = chats.find(c => c.id === _activeChat.id);
+                if (updatedChat) {
+                    if (updatedChat !== _activeChat) _setActiveChat(updatedChat);
+                } else {
+                    // Chat was deleted or user removed
+                    _setActiveChat(null);
+                    localStorage.removeItem('activeChatId');
+                }
+            } else if (storedChatId) {
+                // Restore active chat from storage
+                const restoredChat = chats.find(c => c.id === storedChatId);
+                if (restoredChat) _setActiveChat(restoredChat);
+            }
+        }
+    }, [chats, _activeChat]);
+
+    const handleSetActiveChat = (chat) => {
+        _setActiveChat(chat);
+        if (chat) localStorage.setItem('activeChatId', chat.id);
+        else localStorage.removeItem('activeChatId');
+    };
 
     // Fetch all users from Firestore on initial load
     // This is now a real-time listener to get user status updates
@@ -535,7 +571,7 @@ const App = () => {
 
         if (existingChat) {
             // If chat exists, just switch to it
-            _setActiveChat(existingChat);
+            handleSetActiveChat(existingChat);
             return;
         }
 
@@ -790,7 +826,7 @@ const App = () => {
         return <AuthScreen initialView={initialAuthView} onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow} />;
     }
     return (<>
-        <MainUI activeChat={_activeChat} onSetActiveChat={_setActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead}/>
+        <MainUI activeChat={_activeChat} onSetActiveChat={handleSetActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead}/>
         <FloatingChatbot currentUser={currentUser} isOnline={isOnline} />
     </>);
 };

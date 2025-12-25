@@ -1,9 +1,12 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { 
+  initializeFirestore, 
+  persistentLocalCache, 
+  persistentMultipleTabManager 
+} from "firebase/firestore";
 import { getDatabase } from "firebase/database";
 
-// Your web app's Firebase configuration
 // For security, these values are loaded from environment variables
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -19,7 +22,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
-const db = getFirestore(app);
-const rtdb = getDatabase(app); // Realtime Database for presence
+
+// Explicitly set persistence to LOCAL (ensures user stays logged in)
+setPersistence(auth, browserLocalPersistence);
+
+// Initialize Firestore with offline persistence enabled
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager() 
+  })
+});
+
+const rtdb = getDatabase(app); 
 
 export { auth, db, rtdb };
