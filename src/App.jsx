@@ -6,7 +6,7 @@ import WelcomeScreen from './components/WelcomeScreen';
 import FloatingChatbot from './components/FloatingChatbot'; 
 import SettingsModal from './SettingsModal';
 import { auth, db, rtdb } from './services/firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser as deleteAuthUser } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser as deleteAuthUser, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { ref, onValue, set, onDisconnect, serverTimestamp as rtdbServerTimestamp } from "firebase/database";
 import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where, runTransaction, deleteDoc, writeBatch } from 'firebase/firestore';
  
@@ -37,6 +37,35 @@ const App = () => {
 
     const handleOpenSettingsModal = () => setIsSettingsModalOpen(true);
     const handleCloseSettingsModal = () => setIsSettingsModalOpen(false);
+
+    const handleChangePassword = async (currentPassword, newPassword) => {
+        if (!currentUser) {
+            alert("No user is currently signed in.");
+            return false;
+        }
+
+        const user = auth.currentUser;
+        const credential = EmailAuthProvider.credential(user.email, currentPassword);
+
+        try {
+            // Re-authenticate the user to ensure they are the legitimate owner
+            await reauthenticateWithCredential(user, credential);
+            
+            // If re-authentication is successful, update the password
+            await updatePassword(user, newPassword);
+            
+            alert("Password updated successfully!");
+            return true;
+        } catch (error) {
+            console.error("Error changing password:", error);
+            let errorMessage = "An error occurred. Please try again.";
+            if (error.code === 'auth/wrong-password') {
+                errorMessage = "The current password you entered is incorrect.";
+            }
+            alert(`Failed to change password: ${errorMessage}`);
+            return false;
+        }
+    };
 
     // Persist Auth UI State
     useEffect(() => { sessionStorage.setItem('authStep', authStep); }, [authStep]);
@@ -846,6 +875,7 @@ const App = () => {
                 currentUser={currentUser}
                 onUpdateUser={handleUpdateUser}
                 onClose={handleCloseSettingsModal}
+                onUpdatePassword={handleChangePassword}
             />
         )}
         <FloatingChatbot currentUser={currentUser} isOnline={isOnline} />
