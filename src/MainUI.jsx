@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Home, Megaphone, Folder, FileText, Trash2, MessageSquare, Users, User, LogOut, Moon, Sun } from 'lucide-react'; // Assuming lucide-react for icons
+import { Home, Megaphone, Folder, FileText, Trash2, MessageSquare, Users, User, LogOut, Moon, Sun, ShieldCheck } from 'lucide-react'; // Assuming lucide-react for icons
 
 // NOTE: These are placeholder components. You should replace them with your actual Post, PostForm, etc. components.
 const Post = ({ post, currentUser, onDeletePost, onToggleLike, onAddComment }) => (
@@ -7,7 +7,10 @@ const Post = ({ post, currentUser, onDeletePost, onToggleLike, onAddComment }) =
         <div className="flex items-center mb-2">
             <img src={post.author.avatar} alt={post.author.name} className="w-10 h-10 rounded-full mr-3" />
             <div>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">{post.author.name}</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    {post.author.name}
+                    {post.author.role === 'admin' && <ShieldCheck className="w-4 h-4 ml-1 text-blue-500" aria-label="Admin Badge" />}
+                </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{post.timestamp}</p>
             </div>
         </div>
