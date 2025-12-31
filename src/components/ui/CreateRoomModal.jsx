@@ -31,7 +31,7 @@ const CreateRoomModal = ({ onCreateRoom, onClose }) => {
                     <XIcon className="h-6 w-6" />
                 </button>
             </div>
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 overflow-y-auto">
                 <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Room Type</label>
                     <div className="grid grid-cols-1 gap-3">
