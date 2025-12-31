@@ -456,7 +456,7 @@ const MainUI = ({
     }, 0);
     return (<>
         {isCreateGroupModalOpen && (<CreateGroupModal currentUser={currentUser} users={users} onCreateGroup={onCreateGroup} onClose={() => setIsCreateGroupModalOpen(false)} />)}
-        {isCreateRoomModalOpen && (<CreateRoomModal onCreateRoom={onCreateRoom} onClose={() => setIsCreateRoomModalOpen(false)} />)}
+        {isCreateRoomModalOpen && (<CreateRoomModal users={users} currentUser={currentUser} onCreateRoom={onCreateRoom} onClose={() => setIsCreateRoomModalOpen(false)} />)}
         {isJoinRoomModalOpen && (<JoinRoomModal roomName={isJoinRoomModalOpen.name || 'this room'} onClose={() => setIsJoinRoomModalOpen(null)} onJoin={async (password) => {
             const success = await onJoinRoom(isJoinRoomModalOpen.id, password);
             if (success) {

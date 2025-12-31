@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { XIcon, LockClosedIcon, UserPlusIcon, SpinnerIcon, UsersIcon } from '../Icons';
-const CreateRoomModal = ({ onCreateRoom, onClose }) => {
+import { XIcon, LockClosedIcon, UserPlusIcon, SpinnerIcon, UsersIcon, SearchIcon } from '../Icons';
+const CreateRoomModal = ({ users, currentUser, onCreateRoom, onClose }) => {
     const [roomName, setRoomName] = useState('');
     const [privacy, setPrivacy] = useState('invite_only');
     const [password, setPassword] = useState('');
+    const [selectedMembers, setSelectedMembers] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const handleSubmit = async () => {
         if (!roomName.trim() || isCreating)
@@ -12,7 +14,7 @@ const CreateRoomModal = ({ onCreateRoom, onClose }) => {
             return;
         setIsCreating(true);
         try {
-            await onCreateRoom(roomName, privacy, password);
+            await onCreateRoom(roomName, privacy, password, selectedMembers);
             onClose();
         }
         catch (error) {
@@ -22,6 +24,21 @@ const CreateRoomModal = ({ onCreateRoom, onClose }) => {
             setIsCreating(false);
         }
     };
+
+    const toggleMember = (user) => {
+        if (selectedMembers.some(m => m.id === user.id)) {
+            setSelectedMembers(prev => prev.filter(m => m.id !== user.id));
+        } else {
+            setSelectedMembers(prev => [...prev, user]);
+        }
+    };
+
+    const usersToDisplay = users.filter(u =>
+        u.id !== currentUser.id &&
+        u.status === 'active' &&
+        u.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     const isSubmitDisabled = !roomName.trim() || (privacy === 'password_protected' && password.length < 4) || isCreating;
     return (<div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md transform animate-fade-in-scale flex flex-col max-h-[90vh]">
@@ -75,11 +92,55 @@ const CreateRoomModal = ({ onCreateRoom, onClose }) => {
                         <label htmlFor="password" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Room Password</label>
                         <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="block w-full px-4 py-3 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 text-gray-800 dark:text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50" placeholder="Min. 4 characters" disabled={isCreating} />
                     </div>
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-700/50 dark:to-slate-700/30 p-3 rounded-lg text-sm text-gray-600 dark:text-gray-400 border border-blue-200/50 dark:border-slate-600/50">
-                        <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-1">For Demo</h4>
-                        <p>You can join the existing 'Design Lounge' room using the password: <strong>design</strong></p>
-                    </div>
                 </div>)}
+
+                {/* Add Members Section - For All Room Types */}
+                <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Add Members (Optional)</label>
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><SearchIcon className="h-5 w-5" /></span>
+                        <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search users by name..." className="w-full pl-10 pr-4 py-3 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 text-gray-800 dark:text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50" disabled={isCreating} />
+                    </div>
+
+                    {/* Selected Members Chips */}
+                    {selectedMembers.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                            {selectedMembers.map(member => (
+                                <div key={member.id} className="flex items-center space-x-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                                    <span>{member.name}</span>
+                                    <button onClick={() => toggleMember(member)} disabled={isCreating} className="hover:text-red-500"><XIcon className="h-4 w-4" /></button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Available Users List */}
+                    <div className="max-h-48 overflow-y-auto space-y-2 border border-gray-100 dark:border-slate-700 rounded-lg p-2">
+                        {usersToDisplay.length > 0 ? (
+                            usersToDisplay.map(user => {
+                                const isSelected = selectedMembers.some(m => m.id === user.id);
+                                return (
+                                    <button
+                                        key={user.id}
+                                        onClick={() => toggleMember(user)}
+                                        disabled={isCreating}
+                                        className={`w-full flex items-center space-x-3 p-2 rounded-lg transition-colors ${isSelected ? 'bg-primary/5 dark:bg-primary/20' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}
+                                    >
+                                        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold text-white ${isSelected ? 'bg-primary' : 'bg-gray-400'}`}>
+                                            {user.name.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="text-left flex-1">
+                                            <p className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-gray-800 dark:text-gray-200'}`}>{user.name}</p>
+                                        </div>
+                                        {isSelected && <div className="h-2 w-2 rounded-full bg-primary"></div>}
+                                    </button>
+                                );
+                            })
+                        ) : (
+                            <p className="text-center text-sm text-gray-400 py-2">No users found.</p>
+                        )}
+                    </div>
+                </div>
             </div>
             <div className="flex justify-end space-x-4 p-6 bg-gradient-to-r from-gray-50/80 to-blue-50/80 dark:from-slate-700/50 dark:to-slate-700/30 rounded-b-2xl mt-auto border-t border-gray-200/50 dark:border-slate-700/50">
                 <button onClick={onClose} className="px-6 py-2.5 text-sm font-semibold rounded-full hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500">Cancel</button>

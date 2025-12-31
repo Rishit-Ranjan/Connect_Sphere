@@ -678,18 +678,22 @@ const App = () => {
             alert("Failed to create group. Please try again.");
         }
     };
-    const handleCreateRoom = async (name, privacy, password) => {
+    const handleCreateRoom = async (name, privacy, password, initialMembers = []) => {
         if (!currentUser || !name.trim())
             return;
         try {
+            const initialParticipantIds = [currentUser.id, ...initialMembers.map(m => m.id)];
+            // Remove duplicates
+            const uniqueParticipantIds = [...new Set(initialParticipantIds)];
+
             const newRoom = {
                 name,
                 type: 'room',
                 roomPrivacy: privacy,
                 password: privacy === 'password_protected' ? password : null,
-                participantIds: [currentUser.id],
+                participantIds: uniqueParticipantIds,
                 messages: [],
-                unreadCounts: { [currentUser.id]: 0 },
+                unreadCounts: uniqueParticipantIds.reduce((acc, id) => ({ ...acc, [id]: 0 }), {}),
                 adminId: currentUser.id,
                 createdAt: serverTimestamp(),
                 messagingPermission: 'all',
@@ -782,19 +786,21 @@ const App = () => {
     };
     const handleDeleteRoom = async (chatId) => {
         if (!currentUser)
-            return;
+            return false;
         const chatRef = doc(db, "chats", chatId);
         try {
             const chatDoc = await getDoc(chatRef);
             if (!chatDoc.exists() || chatDoc.data().adminId !== currentUser.id) {
                 alert("You are not authorized to delete this room.");
-                return;
+                return false;
             }
             await deleteDoc(chatRef);
             console.log("Room deleted from Firestore.");
+            return true;
         } catch (error) {
             console.error("Error deleting room:", error);
-            alert("Failed to delete room. Please try again.");
+            alert(`Failed to delete room: ${error.message}`);
+            return false;
         }
     };
     const handleMarkChatAsRead = (chatId) => {

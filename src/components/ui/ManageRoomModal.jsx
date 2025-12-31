@@ -41,8 +41,12 @@ const ManageRoomModal = ({ room, allUsers, onClose, onSaveMembers, onSaveSetting
     if (window.confirm(`Are you sure you want to permanently delete the room "${room.name}"? This will remove the room and all its messages for all participants. This action cannot be undone.`)) {
       setIsSaving(true);
       try {
-        await onDeleteRoom(room.id);
-        // onClose will be called from MainUI when the room is removed from state
+        const success = await onDeleteRoom(room.id);
+        if (success) {
+          onClose();
+        } else {
+          setIsSaving(false);
+        }
       }
       catch (error) {
         console.error("Failed to delete room", error);
