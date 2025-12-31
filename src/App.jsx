@@ -3,13 +3,13 @@ import AuthScreen from './components/LoginScreen';
 import MainUI from './components/MainUI';
 import ProfileSelectionScreen from './components/ProfileSelectionScreen';
 import WelcomeScreen from './components/WelcomeScreen';
-import FloatingChatbot from './components/FloatingChatbot'; 
+import FloatingChatbot from './components/FloatingChatbot';
 import SettingsModal from './SettingsModal';
 import { auth, db, rtdb } from './services/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser as deleteAuthUser, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { ref, onValue, set, onDisconnect, serverTimestamp as rtdbServerTimestamp } from "firebase/database";
 import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where, runTransaction, deleteDoc, writeBatch } from 'firebase/firestore';
- 
+
 import * as cloudinaryService from './services/cloudinaryService';
 import * as cryptoService from './services/cryptoService';
 import { usePosts } from './usePosts';
@@ -18,6 +18,7 @@ const App = () => {
     const [users, setUsers] = useState([]);
     const [resources, setResources] = useState([]); // For the Resource Hub
     const [chats, setChats] = useState([]);
+    const [availableRooms, setAvailableRooms] = useState([]);
     const [notifications, setNotifications] = useState([]);
     const [viewingProfile, setViewingProfile] = useState(null);
     const [authStep, setAuthStep] = useState(() => sessionStorage.getItem('authStep') || 'welcome'); // 'welcome', 'auth'
@@ -50,10 +51,10 @@ const App = () => {
         try {
             // Re-authenticate the user to ensure they are the legitimate owner
             await reauthenticateWithCredential(user, credential);
-            
+
             // If re-authentication is successful, update the password
             await updatePassword(user, newPassword);
-            
+
             alert("Password updated successfully!");
             return true;
         } catch (error) {
@@ -104,7 +105,7 @@ const App = () => {
     };
 
     // Fetch all users from Firestore on initial load
-    // This is now a real-time listener to get user status updates
+
     useEffect(() => {
         if (!currentUser) {
             setUsers([]); // Clear users when logged out
@@ -189,7 +190,25 @@ const App = () => {
         return () => unsubscribe();
     }, [currentUser, users]);
 
-    // Listen for status changes in Realtime Database and sync to Firestore
+
+
+    // Real-time listener for available rooms (Discovery)
+    useEffect(() => {
+        if (!currentUser) return;
+        const chatsCollectionRef = collection(db, "chats");
+        // We can't easily query OR in Firestore for "public" OR "password_protected" combined with other fields efficiently without index.
+        // But "in" query works for up to 10 values.
+        const q = query(chatsCollectionRef, where("type", "==", "room"), where("roomPrivacy", "in", ["public", "password_protected"]));
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const rooms = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setAvailableRooms(rooms);
+        }, (error) => {
+            console.error("Error fetching available rooms:", error);
+        });
+
+        return () => unsubscribe();
+    }, [currentUser]);
     useEffect(() => {
         if (users.length === 0) return;
 
@@ -269,7 +288,7 @@ const App = () => {
                 // User is signed in, see docs for a list of available properties
                 // https://firebase.google.com/docs/reference/js/firebase.User
                 console.log("Firebase user signed in:", user.uid);
-                
+
                 // Fetch user profile from Firestore
                 const userDocRef = doc(db, "users", user.uid);
                 const userDocSnap = await getDoc(userDocRef);
@@ -281,7 +300,7 @@ const App = () => {
                 } else {
                     // This case might happen if a user is authenticated but their Firestore doc is missing
                     console.error("No user document found in Firestore for UID:", user.uid);
-                    setCurrentUser(null); 
+                    setCurrentUser(null);
                 }
             } else {
                 // User is signed out
@@ -296,7 +315,7 @@ const App = () => {
     const handleToggleTheme = () => {
         setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
     };
-    const ensureUserKeyPair = async (user) => { 
+    const ensureUserKeyPair = async (user) => {
         if (user.publicKeyJwk)
             return user;
 
@@ -350,7 +369,7 @@ const App = () => {
     const markNotificationsAsRead = async () => {
         if (!currentUser)
             return;
-        
+
         const unreadNotifications = notifications.filter(n => !n.read);
         if (unreadNotifications.length === 0) return;
 
@@ -433,7 +452,7 @@ const App = () => {
 
             // 5. Update local state (optional, as onAuthStateChanged will also fire)
             // The real-time listener for users will handle this update.
-            
+
             // onAuthStateChanged will handle setting the current user
             return true;
         } catch (error) {
@@ -442,7 +461,7 @@ const App = () => {
             return false;
         }
     };
-    const handleLogout = async () => { 
+    const handleLogout = async () => {
         await signOut(auth);
         setViewingProfile(null);
         setAuthFlow(null);
@@ -638,7 +657,7 @@ const App = () => {
     const handleCreateGroup = async (name, members) => {
         if (!currentUser || !name.trim() || members.length === 0)
             return;
-        
+
         const allParticipantIds = [currentUser.id, ...members.map(m => m.id)];
         const uniqueParticipantIds = [...new Set(allParticipantIds)];
 
@@ -663,6 +682,19 @@ const App = () => {
         if (!currentUser || !name.trim())
             return;
         try {
+            const newRoom = {
+                name,
+                type: 'room',
+                roomPrivacy: privacy,
+                password: privacy === 'password_protected' ? password : null,
+                participantIds: [currentUser.id],
+                messages: [],
+                unreadCounts: { [currentUser.id]: 0 },
+                adminId: currentUser.id,
+                createdAt: serverTimestamp(),
+                messagingPermission: 'all',
+                mediaSharePermission: 'all'
+            };
             await addDoc(collection(db, "chats"), newRoom);
             // The onSnapshot listener will handle the UI update.
         } catch (error) {
@@ -684,14 +716,15 @@ const App = () => {
 
         const room = { id: roomDocSnap.id, ...roomDocSnap.data() };
 
-        // Check if room is password protected and password matches
-        if (!room || room.type !== 'room' || room.roomPrivacy !== 'password_protected') {
+        if (!room || room.type !== 'room') {
             return false;
         }
-        if (room.password === passwordInput) {
+
+        if (room.roomPrivacy === 'public' || (room.roomPrivacy === 'password_protected' && room.password === passwordInput)) {
             // Add the current user to the room's participants in Firestore
             await updateDoc(roomDocRef, {
-                participantIds: arrayUnion(currentUser.id)
+                participantIds: arrayUnion(currentUser.id),
+                [`unreadCounts.${currentUser.id}`]: 0
             });
             // The onSnapshot listener will handle the UI update.
             return true;
@@ -770,7 +803,7 @@ const App = () => {
         setChats(prevChats => prevChats.map(chat => {
             if (chat.id === chatId) {
                 const newUnreadCounts = { ...chat.unreadCounts };
-                newUnreadCounts[currentUser.id] = 0;                
+                newUnreadCounts[currentUser.id] = 0;
                 // Update Firestore for unread counts
                 updateDoc(doc(db, "chats", chatId), {
                     [`unreadCounts.${currentUser.id}`]: 0
@@ -782,10 +815,10 @@ const App = () => {
     const handleUpdateUser = async (updatedData) => {
         if (!currentUser)
             return;
-        
+
         // Use the incoming data as the source of truth for the update
         const updatedUser = updatedData;
-        
+
         // Persist changes to Firestore
         const userDocRef = doc(db, "users", updatedUser.id);
         await setDoc(userDocRef, updatedUser, { merge: true }); // Use merge: true to avoid overwriting
@@ -869,7 +902,7 @@ const App = () => {
         return <AuthScreen initialView={initialAuthView} onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow} />;
     }
     return (<>
-        <MainUI activeChat={_activeChat} onSetActiveChat={handleSetActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} onOpenSettingsModal={handleOpenSettingsModal} />
+        <MainUI activeChat={_activeChat} onSetActiveChat={handleSetActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} availableRooms={availableRooms} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} onOpenSettingsModal={handleOpenSettingsModal} />
         {isSettingsModalOpen && (
             <SettingsModal
                 currentUser={currentUser}

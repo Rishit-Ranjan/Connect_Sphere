@@ -24,6 +24,7 @@ const MainUI = ({
     posts,
     resources, // New prop
     chats,
+    availableRooms, // New prop
     notifications,
     viewingProfile,
     theme,
@@ -92,7 +93,7 @@ const MainUI = ({
     const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
     const attachmentMenuRef = useRef(null);
     const sortedChats = [...chats].filter(c => c.participants.some(p => p.id === currentUser.id)).sort((a, b) => (b.messages[b.messages.length - 1]?.id ?? 0) - (a.messages[a.messages.length - 1]?.id ?? 0));
-    const joinableRooms = chats.filter(c => c.type === 'room' && c.roomPrivacy === 'password_protected' && !c.participants.some(p => p.id === currentUser.id));
+    const joinableRooms = (availableRooms || []).filter(r => !r.participantIds?.includes(currentUser.id));
     const handleChatImageSelect = (e) => {
         if (e.target.files && e.target.files[0]) {
             const reader = new FileReader();
@@ -674,10 +675,21 @@ const MainUI = ({
                                 <div className="space-y-2">
                                     {joinableRooms.map(room => (<div key={room.id} className="flex items-center justify-between">
                                         <div className="flex items-center space-x-3">
-                                            <div className="h-10 w-10 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0"><LockClosedIcon className="h-6 w-6 text-orange-500" /></div>
-                                            <p className="font-semibold text-sm">{room.name}</p>
+                                            <div className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${room.roomPrivacy === 'public' ? 'bg-blue-500/20' : 'bg-orange-500/20'}`}>
+                                                {room.roomPrivacy === 'public' ? <UsersIcon className="h-6 w-6 text-blue-500" /> : <LockClosedIcon className="h-6 w-6 text-orange-500" />}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-sm">{room.name}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{room.roomPrivacy === 'public' ? 'Public Room' : 'Password Protected'}</p>
+                                            </div>
                                         </div>
-                                        <button onClick={() => setIsJoinRoomModalOpen(room)} className="text-sm font-semibold px-4 py-1 rounded-full transition bg-primary/10 text-primary dark:bg-primary/20 dark:text-indigo-400 hover:bg-primary/20">
+                                        <button onClick={() => {
+                                            if (room.roomPrivacy === 'public') {
+                                                onJoinRoom(room.id, null);
+                                            } else {
+                                                setIsJoinRoomModalOpen(room);
+                                            }
+                                        }} className="text-sm font-semibold px-4 py-1 rounded-full transition bg-primary/10 text-primary dark:bg-primary/20 dark:text-indigo-400 hover:bg-primary/20">
                                             Join
                                         </button>
                                     </div>))}
@@ -750,7 +762,7 @@ const PostDetailModal = ({ post, currentUser, onClose, onAddComment, onDeleteCom
                                 <p className="text-sm text-gray-800 dark:text-gray-200">{c.content}</p>
                             </div>
                             {(currentUser.id === c.author.id || currentUser.role === 'admin') && (
-                                <button 
+                                <button
                                     onClick={() => onDeleteComment(post.id, c.id)}
                                     className="p-2 text-gray-400 rounded-full opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-opacity"
                                     title="Delete comment"
