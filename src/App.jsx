@@ -18,7 +18,7 @@ const App = () => {
     const [users, setUsers] = useState([]);
     const [resources, setResources] = useState([]); // For the Resource Hub
     const [chats, setChats] = useState([]);
-    const [notifications, setNotifications] = useState([]); // TODO: Migrate to Firestore
+    const [notifications, setNotifications] = useState([]);
     const [viewingProfile, setViewingProfile] = useState(null);
     const [authStep, setAuthStep] = useState(() => sessionStorage.getItem('authStep') || 'welcome'); // 'welcome', 'auth'
     const [initialAuthView, setInitialAuthView] = useState(() => sessionStorage.getItem('initialAuthView') || 'login');
