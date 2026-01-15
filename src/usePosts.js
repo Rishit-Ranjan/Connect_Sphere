@@ -149,8 +149,8 @@ export const usePosts = (currentUser, users, addNotification) => {
 
         try {
             const postRef = doc(db, "posts", postId);
-            const commentAsInDb = { ...commentToDelete, author: undefined, authorId: commentToDelete.author.id };
-            delete commentAsInDb.author;
+            // Destructuring: Extract 'author' into a variable we ignore, and store the rest of the properties in 'commentAsInDb'
+            const { author, ...commentAsInDb } = commentToDelete;
 
             await updateDoc(postRef, { comments: arrayRemove(commentAsInDb) });
         } catch (error) {
