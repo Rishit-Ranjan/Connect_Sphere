@@ -21,6 +21,62 @@ const App = () => {
     const [resources, setResources] = useState([]); // For the Resource Hub
     // chats and availableRooms state are now managed in useChat hook
     const [notifications, setNotifications] = useState([]);
+
+    const addNotification = async (recipientId, type, triggeringUser, post, messageContent) => {
+        if (recipientId === triggeringUser.id)
+            return;
+
+        // Prepare data for Firestore. Store IDs instead of large objects.
+        const newNotification = {
+            recipientId,
+            type,
+            triggeringUserId: triggeringUser.id,
+            postId: post ? post.id : null,
+            messageContent,
+            read: false,
+            timestamp: serverTimestamp(),
+        };
+
+        try {
+            await addDoc(collection(db, "notifications"), newNotification);
+
+            // Send email notification if enabled by recipient
+            const recipient = users.find(u => u.id === recipientId);
+            if (recipient && recipient.emailNotifications && recipient.email) {
+                await addDoc(collection(db, "mail"), {
+                    to: recipient.email,
+                    message: {
+                        subject: `New Notification: ${type}`,
+                        html: `<p>You received a <strong>${type}</strong> from <strong>${triggeringUser.name}</strong>.</p><p>${messageContent || ''}</p>`
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Error creating notification:", error);
+        }
+    };
+
+    // Initialize useChat hook
+    const {
+        chats,
+        availableRooms,
+        addMessage,
+        handleStartChat: startChat,
+        handleCreateGroup,
+        handleCreateRoom,
+        handleJoinRoom,
+        handleManageRoomMembers,
+        handleUpdateRoomSettings,
+        handleDeleteRoom,
+        handleMarkChatAsRead
+    } = useChat(currentUser, users, addNotification);
+
+    const handleStartChat = async (participant) => {
+        const chat = await startChat(participant);
+        if (chat) {
+            handleSetActiveChat(chat);
+        }
+    };
     const [viewingProfile, setViewingProfile] = useState(null);
     const [authStep, setAuthStep] = useState(() => sessionStorage.getItem('authStep') || 'welcome'); // 'welcome', 'auth'
     const [initialAuthView, setInitialAuthView] = useState(() => sessionStorage.getItem('initialAuthView') || 'login');
@@ -277,39 +333,7 @@ const App = () => {
         await handleUpdateUser(updatedUser);
         return updatedUser;
     };
-    const addNotification = async (recipientId, type, triggeringUser, post, messageContent) => {
-        if (recipientId === triggeringUser.id)
-            return;
 
-        // Prepare data for Firestore. Store IDs instead of large objects.
-        const newNotification = {
-            recipientId,
-            type,
-            triggeringUserId: triggeringUser.id,
-            postId: post ? post.id : null,
-            messageContent,
-            read: false,
-            timestamp: serverTimestamp(),
-        };
-
-        try {
-            await addDoc(collection(db, "notifications"), newNotification);
-
-            // Send email notification if enabled by recipient
-            const recipient = users.find(u => u.id === recipientId);
-            if (recipient && recipient.emailNotifications && recipient.email) {
-                await addDoc(collection(db, "mail"), {
-                    to: recipient.email,
-                    message: {
-                        subject: `New Notification: ${type}`,
-                        html: `<p>You received a <strong>${type}</strong> from <strong>${triggeringUser.name}</strong>.</p><p>${messageContent || ''}</p>`
-                    }
-                });
-            }
-        } catch (error) {
-            console.error("Error creating notification:", error);
-        }
-    };
     const markNotificationsAsRead = async () => {
         if (!currentUser)
             return;
@@ -534,27 +558,7 @@ const App = () => {
             alert("Failed to delete user. Please try again.");
         }
     };
-    // Initialize useChat hook
-    const {
-        chats,
-        availableRooms,
-        addMessage,
-        handleStartChat: startChat,
-        handleCreateGroup,
-        handleCreateRoom,
-        handleJoinRoom,
-        handleManageRoomMembers,
-        handleUpdateRoomSettings,
-        handleDeleteRoom,
-        handleMarkChatAsRead
-    } = useChat(currentUser, users, addNotification);
 
-    const handleStartChat = async (participant) => {
-        const chat = await startChat(participant);
-        if (chat) {
-            handleSetActiveChat(chat);
-        }
-    };
     const handleUpdateUser = async (updatedData) => {
         if (!currentUser)
             return;
