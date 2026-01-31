@@ -543,9 +543,6 @@ const App = () => {
             await deleteDoc(doc(db, "users", userId));
 
             // 2. Delete user from Firebase Authentication (requires Cloud Function for security)
-            // For now, we'll just delete the Firestore document.
-            // A real-world app would have a Cloud Function triggered by Firestore delete
-            // to also delete the Auth user.
 
             // 3. Clean up local storage for crypto keys (if they exist)
             localStorage.removeItem(`private_key_${userId}`);
