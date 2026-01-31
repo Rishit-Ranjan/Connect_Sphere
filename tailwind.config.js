@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#6366f1', // Indigo 500 - More modern/premium than the previous blurple
+        primary: '#6366f1', // Indigo 500
         secondary: '#1e293b', // Slate 800 - Richer dark
         accent: '#f59e0b', // Amber 500
         dark: '#0f172a', // Slate 900

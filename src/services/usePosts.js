@@ -63,7 +63,7 @@ export const usePosts = (currentUser, users, addNotification) => {
             timestamp: serverTimestamp(),
             likedBy: [],
             comments: [],
-            isAnnouncement: postData.isAnnouncement && currentUser.role === 'admin',
+            isAnnouncement: !!postData.isAnnouncement && currentUser.role === 'admin',
         };
 
         try {
@@ -71,8 +71,7 @@ export const usePosts = (currentUser, users, addNotification) => {
             return true;
         } catch (error) {
             console.error("Error adding post to Firestore: ", error);
-            alert("Failed to create post. Please try again.");
-            return false;
+            throw error;
         }
     };
 

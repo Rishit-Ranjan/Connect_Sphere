@@ -472,7 +472,7 @@ const App = () => {
                         ...postData,
                         imageUrl: uploadResult.secure_url,
                     };
-                    addPostToDb(postWithImageUrl);
+                    await addPostToDb(postWithImageUrl);
                 } else { // It's a resource for the hub
                     const newResource = {
                         authorId: currentUser.id,
@@ -487,9 +487,10 @@ const App = () => {
             } catch (error) {
                 console.error("Error creating resource:", error);
                 alert("Failed to upload resource. Please try again.");
+                throw error;
             }
         } else if (postData) { // It's a text-only post
-            addPostToDb(postData);
+            await addPostToDb(postData);
         }
     };
     // Real-time listener for resources
