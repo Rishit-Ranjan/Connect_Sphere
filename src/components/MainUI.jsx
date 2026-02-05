@@ -593,6 +593,7 @@ const MainUI = ({
                                             <div>
                                                 <p className="font-semibold text-sm text-gray-800 dark:text-white group-hover:underline">{user.name}</p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">@{user.name.toLowerCase().replace(/\s+/g, '')}</p>
+                                                <p className="text-xs flex items-center space-x-2 text-gray-500 dark:text-gray-400 mt-0.5"><span className={`inline-block h-2 w-2 rounded-full ${user.isOnline ? 'bg-green-500' : 'bg-red-500'}`}></span><span className={`${user.isOnline ? 'text-green-500' : 'text-red-500'}`}>{user.isOnline ? 'Online' : 'Offline'}</span></p>
                                                 {user.statusMessage && <p className="text-xs text-gray-400 truncate mt-0.5">{user.statusMessage}</p>}
                                             </div>
                                         </button>

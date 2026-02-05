@@ -133,11 +133,11 @@ const FloatingChatbot = ({ currentUser, isOnline }) => {
           <div className="flex items-center space-x-3">
             <div className="relative">
               <UserAvatar user={currentBot}/>
-              <span className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-secondary ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+              <span className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-secondary ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></span>
             </div>
             <div>
               <p id="chatbot-heading" className="font-bold text-gray-800 dark:text-white">{currentBot.name}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{isOnline ? 'Online' : 'Offline'}</p>
+              <p className={`text-xs ${isOnline ? 'text-gray-500 dark:text-gray-400' : 'text-red-500 dark:text-red-400'}`}>{isOnline ? 'Online' : 'Offline'}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
