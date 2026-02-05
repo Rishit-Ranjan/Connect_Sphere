@@ -21,6 +21,8 @@ const App = () => {
     const [resources, setResources] = useState([]); // For the Resource Hub
     // chats and availableRooms state are now managed in useChat hook
     const [notifications, setNotifications] = useState([]);
+    const [connectionRequests, setConnectionRequests] = useState([]);
+    const [privacyMap, setPrivacyMap] = useState({});
 
     const addNotification = async (recipientId, type, triggeringUser, post, messageContent) => {
         if (recipientId === triggeringUser.id)
@@ -173,7 +175,7 @@ const App = () => {
             const usersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setUsers(usersList);
             console.log("Real-time user data update received.");
-        }, (error) => { console.error("Error fetching users:", error); }); // Added error handling
+        }, (error) => { console.error("Error fetching users:", error); if (error && error.code === 'permission-denied') { setUsers([]); /* alert('Insufficient permissions for users collection. Ensure Firestore rules allow reads for authenticated users.'); */ } }); // Added error handling
         return () => unsubscribe();
     }, [currentUser]);
 
@@ -199,7 +201,9 @@ const App = () => {
             if (snap.val() === true) {
                 onDisconnect(userStatusDatabaseRef).set(isOfflineForDatabase).then(() => {
                     set(userStatusDatabaseRef, isOnlineForDatabase);
-                    updateDoc(userStatusFirestoreRef, { isOnline: true });
+                    // Update presence in userPrivacy doc instead of users doc
+                    const userPrivacyRef = doc(db, 'userPrivacy', currentUser.id);
+                    setDoc(userPrivacyRef, { isOnline: true, lastSeen: rtdbServerTimestamp() }, { merge: true });
                 });
             }
         });
@@ -217,15 +221,129 @@ const App = () => {
             const statuses = snapshot.val();
             if (!statuses) return;
             users.forEach(user => {
-                const firestoreUserRef = doc(db, 'users', user.id);
+                const userPrivacyRef = doc(db, 'userPrivacy', user.id);
                 const onlineStatus = statuses[user.id]?.isOnline || false;
-                if (user.isOnline !== onlineStatus) {
-                    updateDoc(firestoreUserRef, { isOnline: onlineStatus });
-                }
+                // Only update if different to avoid extra writes
+                // Note: We cannot compare against userPrivacy here easily; perform a write for truth
+                updateDoc(userPrivacyRef, { isOnline: onlineStatus }).catch(err => {
+                    // Ignore permission errors here; Firestore rules may prevent updates for other users
+                    if (err.code !== 'permission-denied') console.error('Failed updating userPrivacy presence:', err);
+                });
             });
         });
         return () => unsubscribe();
     }, [users]);
+
+    // Listen for connection requests involving current user
+    useEffect(() => {
+        if (!currentUser) {
+            setConnectionRequests([]);
+            return;
+        }
+        const incomingQuery = query(collection(db, 'connectionRequests'), where('toId', '==', currentUser.id));
+        const outgoingQuery = query(collection(db, 'connectionRequests'), where('fromId', '==', currentUser.id));
+        const unsubIncoming = onSnapshot(incomingQuery, (qs) => {
+            const items = qs.docs.map(d => ({ id: d.id, ...d.data() }));
+            setConnectionRequests(prev => {
+                // Merge with outgoing to keep full set
+                const outgoing = prev.filter(r => r.fromId === currentUser.id);
+                const merged = items.concat(outgoing.filter(o => !items.find(i => i.id === o.id)));
+                return merged;
+            });
+        }, (error) => {
+            console.error('ConnectionRequests incoming snapshot error:', error);
+            if (error && error.code === 'permission-denied') {
+                // Clear local state and notify developer/user
+                setConnectionRequests([]);
+                // Optional: show a friendly alert in dev/testing
+                // alert('Permission denied: cannot read connection requests. Check Firestore rules.');
+            }
+        });
+        const unsubOutgoing = onSnapshot(outgoingQuery, (qs) => {
+            const items = qs.docs.map(d => ({ id: d.id, ...d.data() }));
+            setConnectionRequests(prev => {
+                const incoming = prev.filter(r => r.toId === currentUser.id);
+                const merged = incoming.concat(items.filter(o => !incoming.find(i => i.id === o.id)));
+                return merged;
+            });
+        }, (error) => {
+            console.error('ConnectionRequests outgoing snapshot error:', error);
+            if (error && error.code === 'permission-denied') {
+                setConnectionRequests([]);
+            }
+        });
+
+        // Also listen for userPrivacy docs so UI can show statusMessage / presence according to visibility
+        const privacyQuery = collection(db, 'userPrivacy');
+        const unsubPrivacy = onSnapshot(privacyQuery, (qs) => {
+            const map = {};
+            qs.docs.forEach(d => { map[d.id] = d.data(); });
+            setPrivacyMap(map);
+        }, (error) => {
+            console.error('userPrivacy snapshot error:', error);
+            if (error && error.code === 'permission-denied') {
+                setPrivacyMap({});
+            }
+        });
+
+        return () => { unsubIncoming(); unsubOutgoing(); unsubPrivacy(); };
+    }, [currentUser]);
+
+    // Connection request APIs
+    const sendConnectionRequest = async (targetUserId) => {
+        if (!currentUser || currentUser.id === targetUserId) return;
+        try {
+            await addDoc(collection(db, 'connectionRequests'), {
+                fromId: currentUser.id,
+                toId: targetUserId,
+                status: 'pending',
+                timestamp: serverTimestamp()
+            });
+            const target = users.find(u => u.id === targetUserId);
+            if (target) await addNotification(targetUserId, 'connection_request', currentUser, null, `${currentUser.name} sent you a connection request.`);
+        } catch (error) {
+            console.error('Failed to send connection request', error);
+            alert('Could not send connection request. Please try again.');
+        }
+    };
+
+    const cancelConnectionRequest = async (requestId) => {
+        try {
+            await deleteDoc(doc(db, 'connectionRequests', requestId));
+        } catch (error) {
+            console.error('Failed to cancel connection request', error);
+            alert('Could not cancel request. Please try again.');
+        }
+    };
+
+    const acceptConnectionRequest = async (request) => {
+        try {
+            const reqRef = doc(db, 'connectionRequests', request.id);
+            await updateDoc(reqRef, { status: 'accepted' });
+            // Add each user to the other's connections
+            const meRef = doc(db, 'users', currentUser.id);
+            const otherRef = doc(db, 'users', request.fromId);
+            await updateDoc(meRef, { connections: arrayUnion(request.fromId) });
+            await updateDoc(otherRef, { connections: arrayUnion(currentUser.id) });
+            const other = users.find(u => u.id === request.fromId);
+            if (other) await addNotification(request.fromId, 'connection_accepted', currentUser, null, `${currentUser.name} accepted your connection request.`);
+        } catch (error) {
+            console.error('Failed to accept connection request', error);
+            alert('Could not accept request. Please try again.');
+        }
+    };
+
+    const declineConnectionRequest = async (request) => {
+        try {
+            const reqRef = doc(db, 'connectionRequests', request.id);
+            await updateDoc(reqRef, { status: 'declined' });
+            const other = users.find(u => u.id === request.fromId);
+            if (other) await addNotification(request.fromId, 'connection_declined', currentUser, null, `${currentUser.name} declined your connection request.`);
+        } catch (error) {
+            console.error('Failed to decline connection request', error);
+            alert('Could not decline request. Please try again.');
+        }
+    };
 
     // Real-time listener for notifications
     useEffect(() => {
@@ -561,16 +679,26 @@ const App = () => {
         if (!currentUser)
             return;
 
-        // Use the incoming data as the source of truth for the update
-        const updatedUser = updatedData;
+        // Normalize updated user object: parent code passes either full user or partial fields
+        const updatedUser = { ...(currentUser || {}), ...(updatedData || {}) };
 
-        // Persist changes to Firestore
+        // Persist changes to Firestore (users collection)
         const userDocRef = doc(db, "users", updatedUser.id);
         await setDoc(userDocRef, updatedUser, { merge: true }); // Use merge: true to avoid overwriting
 
+        // Persist privacy-sensitive fields to userPrivacy collection
+        const userPrivacyRef = doc(db, 'userPrivacy', updatedUser.id);
+        const privacyPayload = {};
+        if ('statusMessage' in updatedUser) privacyPayload.statusMessage = updatedUser.statusMessage || '';
+        if ('statusVisibility' in updatedUser) privacyPayload.statusVisibility = updatedUser.statusVisibility;
+        if ('presenceVisibility' in updatedUser) privacyPayload.presenceVisibility = updatedUser.presenceVisibility;
+        if (Object.keys(privacyPayload).length > 0) {
+            await setDoc(userPrivacyRef, privacyPayload, { merge: true });
+        }
+
+        // Update local state
         setCurrentUser(updatedUser);
-        // Note: Chat messages sender objects won't update retroactively, which is fine.
-        // New messages will use the updated user object.
+        // Update chats participants' cached data
         setChats(prevChats => prevChats.map(chat => ({
             ...chat,
             participants: chat.participants.map(p => p.id === updatedUser.id ? updatedUser : p)
@@ -647,7 +775,7 @@ const App = () => {
         return <AuthScreen initialView={initialAuthView} onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow} />;
     }
     return (<>
-        <MainUI activeChat={_activeChat} onSetActiveChat={handleSetActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} availableRooms={availableRooms} notifications={notifications} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} onOpenSettingsModal={handleOpenSettingsModal} />
+        <MainUI activeChat={_activeChat} onSetActiveChat={handleSetActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} availableRooms={availableRooms} notifications={notifications} connectionRequests={connectionRequests} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onSendConnectionRequest={sendConnectionRequest} onAcceptConnectionRequest={acceptConnectionRequest} onDeclineConnectionRequest={declineConnectionRequest} onCancelConnectionRequest={cancelConnectionRequest} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} onOpenSettingsModal={handleOpenSettingsModal} />
         {isSettingsModalOpen && (
             <SettingsModal
                 currentUser={currentUser}

@@ -51,7 +51,15 @@ const MainUI = ({
     onAddComment,
     onToggleTheme,
     onMarkNotificationsAsRead,
-    onMarkChatAsRead
+    onMarkChatAsRead,
+    // Connection props
+    connectionRequests,
+    onSendConnectionRequest,
+    onAcceptConnectionRequest,
+    onDeclineConnectionRequest,
+    onCancelConnectionRequest,
+    // Privacy map
+    privacyMap
 }) => {
     const [activeView, setActiveView] = useState('feed'); // 'feed', 'chat', 'notices', 'resources'
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -288,7 +296,7 @@ const MainUI = ({
                                 <p className="text-xs text-gray-400">{activeChat.participants.length} members</p>
                             ) : (
                                 <p className={`text-xs font-medium ${chatPartner?.isOnline ? 'text-green-500' : 'text-gray-400'}`}>
-                                    {chatPartner?.statusMessage ? chatPartner.statusMessage : (chatPartner?.isOnline ? 'Online' : 'Offline')}
+                                    {(privacyMap[chatPartner?.id] && privacyMap[chatPartner.id].statusMessage) ? privacyMap[chatPartner.id].statusMessage : (privacyMap[chatPartner?.id] ? (privacyMap[chatPartner.id].isOnline ? 'Online' : 'Offline') : (chatPartner?.isOnline ? 'Online' : 'Offline'))}
                                 </p>
                             )}
                         </div>
@@ -551,7 +559,7 @@ const MainUI = ({
                                     <div className="hidden lg:inline text-left">
                                         <p className="font-semibold text-sm">{currentUser.name}</p>
                                         <p className="text-xs text-gray-500">
-                                            {currentUser.statusMessage ? currentUser.statusMessage : currentUser.role}
+                                            {(privacyMap[currentUser.id] && privacyMap[currentUser.id].statusMessage) ? privacyMap[currentUser.id].statusMessage : currentUser.role}
                                         </p>
                                     </div>
                                 </button>
@@ -562,7 +570,7 @@ const MainUI = ({
 
                 {/* Main Content */}
                 <main className="col-span-12 sm:col-span-10 lg:col-span-7 h-[calc(100vh-5rem)] sm:h-[calc(100vh-2rem)] overflow-y-auto pr-2">
-                    {viewingProfile ? (<ProfilePage profileUser={viewingProfile} currentUser={currentUser} allPosts={posts} onBack={onBackToFeed} onDeletePost={onDeletePost} onViewProfile={onViewProfile} onToggleFollow={onToggleFollow} onToggleLike={onToggleLike} onAddComment={onAddComment} onUpdateUser={onUpdateUser} onStartChat={(user) => {
+                    {viewingProfile ? (<ProfilePage profileUser={viewingProfile} currentUser={currentUser} allPosts={posts} onBack={onBackToFeed} onDeletePost={onDeletePost} onViewProfile={onViewProfile} onToggleFollow={onToggleFollow} onToggleLike={onToggleLike} onAddComment={onAddComment} onUpdateUser={onUpdateUser} connectionRequests={connectionRequests} onSendConnectionRequest={onSendConnectionRequest} onAcceptConnectionRequest={onAcceptConnectionRequest} onDeclineConnectionRequest={onDeclineConnectionRequest} onCancelConnectionRequest={onCancelConnectionRequest} privacyMap={privacyMap} onStartChat={(user) => {
                         const chat = chats.find(c => c.type === 'private' && c.participants.some(p => p.id === user.id));
                         if (chat)
                             handleSelectChat(chat);
@@ -574,6 +582,31 @@ const MainUI = ({
                 {/* Right Sidebar */}
                 <aside className="col-span-3 hidden lg:block">
                     <div className="sticky top-4 space-y-6">
+                        {/* Connection Requests panel */}
+                        <div className="glass rounded-3xl p-4 animate-slide-in-right">
+                            <h4 className="font-semibold text-sm mb-3 text-gray-700 dark:text-gray-200">Connection Requests</h4>
+                            {connectionRequests && connectionRequests.filter(r => r.toId === currentUser.id && r.status === 'pending').length > 0 ? (
+                                <div className="space-y-3">
+                                    {connectionRequests.filter(r => r.toId === currentUser.id && r.status === 'pending').map(req => {
+                                        const fromUser = users.find(u => u.id === req.fromId) || { name: 'Unknown', avatar: '' };
+                                        return (<div key={req.id} className="flex items-center justify-between">
+                                            <button onClick={() => onViewProfile(fromUser)} className="flex items-center space-x-3 text-left">
+                                                <UserAvatar user={fromUser} />
+                                                <div>
+                                                    <p className="font-medium text-sm text-gray-800 dark:text-white">{fromUser.name}</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">@{fromUser.name.toLowerCase().replace(/\s+/g, '')}</p>
+                                                </div>
+                                            </button>
+                                            <div className="flex items-center space-x-2">
+                                                <button onClick={() => onAcceptConnectionRequest(req)} className="px-3 py-1 text-sm bg-green-500 text-white rounded-full">Accept</button>
+                                                <button onClick={() => onDeclineConnectionRequest(req)} className="px-3 py-1 text-sm bg-red-100 dark:bg-red-900/20 text-red-600 rounded-full">Decline</button>
+                                            </div>
+                                        </div>);
+                                    })}
+                                </div>
+                            ) : (<p className="text-sm text-gray-500 dark:text-gray-400">No incoming requests.</p>)}
+                        </div>
+
                         <div className="glass rounded-3xl p-5 animate-slide-in-right">
                             <h3 className="font-bold text-lg mb-4 text-gray-800 dark:text-white">
                                 {isSearching ? 'Search Results' : (currentUser.role === 'admin' ? 'Manage Users' : 'Discover People')}
@@ -587,6 +620,9 @@ const MainUI = ({
                             <div className="space-y-4">
                                 {usersToShow.length > 0 ? (usersToShow.map(user => {
                                     const isFollowing = currentUser.following.includes(user.id);
+                                    const isConnected = currentUser.connections && currentUser.connections.includes(user.id);
+                                    const outgoingRequest = connectionRequests.find(req => req.fromId === currentUser.id && req.toId === user.id && req.status === 'pending');
+                                    const incomingRequest = connectionRequests.find(req => req.fromId === user.id && req.toId === currentUser.id && req.status === 'pending');
                                     return (<div key={user.id} className="flex items-center justify-between">
                                         <button onClick={() => onViewProfile(user)} className="flex items-center space-x-3 group text-left">
                                             <UserAvatar user={user} />
@@ -594,7 +630,7 @@ const MainUI = ({
                                                 <p className="font-semibold text-sm text-gray-800 dark:text-white group-hover:underline">{user.name}</p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">@{user.name.toLowerCase().replace(/\s+/g, '')}</p>
                                                 <p className="text-xs flex items-center space-x-2 text-gray-500 dark:text-gray-400 mt-0.5"><span className={`inline-block h-2 w-2 rounded-full ${user.isOnline ? 'bg-green-500' : 'bg-red-500'}`}></span><span className={`${user.isOnline ? 'text-green-500' : 'text-red-500'}`}>{user.isOnline ? 'Online' : 'Offline'}</span></p>
-                                                {user.statusMessage && <p className="text-xs text-gray-400 truncate mt-0.5">{user.statusMessage}</p>}
+                                                {privacyMap[user.id] && privacyMap[user.id].statusMessage && <p className="text-xs text-gray-400 truncate mt-0.5">{privacyMap[user.id].statusMessage}</p>}
                                             </div>
                                         </button>
                                         {currentUser.role === 'admin' ? (<div className="flex items-center space-x-1">
@@ -609,9 +645,12 @@ const MainUI = ({
                                             }} className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition" title={`Delete ${user.name}`}>
                                                 <TrashIcon className="h-4 w-4" />
                                             </button>
-                                        </div>) : (<button onClick={() => onToggleFollow(user.id)} className={`text-sm font-semibold px-4 py-1 rounded-full transition ${isFollowing ? 'bg-primary text-white' : 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-indigo-400 hover:bg-primary/20'}`}>
-                                            {isFollowing ? 'Following' : 'Follow'}
-                                        </button>)}
+                                        </div>) : (<div className="flex items-center space-x-2">
+                                            <button onClick={() => onToggleFollow(user.id)} className={`text-sm font-semibold px-4 py-1 rounded-full transition ${isFollowing ? 'bg-primary text-white' : 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-indigo-400 hover:bg-primary/20'}`}>
+                                                {isFollowing ? 'Following' : 'Follow'}
+                                            </button>
+                                            {isConnected ? (<button className="text-sm font-semibold px-4 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">Connected</button>) : incomingRequest ? (<div className="flex items-center space-x-2"><button onClick={() => onAcceptConnectionRequest(incomingRequest)} className="px-3 py-1 text-sm bg-green-500 text-white rounded-full">Accept</button><button onClick={() => onDeclineConnectionRequest(incomingRequest)} className="px-3 py-1 text-sm bg-red-100 dark:bg-red-900/20 text-red-600 rounded-full">Decline</button></div>) : outgoingRequest ? (<div className="flex items-center space-x-2"><button onClick={() => onCancelConnectionRequest(outgoingRequest.id)} className="px-3 py-1 text-sm bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 rounded-full">Requested</button></div>) : (<button onClick={() => onSendConnectionRequest(user.id)} className="text-sm font-semibold px-4 py-1 rounded-full bg-blue-600 text-white">Connect</button>)}
+                                        </div>)}
                                     </div>);
                                 })) : (<p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">
                                     {isSearching ? 'No users found.' : 'No users to show.'}

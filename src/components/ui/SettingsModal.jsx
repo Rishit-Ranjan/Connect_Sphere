@@ -8,6 +8,8 @@ const SettingsModal = ({ onClose, currentUser, onUpdateUser }) => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isPrivate, setIsPrivate] = useState(currentUser?.isPrivate || false);
     const [emailNotifications, setEmailNotifications] = useState(true);
+    const [statusVisibility, setStatusVisibility] = useState(currentUser?.statusVisibility || 'everyone');
+    const [presenceVisibility, setPresenceVisibility] = useState(currentUser?.presenceVisibility || 'everyone');
 
     const handleSavePassword = (e) => {
         e.preventDefault();
@@ -27,7 +29,7 @@ const SettingsModal = ({ onClose, currentUser, onUpdateUser }) => {
     };
 
     const handleSavePrivacy = () => {
-        onUpdateUser({ isPrivate });
+        onUpdateUser({ isPrivate, statusVisibility, presenceVisibility });
         alert("Privacy settings updated.");
     };
 
@@ -134,6 +136,29 @@ const SettingsModal = ({ onClose, currentUser, onUpdateUser }) => {
                                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isPrivate ? 'translate-x-6' : 'translate-x-1'}`} />
                                     </button>
                                 </div>
+
+                                <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-gray-100/50 dark:border-slate-700/50">
+                                    <p className="font-medium text-gray-800 dark:text-white mb-2">Status visibility</p>
+                                    <select value={statusVisibility} onChange={(e) => setStatusVisibility(e.target.value)} className="w-full rounded-md p-2 bg-gray-100 dark:bg-gray-700">
+                                        <option value="everyone">Everyone</option>
+                                        <option value="followers">Followers</option>
+                                        <option value="connections">Connections</option>
+                                        <option value="nobody">Nobody</option>
+                                    </select>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Control who can see your status message.</p>
+                                </div>
+
+                                <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-gray-100/50 dark:border-slate-700/50">
+                                    <p className="font-medium text-gray-800 dark:text-white mb-2">Presence visibility</p>
+                                    <select value={presenceVisibility} onChange={(e) => setPresenceVisibility(e.target.value)} className="w-full rounded-md p-2 bg-gray-100 dark:bg-gray-700">
+                                        <option value="everyone">Everyone</option>
+                                        <option value="followers">Followers</option>
+                                        <option value="connections">Connections</option>
+                                        <option value="nobody">Nobody</option>
+                                    </select>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Control who can see your online/offline presence.</p>
+                                </div>
+
                                 <div className="pt-4">
                                     <button
                                         onClick={handleSavePrivacy}

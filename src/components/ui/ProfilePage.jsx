@@ -4,12 +4,15 @@ import UserAvatar from './UserAvatar';
 import PostCard from './PostCard';
 import EditProfileModal from './EditProfileModal';
 import { EditIcon } from '../Icons';
-const ProfilePage = ({ profileUser, currentUser, allPosts, onBack, onDeletePost, onViewProfile, onToggleFollow, onToggleLike, onAddComment, onStartChat, onUpdateUser }) => {
+const ProfilePage = ({ profileUser, currentUser, allPosts, onBack, onDeletePost, onViewProfile, onToggleFollow, onToggleLike, onAddComment, onStartChat, onUpdateUser, connectionRequests = [], onSendConnectionRequest, onAcceptConnectionRequest, onDeclineConnectionRequest, onCancelConnectionRequest, privacyMap = {} }) => {
     const [isFollowingLoading, setIsFollowingLoading] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const userPosts = allPosts.filter(p => p.author.id === profileUser.id);
     const username = profileUser.name.toLowerCase().replace(/\s+/g, '');
     const isFollowing = currentUser.following.includes(profileUser.id);
+    const isConnected = currentUser.connections && currentUser.connections.includes(profileUser.id);
+    const outgoingRequest = connectionRequests.find(req => req.fromId === currentUser.id && req.toId === profileUser.id && req.status === 'pending');
+    const incomingRequest = connectionRequests.find(req => req.fromId === profileUser.id && req.toId === currentUser.id && req.status === 'pending');
     const handleFollowClick = async () => {
         setIsFollowingLoading(true);
         try {
@@ -43,7 +46,7 @@ const ProfilePage = ({ profileUser, currentUser, allPosts, onBack, onDeletePost,
                     <div>
                         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{profileUser.name}</h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400">@{username}</p>
-                        {profileUser.statusMessage && <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{profileUser.statusMessage}</p>}
+                        {(privacyMap[profileUser.id] && privacyMap[profileUser.id].statusMessage) && <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{privacyMap[profileUser.id].statusMessage}</p>}
                     </div>
                     {currentUser.id !== profileUser.id && (<div className="flex items-center space-x-2">
                         <button onClick={() => onStartChat(profileUser)} className="font-semibold px-6 py-2 rounded-full transition bg-blue-500 text-white hover:bg-blue-600">
@@ -54,6 +57,8 @@ const ProfilePage = ({ profileUser, currentUser, allPosts, onBack, onDeletePost,
                             : 'bg-primary text-white hover:bg-indigo-700'} disabled:opacity-50`}>
                             {isFollowingLoading ? <SpinnerIcon className="animate-spin h-5 w-5" /> : (isFollowing ? 'Following' : 'Follow')}
                         </button>
+                        {/* Connection controls */}
+                        {isConnected ? (<button className="font-semibold px-6 py-2 rounded-full transition bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">Connected</button>) : incomingRequest ? (<div className="flex items-center space-x-2"><button onClick={() => onAcceptConnectionRequest(incomingRequest)} className="px-4 py-2 text-sm bg-green-500 text-white rounded-full">Accept</button><button onClick={() => onDeclineConnectionRequest(incomingRequest)} className="px-4 py-2 text-sm bg-red-100 dark:bg-red-900/20 text-red-600 rounded-full">Decline</button></div>) : outgoingRequest ? (<button onClick={() => onCancelConnectionRequest(outgoingRequest.id)} className="px-4 py-2 text-sm bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 rounded-full">Requested</button>) : (<button onClick={() => onSendConnectionRequest(profileUser.id)} className="font-semibold px-6 py-2 rounded-full transition bg-blue-600 text-white hover:bg-blue-700">Connect</button>)}
                     </div>)}
                     {(currentUser.id === profileUser.id || currentUser.role === 'admin') && (
                         <button onClick={() => setIsEditModalOpen(true)} className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition text-gray-700 dark:text-gray-300 font-semibold w-full sm:w-auto text-center">

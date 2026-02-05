@@ -25,3 +25,6 @@ dist-ssr
 
 # Security
 serviceAccountKey.json
+
+
+firestore.rules

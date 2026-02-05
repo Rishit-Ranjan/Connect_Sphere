@@ -92,4 +92,13 @@ Contributions are what make the open-source community such an amazing place to l
 **System Admin Module**<br/><br/>
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/76730b78-d43c-4f34-9810-35194bf4f31d" />
 
+## 🔗 Connection Requests
+
+Users can send and manage connection requests (LinkedIn-style). The repository now includes:
+- Client-side handlers to send/cancel/accept/decline connection requests (`connectionRequests` collection in Firestore).
+- In-app UI: a small incoming requests panel in the sidebar, connect buttons in user lists and profile pages.
+- A sample Cloud Function in `functions/` that creates notifications when a request is created or its status changes.
+
+To enable the Cloud Function, deploy the `functions` folder with the Firebase CLI and configure proper service account permissions.
+
 
