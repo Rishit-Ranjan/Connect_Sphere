@@ -43,6 +43,7 @@ const ProfilePage = ({ profileUser, currentUser, allPosts, onBack, onDeletePost,
                     <div>
                         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{profileUser.name}</h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400">@{username}</p>
+                        {profileUser.statusMessage && <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{profileUser.statusMessage}</p>}
                     </div>
                     {currentUser.id !== profileUser.id && (<div className="flex items-center space-x-2">
                         <button onClick={() => onStartChat(profileUser)} className="font-semibold px-6 py-2 rounded-full transition bg-blue-500 text-white hover:bg-blue-600">

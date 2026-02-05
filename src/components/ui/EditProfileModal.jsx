@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { XIcon, CameraIcon, SpinnerIcon } from '../Icons';
 const EditProfileModal = ({ user, onSave, onClose }) => {
     const [name, setName] = useState(user.name);
+    const [statusMessage, setStatusMessage] = useState(user.statusMessage || '');
     const [newAvatar, setNewAvatar] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const fileInputRef = useRef(null);
@@ -19,7 +20,8 @@ const EditProfileModal = ({ user, onSave, onClose }) => {
             return;
         setIsSaving(true);
         try {
-            await onSave({ name, avatar: newAvatar || user.avatar });
+            // Ensure we send a full user object so parent can persist correctly
+            await onSave({ ...user, name: name.trim(), avatar: newAvatar || user.avatar, statusMessage: statusMessage.trim() });
             onClose();
         }
         catch (error) {
@@ -53,6 +55,10 @@ const EditProfileModal = ({ user, onSave, onClose }) => {
                     <div>
                         <label htmlFor="name" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Name</label>
                         <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} className="block w-full px-4 py-3 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 text-gray-800 dark:text-gray-200 border-2 border-transparent focus:border-primary rounded-lg shadow-sm focus:outline-none focus:ring-0 transition disabled:opacity-50" placeholder="Your name" disabled={isSaving}/>
+                    </div>
+                    <div>
+                        <label htmlFor="status" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Status</label>
+                        <input type="text" id="status" value={statusMessage} onChange={(e) => setStatusMessage(e.target.value)} maxLength={120} className="block w-full px-4 py-3 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 text-gray-800 dark:text-gray-200 border-2 border-transparent focus:border-primary rounded-lg shadow-sm focus:outline-none focus:ring-0 transition disabled:opacity-50" placeholder="What's your status? (max 120 chars)" disabled={isSaving}/>
                     </div>
                 </div>
                 

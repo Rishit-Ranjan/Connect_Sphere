@@ -288,7 +288,7 @@ const MainUI = ({
                                 <p className="text-xs text-gray-400">{activeChat.participants.length} members</p>
                             ) : (
                                 <p className={`text-xs font-medium ${chatPartner?.isOnline ? 'text-green-500' : 'text-gray-400'}`}>
-                                    {chatPartner?.isOnline ? 'Online' : 'Offline'}
+                                    {chatPartner?.statusMessage ? chatPartner.statusMessage : (chatPartner?.isOnline ? 'Online' : 'Offline')}
                                 </p>
                             )}
                         </div>
@@ -550,7 +550,9 @@ const MainUI = ({
                                     <UserAvatar user={currentUser} />
                                     <div className="hidden lg:inline text-left">
                                         <p className="font-semibold text-sm">{currentUser.name}</p>
-                                        <p className="text-xs text-gray-500">{currentUser.role}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {currentUser.statusMessage ? currentUser.statusMessage : currentUser.role}
+                                        </p>
                                     </div>
                                 </button>
                             </div>
@@ -591,6 +593,7 @@ const MainUI = ({
                                             <div>
                                                 <p className="font-semibold text-sm text-gray-800 dark:text-white group-hover:underline">{user.name}</p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">@{user.name.toLowerCase().replace(/\s+/g, '')}</p>
+                                                {user.statusMessage && <p className="text-xs text-gray-400 truncate mt-0.5">{user.statusMessage}</p>}
                                             </div>
                                         </button>
                                         {currentUser.role === 'admin' ? (<div className="flex items-center space-x-1">
