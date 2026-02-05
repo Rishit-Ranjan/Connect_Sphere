@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { HomeIcon, MessageIcon, LogoutIcon, SendIcon, PhotoIcon, TrashIcon, LogoIcon, EditIcon, BanIcon, UserCheckIcon, SunIcon, MoonIcon, BellIcon, PaperclipIcon, UserIcon, SearchIcon, UsersIcon, PlusIcon, XIcon, HashtagIcon, LockClosedIcon, Cog6ToothIcon, MegaphoneIcon, FolderIcon, FileTextIcon, UploadCloudIcon, CommentIcon } from './Icons';
 import * as cryptoService from '../services/cryptoService';
-// AI feature removed
 // import { generateReplySuggestions } from '../services/geminiService';
 // Import newly created UI components
 import UserAvatar from './ui/UserAvatar';
