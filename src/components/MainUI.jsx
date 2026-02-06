@@ -59,7 +59,7 @@ const MainUI = ({
     onDeclineConnectionRequest,
     onCancelConnectionRequest,
     // Privacy map
-    privacyMap
+    privacyMap = {}
 }) => {
     const [activeView, setActiveView] = useState('feed'); // 'feed', 'chat', 'notices', 'resources'
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -175,7 +175,7 @@ const MainUI = ({
                     .catch(err => console.error("Failed to derive shared secret:", err));
             }
         }
-        if (chat.unreadCounts[currentUser.id] > 0) {
+        if (chat.unreadCounts && chat.unreadCounts[currentUser.id] > 0) {
             onMarkChatAsRead(chat.id);
         }
         // Close menus when switching chats
@@ -457,7 +457,7 @@ const MainUI = ({
     }
     const totalUnreadMessages = chats.reduce((acc, chat) => {
         if (chat.participants.some(p => p.id === currentUser.id)) {
-            return acc + (chat.unreadCounts[currentUser.id] || 0);
+            return acc + ((chat.unreadCounts && chat.unreadCounts[currentUser.id]) || 0);
         }
         return acc;
     }, 0);
@@ -690,22 +690,22 @@ const MainUI = ({
                             </div>
                             <div className="space-y-1 max-h-60 overflow-y-auto">
                                 {sortedChats.map(chat => {
-                                    const unreadCount = chat.unreadCounts[currentUser.id] || 0;
+                                    const chatUnreadCount = (chat.unreadCounts && chat.unreadCounts[currentUser.id]) || 0;
                                     const isGroup = chat.type === 'group';
                                     const isRoom = chat.type === 'room';
                                     const chatPartner = !isGroup && !isRoom ? chat.participants.find(p => p.id !== currentUser.id) : null;
                                     return (<button key={chat.id} onClick={() => handleSelectChat(chat)} className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all text-left group ${activeChat?.id === chat.id ? 'bg-primary/10 border border-primary/20' : 'hover:bg-slate-100 dark:hover:bg-slate-700/50 border border-transparent'}`}>
                                         {isGroup ? <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0"><UsersIcon className="h-6 w-6 text-primary" /></div> : isRoom ? <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0"><HashtagIcon className="h-6 w-6 text-green-500" /></div> : <UserAvatar user={chatPartner} />}
                                         <div className="flex-1 overflow-hidden">
-                                            <p className={`font-semibold text-sm truncate ${unreadCount > 0 ? 'font-bold text-gray-900 dark:text-white' : ''}`}>
+                                            <p className={`font-semibold text-sm truncate ${chatUnreadCount > 0 ? 'font-bold text-gray-900 dark:text-white' : ''}`}>
                                                 {isGroup || isRoom ? chat.name : chatPartner?.name}
                                             </p>
-                                            <p className={`text-xs truncate ${unreadCount > 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500'}`}>
+                                            <p className={`text-xs truncate ${chatUnreadCount > 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500'}`}>
                                                 {chat.messages[chat.messages.length - 1]?.content?.text || (chat.messages.length > 0 ? 'Encrypted Message' : 'No messages yet')}
                                             </p>
                                         </div>
-                                        {unreadCount > 0 && (<span className="flex-shrink-0 h-5 w-5 flex items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
-                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        {chatUnreadCount > 0 && (<span className="flex-shrink-0 h-5 w-5 flex items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
+                                            {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
                                         </span>)}
                                     </button>);
                                 })}
