@@ -489,7 +489,7 @@ const MainUI = ({
                             <div className="bg-primary/10 p-2 rounded-xl">
                                 <LogoIcon className="h-8 w-8 text-primary" />
                             </div>
-                            <span className="text-2xl font-bold hidden lg:inline bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">Connect</span>
+                            <span className="text-2xl font-bold hidden lg:inline bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">Connect Sphere</span>
                         </div>
                         <nav className="space-y-2 mt-4">
                             <NavItem icon={<HomeIcon className="h-6 w-6" />} label="Home" isActive={activeView === 'feed' && !viewingProfile} onClick={() => { setActiveView('feed'); onBackToFeed(); }} />
