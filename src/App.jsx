@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AuthScreen from './components/LoginScreen';
 import MainUI from './components/MainUI';
-import ProfileSelectionScreen from './components/ProfileSelectionScreen';
 import WelcomeScreen from './components/WelcomeScreen';
 import FloatingChatbot from './components/FloatingChatbot';
 import SettingsModal from './SettingsModal';
@@ -19,6 +18,7 @@ const App = () => {
     const [currentUser, setCurrentUser] = useState(undefined); // Use undefined to represent loading state
     const [users, setUsers] = useState([]);
     const [resources, setResources] = useState([]); // For the Resource Hub
+    
     // chats and availableRooms state are now managed in useChat hook
     const [notifications, setNotifications] = useState([]);
     const [connectionRequests, setConnectionRequests] = useState([]);
@@ -225,7 +225,7 @@ const App = () => {
                 const onlineStatus = statuses[user.id]?.isOnline || false;
                 // Only update if different to avoid extra writes
                 // Note: We cannot compare against userPrivacy here easily; perform a write for truth
-                updateDoc(userPrivacyRef, { isOnline: onlineStatus }).catch(err => {
+                setDoc(userPrivacyRef, { isOnline: onlineStatus }, { merge: true }).catch(err => {
                     // Ignore permission errors here; Firestore rules may prevent updates for other users
                     if (err.code !== 'permission-denied') console.error('Failed updating userPrivacy presence:', err);
                 });
