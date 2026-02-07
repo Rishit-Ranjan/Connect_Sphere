@@ -181,6 +181,7 @@ const App = () => {
         setIsFetchingUsers(true);
         try {
             const usersCollectionRef = collection(db, "users");
+            
             // Order by name for consistent pagination
             let q = query(usersCollectionRef, orderBy("name"), limit(20));
 
