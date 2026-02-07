@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation, useParams, Navigate } from 'react-router-dom';
 import AuthScreen from './components/LoginScreen';
 import MainUI from './components/MainUI';
 import WelcomeScreen from './components/WelcomeScreen';
@@ -7,14 +8,23 @@ import SettingsModal from './SettingsModal';
 import { auth, db, rtdb } from './services/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser as deleteAuthUser, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { ref, onValue, set, onDisconnect, serverTimestamp as rtdbServerTimestamp } from "firebase/database";
-import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where, runTransaction, deleteDoc, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where, runTransaction, deleteDoc, writeBatch, limit, startAfter } from 'firebase/firestore';
 
 import * as cloudinaryService from './services/cloudinaryService';
 import * as cryptoService from './services/cryptoService';
 import { usePosts } from './services/usePosts';
 import { useChat } from './services/useChat';
 
+// Wrapper to inject route params into MainUI
+const MainUIWrapper = ({ users, ...props }) => {
+    const { userId } = useParams();
+    const viewingProfile = userId ? users.find(u => u.id === userId) : null;
+    return <MainUI {...props} users={users} viewingProfile={viewingProfile} />;
+};
+
 const App = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const [currentUser, setCurrentUser] = useState(undefined); // Use undefined to represent loading state
     const [users, setUsers] = useState([]);
     const [resources, setResources] = useState([]); // For the Resource Hub
@@ -79,9 +89,6 @@ const App = () => {
             handleSetActiveChat(chat);
         }
     };
-    const [viewingProfile, setViewingProfile] = useState(null);
-    const [authStep, setAuthStep] = useState(() => sessionStorage.getItem('authStep') || 'welcome'); // 'welcome', 'auth'
-    const [initialAuthView, setInitialAuthView] = useState(() => sessionStorage.getItem('initialAuthView') || 'login');
     const [authFlow, setAuthFlow] = useState(() => sessionStorage.getItem('authFlow') || null); // Can be 'admin' or 'participant'
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [_activeChat, _setActiveChat] = useState(null);
@@ -128,8 +135,6 @@ const App = () => {
     };
 
     // Persist Auth UI State
-    useEffect(() => { sessionStorage.setItem('authStep', authStep); }, [authStep]);
-    useEffect(() => { sessionStorage.setItem('initialAuthView', initialAuthView); }, [initialAuthView]);
     useEffect(() => {
         if (authFlow) sessionStorage.setItem('authFlow', authFlow);
         else sessionStorage.removeItem('authFlow');
@@ -163,20 +168,55 @@ const App = () => {
         else localStorage.removeItem('activeChatId');
     };
 
-    // Fetch all users from Firestore on initial load
+    // Pagination state for users
+    const [lastUserDoc, setLastUserDoc] = useState(null);
+    const [hasMoreUsers, setHasMoreUsers] = useState(true);
+    const [isFetchingUsers, setIsFetchingUsers] = useState(false);
+
+    const fetchUsers = async (isInitial = false) => {
+        if (!currentUser) return;
+        if (isFetchingUsers) return;
+        if (!isInitial && !hasMoreUsers) return;
+
+        setIsFetchingUsers(true);
+        try {
+            const usersCollectionRef = collection(db, "users");
+            // Order by name for consistent pagination
+            let q = query(usersCollectionRef, orderBy("name"), limit(20));
+
+            if (!isInitial && lastUserDoc) {
+                q = query(usersCollectionRef, orderBy("name"), startAfter(lastUserDoc), limit(20));
+            }
+
+            const snapshot = await getDocs(q);
+            const newUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            setLastUserDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+            setHasMoreUsers(snapshot.docs.length === 20);
+
+            if (isInitial) {
+                setUsers(newUsers);
+            } else {
+                setUsers(prev => {
+                    const existingIds = new Set(prev.map(u => u.id));
+                    return [...prev, ...newUsers.filter(u => !existingIds.has(u.id))];
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching users:", error);
+        } finally {
+            setIsFetchingUsers(false);
+        }
+    };
 
     useEffect(() => {
         if (!currentUser) {
             setUsers([]); // Clear users when logged out
+            setLastUserDoc(null);
+            setHasMoreUsers(true);
             return;
         }
-        const usersCollectionRef = collection(db, "users");
-        const unsubscribe = onSnapshot(usersCollectionRef, (querySnapshot) => {
-            const usersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setUsers(usersList);
-            console.log("Real-time user data update received.");
-        }, (error) => { console.error("Error fetching users:", error); if (error && error.code === 'permission-denied') { setUsers([]); /* alert('Insufficient permissions for users collection. Ensure Firestore rules allow reads for authenticated users.'); */ } }); // Added error handling
-        return () => unsubscribe();
+        fetchUsers(true);
     }, [currentUser]);
 
     // Real-time presence system using Realtime Database
@@ -423,7 +463,6 @@ const App = () => {
             } else {
                 // User is signed out
                 setCurrentUser(null);
-                setAuthStep('welcome'); // Reset to welcome screen on logout
             }
         });
 
@@ -549,20 +588,17 @@ const App = () => {
     };
     const handleLogout = async () => {
         await signOut(auth);
-        setViewingProfile(null);
         setAuthFlow(null);
-        // The onAuthStateChanged listener will also set authStep
+        navigate('/welcome');
     };
     const handleGoToLogin = () => {
-        setInitialAuthView('login');
-        setAuthStep('auth');
+        navigate('/login');
     };
     const handleGoToSignup = () => {
-        setInitialAuthView('signup');
-        setAuthStep('auth');
+        navigate('/signup');
     };
     const handleBackToWelcome = () => {
-        setAuthStep('welcome');
+        navigate('/welcome');
     };
     const handleSetAuthFlow = (flow) => {
         setAuthFlow(flow);
@@ -570,10 +606,10 @@ const App = () => {
     // Call the usePosts hook and pass dependencies
     const { posts, addPost: addPostToDb, deletePost, handleToggleLike, handleAddComment, handleDeleteComment } = usePosts(currentUser, users, addNotification);
     const handleViewProfile = (user) => {
-        setViewingProfile(user);
+        navigate(`/profile/${user.id}`);
     };
     const handleBackToFeed = () => {
-        setViewingProfile(null);
+        navigate('/');
     };
     const addPost = async (postData, file) => {
         if (!currentUser)
@@ -658,12 +694,25 @@ const App = () => {
             return;
         }
         try {
-            // 1. Delete user document from Firestore (this part remains as it's a Firestore operation)
-            await deleteDoc(doc(db, "users", userId));
+            const batch = writeBatch(db);
 
-            // 2. Delete user from Firebase Authentication (requires Cloud Function for security)
+            // 1. Delete user document from Firestore
+            const userRef = doc(db, "users", userId);
+            batch.delete(userRef);
 
-            // 3. Clean up local storage for crypto keys (if they exist)
+            // 2. Delete user privacy settings (Cleanup orphaned data)
+            const privacyRef = doc(db, "userPrivacy", userId);
+            batch.delete(privacyRef);
+
+            await batch.commit();
+
+            // 3. Remove from Realtime Database presence
+            await set(ref(rtdb, 'status/' + userId), null);
+
+            // 4. Delete user from Firebase Authentication (requires Cloud Function for security)
+            // TODO: Trigger a Cloud Function here or call a backend endpoint to remove the Auth user.
+
+            // 5. Clean up local storage for crypto keys (if they exist)
             localStorage.removeItem(`private_key_${userId}`);
             localStorage.removeItem(`public_key_${userId}`);
 
@@ -765,17 +814,84 @@ const App = () => {
             alert("Could not update follow status. Please try again.");
         }
     };
+
+    // Auth Redirect Logic
+    useEffect(() => {
+        if (currentUser === undefined) return; // Wait for loading
+
+        const publicPaths = ['/welcome', '/login', '/signup'];
+        const isPublicPath = publicPaths.includes(location.pathname);
+
+        if (currentUser && isPublicPath) {
+            navigate('/');
+        } else if (!currentUser && !isPublicPath) {
+            navigate('/welcome');
+        }
+    }, [currentUser, location.pathname, navigate]);
+
     if (currentUser === undefined) { // Show a loading screen while auth state is being determined
         return <div className="w-screen h-screen flex items-center justify-center bg-light dark:bg-dark text-dark dark:text-light">Loading...</div>;
     }
-    if (!currentUser) { // Now, if user is null, show auth flow
-        if (authStep === 'welcome') {
-            return <WelcomeScreen onLoginClick={handleGoToLogin} onSignupClick={handleGoToSignup} onSetAuthFlow={handleSetAuthFlow} />;
-        }
-        return <AuthScreen initialView={initialAuthView} onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow} />;
-    }
+
+    const mainUIProps = {
+        activeChat: _activeChat,
+        onSetActiveChat: handleSetActiveChat,
+        currentUser,
+        posts,
+        resources,
+        chats,
+        availableRooms,
+        notifications,
+        connectionRequests,
+        theme,
+        onLogout: handleLogout,
+        onAddPost: addPost,
+        onDeletePost: deletePost,
+        onDeleteUser: deleteUser,
+        onDeleteResource: deleteResource,
+        onAddMessage: addMessage,
+        onStartChat: handleStartChat,
+        onCreateGroup: handleCreateGroup,
+        onCreateRoom: handleCreateRoom,
+        onJoinRoom: handleJoinRoom,
+        onManageRoomMembers: handleManageRoomMembers,
+        onUpdateRoomSettings: handleUpdateRoomSettings,
+        onDeleteRoom: handleDeleteRoom,
+        onUpdateUser: handleUpdateUser,
+        onToggleUserStatus: handleToggleUserStatus,
+        onViewProfile: handleViewProfile,
+        onBackToFeed: handleBackToFeed,
+        onToggleFollow: handleToggleFollow,
+        onSendConnectionRequest: sendConnectionRequest,
+        onAcceptConnectionRequest: acceptConnectionRequest,
+        onDeclineConnectionRequest: declineConnectionRequest,
+        onCancelConnectionRequest: cancelConnectionRequest,
+        onToggleLike: handleToggleLike,
+        onAddComment: handleAddComment,
+        onDeleteComment: handleDeleteComment,
+        onToggleTheme: handleToggleTheme,
+        onMarkNotificationsAsRead: markNotificationsAsRead,
+        onMarkChatAsRead: handleMarkChatAsRead,
+        onOpenSettingsModal: handleOpenSettingsModal,
+        onLoadMoreUsers: () => fetchUsers(false),
+        hasMoreUsers,
+        isFetchingUsers
+    };
+
     return (<>
-        <MainUI activeChat={_activeChat} onSetActiveChat={handleSetActiveChat} currentUser={currentUser} users={users} posts={posts} resources={resources} chats={chats} availableRooms={availableRooms} notifications={notifications} connectionRequests={connectionRequests} viewingProfile={viewingProfile} theme={theme} onLogout={handleLogout} onAddPost={addPost} onDeletePost={deletePost} onDeleteUser={deleteUser} onDeleteResource={deleteResource} onAddMessage={addMessage} onStartChat={handleStartChat} onCreateGroup={handleCreateGroup} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onManageRoomMembers={handleManageRoomMembers} onUpdateRoomSettings={handleUpdateRoomSettings} onDeleteRoom={handleDeleteRoom} onUpdateUser={handleUpdateUser} onToggleUserStatus={handleToggleUserStatus} onViewProfile={handleViewProfile} onBackToFeed={handleBackToFeed} onToggleFollow={handleToggleFollow} onSendConnectionRequest={sendConnectionRequest} onAcceptConnectionRequest={acceptConnectionRequest} onDeclineConnectionRequest={declineConnectionRequest} onCancelConnectionRequest={cancelConnectionRequest} onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} onToggleTheme={handleToggleTheme} onMarkNotificationsAsRead={markNotificationsAsRead} onMarkChatAsRead={handleMarkChatAsRead} onOpenSettingsModal={handleOpenSettingsModal} />
+        <Routes>
+            <Route path="/welcome" element={<WelcomeScreen onLoginClick={handleGoToLogin} onSignupClick={handleGoToSignup} onSetAuthFlow={handleSetAuthFlow} />} />
+            <Route path="/login" element={<AuthScreen initialView="login" onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow} />} />
+            <Route path="/signup" element={<AuthScreen initialView="signup" onLogin={handleLogin} onSignup={handleSignup} onBack={handleBackToWelcome} allowSignupToggle={authFlow !== 'admin'} authFlow={authFlow} />} />
+            
+            {/* Protected Routes */}
+            <Route path="/" element={currentUser ? <MainUIWrapper users={users} {...mainUIProps} /> : <Navigate to="/welcome" />} />
+            <Route path="/profile/:userId" element={currentUser ? <MainUIWrapper users={users} {...mainUIProps} /> : <Navigate to="/welcome" />} />
+            
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to={currentUser ? "/" : "/welcome"} />} />
+        </Routes>
+
         {isSettingsModalOpen && (
             <SettingsModal
                 currentUser={currentUser}
