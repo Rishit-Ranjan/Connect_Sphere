@@ -9,6 +9,7 @@ import { auth, db, rtdb } from './services/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser as deleteAuthUser, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { ref, onValue, set, onDisconnect, serverTimestamp as rtdbServerTimestamp } from "firebase/database";
 import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, onSnapshot, updateDoc, arrayUnion, arrayRemove, where, runTransaction, deleteDoc, writeBatch, limit, startAfter } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import * as cloudinaryService from './services/cloudinaryService';
 import * as cryptoService from './services/cryptoService';
@@ -694,33 +695,20 @@ const App = () => {
             return;
         }
         try {
-            const batch = writeBatch(db);
+            // Call the Cloud Function to handle secure deletion
+            const functions = getFunctions();
+            const deleteUserAccount = httpsCallable(functions, 'deleteUserAccount');
+            
+            await deleteUserAccount({ userId });
 
-            // 1. Delete user document from Firestore
-            const userRef = doc(db, "users", userId);
-            batch.delete(userRef);
-
-            // 2. Delete user privacy settings (Cleanup orphaned data)
-            const privacyRef = doc(db, "userPrivacy", userId);
-            batch.delete(privacyRef);
-
-            await batch.commit();
-
-            // 3. Remove from Realtime Database presence
-            await set(ref(rtdb, 'status/' + userId), null);
-
-            // 4. Delete user from Firebase Authentication (requires Cloud Function for security)
-            // TODO: Trigger a Cloud Function here or call a backend endpoint to remove the Auth user.
-
-            // 5. Clean up local storage for crypto keys (if they exist)
+            // Clean up local storage for crypto keys (if they exist)
             localStorage.removeItem(`private_key_${userId}`);
             localStorage.removeItem(`public_key_${userId}`);
 
-            // The onSnapshot listeners for users, posts, chats will handle UI updates.
-            console.log(`User ${userId} deleted from Firestore.`);
+            console.log(`User ${userId} deleted successfully via Cloud Function.`);
         } catch (error) {
             console.error("Error deleting user:", error);
-            alert("Failed to delete user. Please try again.");
+            alert(`Failed to delete user: ${error.message}`);
         }
     };
 
