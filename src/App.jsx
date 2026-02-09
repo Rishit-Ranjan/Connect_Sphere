@@ -444,8 +444,7 @@ const App = () => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // User is signed in, see docs for a list of available properties
-                // https://firebase.google.com/docs/reference/js/firebase.User
+                // User is signed in
                 console.log("Firebase user signed in:", user.uid);
 
                 // Fetch user profile from Firestore
