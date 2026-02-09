@@ -9,6 +9,7 @@ const SettingsModal = ({ currentUser, onUpdateUser, onClose, onUpdatePassword })
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+    const [passwordError, setPasswordError]= useState('');
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -28,12 +29,13 @@ const SettingsModal = ({ currentUser, onUpdateUser, onClose, onUpdatePassword })
 
     const handlePasswordChangeSubmit = async (e) => {
         e.preventDefault();
+        setPasswordError('');
         if (newPassword !== confirmPassword) {
-            alert("New passwords do not match.");
+            setPasswordError("New passwords do not match.");
             return;
         }
         if (newPassword.length < 6) {
-            alert("New password must be at least 6 characters long.");
+            setPasswordError("New password must be at least 6 characters long.");
             return;
         }
 
@@ -45,6 +47,10 @@ const SettingsModal = ({ currentUser, onUpdateUser, onClose, onUpdatePassword })
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
+        }
+
+        else{
+            setPasswordError("Failed to update password. Please check your current password and try again.");
         }
     };
 
@@ -98,6 +104,9 @@ const SettingsModal = ({ currentUser, onUpdateUser, onClose, onUpdatePassword })
                             Change Password
                         </h3>
                         <form onSubmit={handlePasswordChangeSubmit} className="space-y-4">
+                            {passwordError && (
+                                <div className="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-2 rounded">{passwordError}</div>
+                            )}
                             <div>
                                 <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Current Password</label>
                                 <input 
