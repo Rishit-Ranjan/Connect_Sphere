@@ -83,6 +83,15 @@ Contributions are what make the open-source community such an amazing place to l
 4.  Push to the Branch (`git push origin feature/AmazingFeature`)
 5.  Open a Pull Request<br/><br/>
 
+## 🔗 Connection Requests
+
+Users can send and manage connection requests (LinkedIn-style). The repository now includes:
+- Client-side handlers to send/cancel/accept/decline connection requests (`connectionRequests` collection in Firestore).
+- In-app UI: a small incoming requests panel in the sidebar, connect buttons in user lists and profile pages.
+- A sample Cloud Function in `functions/` that creates notifications when a request is created or its status changes.
+
+To enable the Cloud Function, deploy the `functions` folder with the Firebase CLI and configure proper service account permissions.<br/><br/>
+
 **Welcome Page**<br/><br/>
 <img width="1858" height="959" alt="image" src="https://github.com/user-attachments/assets/f14778c9-18c2-4143-bde3-852b745f3608" /><br/><br/>
 
@@ -92,13 +101,6 @@ Contributions are what make the open-source community such an amazing place to l
 **System Admin Module**<br/><br/>
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/76730b78-d43c-4f34-9810-35194bf4f31d" />
 
-## 🔗 Connection Requests
 
-Users can send and manage connection requests (LinkedIn-style). The repository now includes:
-- Client-side handlers to send/cancel/accept/decline connection requests (`connectionRequests` collection in Firestore).
-- In-app UI: a small incoming requests panel in the sidebar, connect buttons in user lists and profile pages.
-- A sample Cloud Function in `functions/` that creates notifications when a request is created or its status changes.
-
-To enable the Cloud Function, deploy the `functions` folder with the Firebase CLI and configure proper service account permissions.
 
 
