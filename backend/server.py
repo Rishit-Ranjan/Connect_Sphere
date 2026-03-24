@@ -53,11 +53,11 @@ INTENT_MAP = {
     },
     # New intent for issue resolution
     "issue_start": {
-        "keywords": ["issue", "problem", "can't", "doesn't work", "trouble"],
+        "keywords": ["issue", "problem", "can't", "doesn't work", "trouble", "Issues", "Problems", "Trouble"],
         "response": "I'm sorry to hear you're having an issue. What seems to be the problem? (e.g., 'login issue', 'posting a message', 'profile update')"
     },
     "issue_login": {
-        "keywords": ["login", "log in", "signing in", "password"],
+        "keywords": ["login", "log in", "signing in", "password", "logging in", "Login", "Log in", "Signing in", "Password", "Logging in"],
         "response": "For login issues, please first try resetting your password. If that doesn't work, you can contact support at support@connectsphere.com.",
         "context_needed": "issue_start" # This intent is only triggered if we're in an "issue" context
     }
