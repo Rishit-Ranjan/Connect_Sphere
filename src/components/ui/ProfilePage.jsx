@@ -13,6 +13,12 @@ const ProfilePage = ({ profileUser, currentUser, allPosts, onBack, onDeletePost,
     const isConnected = currentUser.connections && currentUser.connections.includes(profileUser.id);
     const outgoingRequest = connectionRequests.find(req => req.fromId === currentUser.id && req.toId === profileUser.id && req.status === 'pending');
     const incomingRequest = connectionRequests.find(req => req.fromId === profileUser.id && req.toId === currentUser.id && req.status === 'pending');
+
+    const privacyData = privacyMap[profileUser.id] || {};
+    const isOnline = privacyData.isOnline ?? profileUser.isOnline;
+    const statusMessage = privacyData.statusMessage || profileUser.statusMessage;
+    const displayUser = { ...profileUser, isOnline };
+
     const handleFollowClick = async () => {
         setIsFollowingLoading(true);
         try {
@@ -36,7 +42,7 @@ const ProfilePage = ({ profileUser, currentUser, allPosts, onBack, onDeletePost,
                     </button>
                 </div>
                 <div className="absolute -bottom-16 left-8">
-                    <UserAvatar user={profileUser} className="h-32 w-32 border-4 border-white dark:border-secondary rounded-full" />
+                    <UserAvatar user={displayUser} className="h-32 w-32 border-4 border-white dark:border-secondary rounded-full" />
                 </div>
             </div>
 
@@ -46,7 +52,11 @@ const ProfilePage = ({ profileUser, currentUser, allPosts, onBack, onDeletePost,
                     <div>
                         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{profileUser.name}</h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400">@{username}</p>
-                        {(privacyMap[profileUser.id] && privacyMap[profileUser.id].statusMessage) && <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{privacyMap[profileUser.id].statusMessage}</p>}
+                        <div className="flex items-center space-x-2 mt-2">
+                             <span className={`inline-block h-2.5 w-2.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                             <span className={`text-sm font-medium ${isOnline ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>{isOnline ? 'Online' : 'Offline'}</span>
+                        </div>
+                        {statusMessage && <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 italic">"{statusMessage}"</p>}
                     </div>
                     {currentUser.id !== profileUser.id && (<div className="flex items-center space-x-2">
                         <button onClick={() => onStartChat(profileUser)} className="font-semibold px-6 py-2 rounded-full transition bg-blue-500 text-white hover:bg-blue-600">
