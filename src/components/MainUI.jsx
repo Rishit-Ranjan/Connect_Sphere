@@ -261,6 +261,112 @@ const MainUI = ({
                 </div>
             </div>);
         }
+        if (activeView === 'rooms') {
+            const myRooms = chats.filter(c => c.type === 'room');
+            return (
+                <div className="animate-fade-in space-y-8">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 flex items-center">
+                            <HashtagIcon className="h-7 w-7 mr-3 text-primary" /> 
+                            Rooms
+                        </h2>
+                        <button 
+                            onClick={() => setIsCreateRoomModalOpen(true)} 
+                            className="bg-primary hover:bg-indigo-600 text-white px-5 py-2.5 rounded-full transition shadow-lg shadow-primary/30 flex items-center space-x-2 font-semibold"
+                        >
+                            <PlusIcon className="h-5 w-5" />
+                            <span>Create Room</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <h3 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-2">My Rooms</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {myRooms.length > 0 ? (
+                                myRooms.map(room => (
+                                    <div key={room.id} className="bg-white dark:bg-secondary p-5 rounded-2xl shadow-sm border border-transparent hover:border-primary/30 hover:shadow-md transition-all group relative">
+                                        <div onClick={() => handleSelectChat(room)} className="cursor-pointer">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                                        <HashtagIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-gray-800 dark:text-white text-lg">{room.name}</h4>
+                                                        <p className="text-xs text-gray-500 font-medium">{room.participantIds.length} members</p>
+                                                    </div>
+                                                </div>
+                                                {room.unreadCounts && room.unreadCounts[currentUser.id] > 0 && (
+                                                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+                                                        {room.unreadCounts[currentUser.id]}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 truncate pl-1 border-l-2 border-gray-200 dark:border-gray-700">
+                                                {room.messages[room.messages.length - 1]?.content?.text || "No messages yet"}
+                                            </p>
+                                        </div>
+                                        
+                                        {currentUser.id === room.adminId && (
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); setIsManageRoomModalOpen(room); }}
+                                                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-primary bg-gray-50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-600 rounded-full transition shadow-sm opacity-0 group-hover:opacity-100"
+                                                title="Manage Room"
+                                            >
+                                                <Cog6ToothIcon className="h-5 w-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="col-span-1 md:col-span-2 text-center py-8 bg-gray-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">
+                                    <HashtagIcon className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                                    <p className="text-gray-500 dark:text-gray-400">You haven't joined any rooms yet.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                     <div>
+                        <h3 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-2">Discover Rooms</h3>
+                        <div className="space-y-3">
+                             {joinableRooms.length > 0 ? (
+                                joinableRooms.map(room => (
+                                    <div key={room.id} className="flex items-center justify-between bg-white dark:bg-secondary p-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-center space-x-4">
+                                            <div className={`h-12 w-12 rounded-full flex items-center justify-center ${room.roomPrivacy === 'public' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-orange-100 dark:bg-orange-900/30'}`}>
+                                                {room.roomPrivacy === 'public' ? <UsersIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" /> : <LockClosedIcon className="h-6 w-6 text-orange-600 dark:text-orange-400" />}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-800 dark:text-white text-lg">{room.name}</p>
+                                                <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                                                    <span className={`px-2 py-0.5 rounded-full ${room.roomPrivacy === 'public' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300' : 'bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-300'}`}>
+                                                        {room.roomPrivacy === 'public' ? 'Public' : 'Private'}
+                                                    </span>
+                                                    <span>•</span>
+                                                    <span>{room.participantIds?.length || 0} members</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => {
+                                            if (room.roomPrivacy === 'public') {
+                                                onJoinRoom(room.id, null);
+                                            } else {
+                                                setIsJoinRoomModalOpen(room);
+                                            }
+                                        }} className="px-6 py-2 bg-primary/10 text-primary dark:bg-primary/20 dark:text-indigo-400 hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white rounded-full font-semibold text-sm transition-all">
+                                            Join
+                                        </button>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-gray-500 dark:text-gray-400 text-center py-4 italic">No new rooms available to join right now.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
         if (activeView === 'notifications') {
             return (<div className="animate-fade-in">
                 <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200 flex items-center"><BellIcon className="h-6 w-6 mr-3 text-primary" /> Notifications</h2>
@@ -508,6 +614,7 @@ const MainUI = ({
                             <NavItem icon={<MegaphoneIcon className="h-6 w-6" />} label="Notices" isActive={activeView === 'notices'} onClick={() => { setActiveView('notices'); onBackToFeed(); }} />
                             <NavItem icon={<FolderIcon className="h-6 w-6" />} label="Resources" isActive={activeView === 'resources'} onClick={() => { setActiveView('resources'); onBackToFeed(); }} />
                             <NavItem icon={<MessageIcon className="h-6 w-6" />} label="Messages" isActive={activeView === 'chat'} onClick={() => { setActiveView('chat'); onBackToFeed(); }} badgeCount={totalUnreadMessages} />
+                            <NavItem icon={<HashtagIcon className="h-6 w-6" />} label="Rooms" isActive={activeView === 'rooms'} onClick={() => { setActiveView('rooms'); onBackToFeed(); }} />
                             <NavItem icon={<BellIcon className="h-6 w-6" />} label="Notifications" isActive={activeView === 'notifications'} onClick={() => {
                                 setActiveView('notifications');
                                 onBackToFeed();
