@@ -5,9 +5,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev:all": "concurrently \"npm run server\" \"npm run dev\"",
-    "server": "backend\\server.py",
-    "dev": "vite",
+    "server": "python backend/server.py",
+    "dev": "concurrently \"npm run server\" \"npm run dev:client\"",
+    "dev:client": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
