@@ -779,9 +779,7 @@ const MainUI = ({
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="font-bold text-lg text-gray-800 dark:text-white">Messages</h3>
                                 <div className="flex items-center space-x-1">
-                                    <button onClick={() => setIsCreateRoomModalOpen(true)} className="p-2 text-gray-400 hover:text-primary rounded-full hover:bg-primary/10 transition" title="Create a new room">
-                                        <HashtagIcon className="h-5 w-5" />
-                                    </button>
+                                    
                                     <button onClick={() => setIsCreateGroupModalOpen(true)} className="p-2 text-gray-400 hover:text-primary rounded-full hover:bg-primary/10 transition" title="Create a new group">
                                         <PlusIcon className="h-5 w-5" />
                                     </button>
