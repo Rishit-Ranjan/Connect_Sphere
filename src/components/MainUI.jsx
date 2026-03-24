@@ -61,8 +61,7 @@ const MainUI = ({
     // Privacy map
     privacyMap = {}
 }) => {
-    const [activeView, setActiveView] = useState('feed'); // 'feed', 'chat', 'notices', 'resources'
-    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [activeView, setActiveView] = useState('feed'); // 'feed', 'chat', 'notices', 'resources', 'notifications'
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
     const [isCreateRoomModalOpen, setIsCreateRoomModalOpen] = useState(false);
@@ -77,7 +76,6 @@ const MainUI = ({
     const [attachedFile, setAttachedFile] = useState(null);
     const [sharedSecrets, setSharedSecrets] = useState(new Map());
     const chatEndRef = useRef(null);
-    const notificationsRef = useRef(null);
     const profileMenuRef = useRef(null);
     const chatImageInputRef = useRef(null);
     const chatFileInputRef = useRef(null);
@@ -211,9 +209,6 @@ const MainUI = ({
     }, [viewingProfile]);
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
-                setIsNotificationsOpen(false);
-            }
             if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
                 setIsProfileMenuOpen(false);
             }
@@ -263,6 +258,23 @@ const MainUI = ({
                                 )}
                             </div>))
                     ) : (<p className="text-center text-gray-500 dark:text-gray-400 mt-8">No resources have been uploaded yet.</p>)}
+                </div>
+            </div>);
+        }
+        if (activeView === 'notifications') {
+            return (<div className="animate-fade-in">
+                <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200 flex items-center"><BellIcon className="h-6 w-6 mr-3 text-primary" /> Notifications</h2>
+                <div className="space-y-2">
+                    {userNotifications.length > 0 ? (userNotifications.map(n => (<NotificationItem key={n.id} notification={n} onClick={() => {
+                        if (n.type === 'message') {
+                            const chat = chats.find(c => c.type === 'private' && c.participants.some(p => p.id === n.triggeringUser.id));
+                            if (chat)
+                                handleSelectChat(chat);
+                        }
+                        else if (n.post) {
+                            onViewProfile(n.triggeringUser);
+                        }
+                    }} />))) : (<p className="text-center text-gray-500 dark:text-gray-400 mt-8">You have no notifications yet.</p>)}
                 </div>
             </div>);
         }
@@ -496,31 +508,11 @@ const MainUI = ({
                             <NavItem icon={<MegaphoneIcon className="h-6 w-6" />} label="Notices" isActive={activeView === 'notices'} onClick={() => { setActiveView('notices'); onBackToFeed(); }} />
                             <NavItem icon={<FolderIcon className="h-6 w-6" />} label="Resources" isActive={activeView === 'resources'} onClick={() => { setActiveView('resources'); onBackToFeed(); }} />
                             <NavItem icon={<MessageIcon className="h-6 w-6" />} label="Messages" isActive={activeView === 'chat'} onClick={() => { setActiveView('chat'); onBackToFeed(); }} badgeCount={totalUnreadMessages} />
-                            <div ref={notificationsRef} className="relative">
-                                <NavItem icon={<BellIcon className="h-6 w-6" />} label="Notifications" isActive={isNotificationsOpen} onClick={() => {
-                                    setIsNotificationsOpen(!isNotificationsOpen);
-                                    if (!isNotificationsOpen)
-                                        onMarkNotificationsAsRead();
-                                }} badgeCount={unreadCount} />
-                                {isNotificationsOpen && (<div className="absolute left-0 sm:left-full top-0 sm:top-auto sm:bottom-0 ml-0 sm:ml-2 mt-14 sm:mt-0 w-full sm:w-96 bg-white dark:bg-secondary rounded-lg shadow-2xl border dark:border-gray-700 z-30 max-h-[70vh] flex flex-col">
-                                    <div className="p-4 border-b dark:border-gray-700">
-                                        <h3 className="font-bold text-lg">Notifications</h3>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto p-2">
-                                        {userNotifications.length > 0 ? (userNotifications.map(n => (<NotificationItem key={n.id} notification={n} onClick={() => {
-                                            setIsNotificationsOpen(false);
-                                            if (n.type === 'message') {
-                                                const chat = chats.find(c => c.type === 'private' && c.participants.some(p => p.id === n.triggeringUser.id));
-                                                if (chat)
-                                                    handleSelectChat(chat);
-                                            }
-                                            else if (n.post) {
-                                                onViewProfile(n.triggeringUser);
-                                            }
-                                        }} />))) : (<p className="p-4 text-center text-sm text-gray-500">You have no notifications yet.</p>)}
-                                    </div>
-                                </div>)}
-                            </div>
+                            <NavItem icon={<BellIcon className="h-6 w-6" />} label="Notifications" isActive={activeView === 'notifications'} onClick={() => {
+                                setActiveView('notifications');
+                                onBackToFeed();
+                                onMarkNotificationsAsRead();
+                            }} badgeCount={unreadCount} />
                         </nav>
                         <div className="flex-grow"></div>
                         <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-auto">
