@@ -5,12 +5,7 @@ from difflib import SequenceMatcher
 import random, requests  # requests for local LLM endpoints
 import re
 
-# remove spacy dependency if it's unreliable in your env
-# import spacy
-# nlp = spacy.load("en_core_web_sm")
-
 user_sessions = {}
-# keep existing INTENT_MAP as is
 
 def fuzzy_match(message: str, keyword: str) -> float:
     return SequenceMatcher(None, message.lower(), keyword.lower()).ratio()
