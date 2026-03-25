@@ -27,11 +27,10 @@ def get_best_intent(message: str, context: str | None = None) -> str | None:
     return best_intent if highest_score >= 0.55 else None
 
 def call_local_llm(message: str, history: list[str]) -> str:
-    # Example: Ollama local server on port 11434
-    # You can swap this with another local engine (gpt4all, localai)
+  
     try:
         payload = {
-            "model": "mistral",  # whatever model you downloaded locally
+            "model": "mistral",  
             "prompt": f"You are a friendly assistant for ConnectSphere.\nUser: {message}\nAssistant:",
             "max_tokens": 150
         }
