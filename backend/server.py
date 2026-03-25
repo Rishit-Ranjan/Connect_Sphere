@@ -36,6 +36,21 @@ def call_local_llm(message: str, history: list[str]) -> str:
         # fallback to a non-API local template
         return "Sorry, I don't understand fully yet, but I can help with login and profile issues."
 
+def call_foundry_model(message: str, history: list) -> str:
+    try:
+        # if Foundry exposes an HTTP server like LocalAI
+        payload = {
+            "model": "local-foundry-model-name",
+            "prompt": f"You are a friendly assistant for ConnectSphere.\nUser: {message}\nAssistant:",
+            "max_tokens": 150
+        }
+        r = requests.post("http://127.0.0.1:5100/v1/generate", json=payload, timeout=10)
+        r.raise_for_status()
+        return r.json()["output"][0]["content"][0]["text"]
+    except Exception as e:
+        print("Foundry fallback error:", e)
+        return "Sorry, I'm having trouble generating a response right now."
+
 def get_bot_response(message: str, user_id: int) -> str:
     if user_id not in user_sessions:
         user_sessions[user_id] = {"context": None, "history": []}
@@ -51,7 +66,7 @@ def get_bot_response(message: str, user_id: int) -> str:
     else:
         # generative fallback.
         session["context"] = None
-        reply = call_local_llm(message, session["history"])
+        reply = call_foundry_model(message, session["history"])
     session["history"].append({"user": message, "bot": reply})
     return reply
 
