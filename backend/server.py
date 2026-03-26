@@ -5,6 +5,13 @@ from difflib import SequenceMatcher
 import random, requests, os, re
 from google import genai
 from dotenv import load_dotenv
+import sys
+import io
+
+# Fix Windows console encoding issues
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 # Load environment variables from .env file
 load_dotenv()
@@ -295,26 +302,26 @@ if __name__ == '__main__':
     
     # Test Foundry connection
     if check_foundry_available():
-        print("Foundry server is running")
+        print("[OK] Foundry server is running")
         
         # Get model info
         try:
             response = requests.get(f"{FOUNDRY_URL}/v1/models", timeout=3)
             if response.status_code == 200:
                 models = response.json()
-                print(f"✓ Available models: {models}")
+                print(f"[OK] Available models: {models}")
         except Exception as e:
-            print(f"⚠️ Could not fetch model info: {e}")
+            print(f"[WARNING] Could not fetch model info: {e}")
         
         # Test a quick inference
         print("\nTesting Foundry with a simple prompt...")
         test_response = call_foundry("Hello", [])
         if test_response:
-            print(f"✓ Foundry test successful: {test_response[:100]}")
+            print(f"[OK] Foundry test successful: {test_response[:100]}")
         else:
-            print("⚠️ Foundry test returned empty response")
+            print("[WARNING] Foundry test returned empty response")
     else:
-        print("⚠️ Foundry server not available")
+        print("[WARNING] Foundry server not available")
         print(f"   Please ensure Foundry is running on {FOUNDRY_URL}")
     
     print("=" * 50)
