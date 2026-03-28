@@ -3,23 +3,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getMyPythonChatbotResponse } from '../services/myChatbotService';
 import { getOfflineBotResponse } from '../services/offlineChatbotService';
 import { MessageIcon, XIcon, SendIcon, EllipsisVerticalIcon, TrashIcon } from './Icons';
-// UPDATE: Changed the AI assistant to a custom bot to reflect the new backend
-const customPythonBot = { id: 0, name: 'Python Assistant', email: 'py@connectsphere.com', gender: 'other', avatar: 'https://i.imgur.com/R3a241h.png', role: 'participant', status: 'active', followers: [], following: [] };
+// UPDATE: Changed the AI assistant to a custom bot to reflect the Gemini backend
+const geminiBot = { id: 0, name: 'Gemini Assistant', email: 'ai@connectsphere.com', gender: 'other', avatar: 'https://i.imgur.com/R3a241h.png', role: 'participant', status: 'active', followers: [], following: [] };
 const offlineBot = { id: -1, name: 'Offline Bot', email: 'offline@connectsphere.com', gender: 'other', avatar: 'https://i.imgur.com/O6G1A22.png', role: 'participant', status: 'active', followers: [], following: [] };
 const FloatingChatbot = ({ currentUser, isOnline }) => {
+    if (!currentUser) return null;
     const [isOpen, setIsOpen] = useState(false);
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const chatEndRef = useRef(null);
     const menuRef = useRef(null);
-    const currentBot = isOnline ? customPythonBot : offlineBot;
-    const storageKey = `chatHistory_${currentUser.id}_${isOnline ? 'online_python' : 'offline'}`; // Updated key for python bot
+    const currentBot = isOnline ? geminiBot : offlineBot;
+    const storageKey = `chatHistory_${currentUser.id}_${isOnline ? 'online_gemini' : 'offline'}`; // Updated key for gemini bot
     const getInitialMessage = React.useCallback(() => ({
         id: Date.now(),
         sender: currentBot,
         text: isOnline
-            ? `Hi ${currentUser.name}! I'm your custom Python-powered assistant. How can I help?`
+            ? `Hi ${currentUser.name}! I'm your Gemini-powered assistant. How can I help you today?`
             : `Hi ${currentUser.name}. You seem to be offline. I'm a basic bot with limited functions. Ask 'help' to see what I can do.`,
         timestamp: 'Just now'
     }), [currentBot, isOnline, currentUser.name]);
