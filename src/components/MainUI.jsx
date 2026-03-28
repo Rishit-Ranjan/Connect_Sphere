@@ -727,9 +727,9 @@ const MainUI = ({
                             <div className="bg-primary/20 p-2.5 rounded-2xl shadow-lg shadow-primary/20 ring-1 ring-primary/50">
                                 <LogoIcon className="h-7 w-7 text-primary" />
                             </div>
-                            <span className="text-xl font-black hidden lg:inline bg-clip-text text-transparent bg-gradient-to-br from-white via-primary to-purple-400">Sphere</span>
+                            <span className="text-xl font-black hidden lg:inline bg-clip-text text-transparent bg-gradient-to-br from-white via-primary to-purple-400">ConnectSphere</span>
                         </div>
-                        <nav className="space-y-1.5 flex-1 overflow-y-auto no-scrollbar">
+                        <nav className="space-y-1.5 flex-1">
                             <NavItem icon={<HomeIcon className="h-6 w-6" />} label="Home" isActive={activeView === 'feed' && !viewingProfile} onClick={() => { setActiveView('feed'); onBackToFeed(); }} />
                             <NavItem icon={<MegaphoneIcon className="h-6 w-6" />} label="Notices" isActive={activeView === 'notices'} onClick={() => { setActiveView('notices'); onBackToFeed(); }} />
                             <NavItem icon={<FolderIcon className="h-6 w-6" />} label="Resources" isActive={activeView === 'resources'} onClick={() => { setActiveView('resources'); onBackToFeed(); }} />
