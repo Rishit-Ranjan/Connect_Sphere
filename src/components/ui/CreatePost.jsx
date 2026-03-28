@@ -156,7 +156,7 @@ const CreatePost = ({ onAddPost, currentUser }) => {
                     {!content && (
                         <p className="absolute top-4 left-4 text-gray-400 dark:text-gray-500 text-lg pointer-events-none select-none">
                             {`What's on your mind, ${currentUser.name}? `}
-                            <span className="font-bold" style={{ color: '#6366f1' }}>#hashtags</span>!
+                            <span className="font-bold" style={{ color: '#6366f1' }}></span>
                         </p>
                     )}
                 </div>

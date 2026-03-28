@@ -4,6 +4,7 @@ const CreateRoomModal = ({ users, currentUser, onCreateRoom, onClose }) => {
     const [roomName, setRoomName] = useState('');
     const [privacy, setPrivacy] = useState('invite_only');
     const [category, setCategory] = useState('General');
+    const [customCategory, setCustomCategory] = useState('');
     const [password, setPassword] = useState('');
     const [selectedMembers, setSelectedMembers] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -15,7 +16,7 @@ const CreateRoomModal = ({ users, currentUser, onCreateRoom, onClose }) => {
             return;
         setIsCreating(true);
         try {
-            await onCreateRoom(roomName, privacy, password, selectedMembers, category);
+            await onCreateRoom(roomName, privacy, password, selectedMembers, category === 'Others' ? (customCategory.trim() || 'Others') : category);
             onClose();
         }
         catch (error) {
@@ -84,18 +85,47 @@ const CreateRoomModal = ({ users, currentUser, onCreateRoom, onClose }) => {
                         </button>
                     </div>
                 </div>
-                <div>
+                <div className="relative">
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Room Category</label>
-                    <select 
-                        value={category} 
-                        onChange={(e) => setCategory(e.target.value)} 
-                        className="block w-full px-4 py-3 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 text-gray-800 dark:text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 appearance-none cursor-pointer"
-                        disabled={isCreating}
-                    >
-                        {['General', 'Tech', 'Gaming', 'Career', 'Study', 'Social'].map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
+                    <div className="grid grid-cols-3 gap-2">
+                        {[
+                            { name: 'General', color: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600', active: 'bg-indigo-600 text-white border-indigo-600', emoji: '💬' },
+                            { name: 'Tech',    color: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700', active: 'bg-blue-600 text-white border-blue-600', emoji: '💻' },
+                            { name: 'Gaming',  color: 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700', active: 'bg-purple-600 text-white border-purple-600', emoji: '🎮' },
+                            { name: 'Career',  color: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700', active: 'bg-green-600 text-white border-green-600', emoji: '💼' },
+                            { name: 'Study',   color: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700', active: 'bg-yellow-500 text-white border-yellow-500', emoji: '📚' },
+                            { name: 'Social',  color: 'bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-700', active: 'bg-pink-500 text-white border-pink-500', emoji: '🎉' },
+                            { name: 'Others',  color: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700', active: 'bg-orange-500 text-white border-orange-500', emoji: '✨' },
+                        ].map(cat => (
+                            <button
+                                key={cat.name}
+                                type="button"
+                                onClick={() => { setCategory(cat.name); if (cat.name !== 'Others') setCustomCategory(''); }}
+                                disabled={isCreating}
+                                className={`flex items-center justify-center space-x-2 px-3 py-2.5 rounded-xl border-2 font-semibold text-sm transition-all hover:scale-105 active:scale-95 ${
+                                    category === cat.name ? cat.active : cat.color
+                                }`}
+                            >
+                                <span>{cat.emoji}</span>
+                                <span>{cat.name}</span>
+                            </button>
                         ))}
-                    </select>
+                    </div>
+                    {/* Custom category input — slides in when 'Others' is selected */}
+                    {category === 'Others' && (
+                        <div className="mt-3 animate-fade-in">
+                            <input
+                                type="text"
+                                autoFocus
+                                value={customCategory}
+                                onChange={(e) => setCustomCategory(e.target.value)}
+                                placeholder="Enter your category name..."
+                                maxLength={30}
+                                className="block w-full px-4 py-3 bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/10 text-gray-800 dark:text-gray-200 border-2 border-orange-300 dark:border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400"
+                                disabled={isCreating}
+                            />
+                        </div>
+                    )}
                 </div>
                 <div>
                     <label htmlFor="roomName" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Room Name</label>
