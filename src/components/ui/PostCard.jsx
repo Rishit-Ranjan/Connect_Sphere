@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TrashIcon, HeartIcon, CommentIcon, PaperclipIcon, SendIcon, SpinnerIcon } from '../Icons';
 import UserAvatar from './UserAvatar';
 
-const PostCard = ({ post, currentUser, onDeletePost, onViewProfile, onToggleLike, onToggleReaction, onAddComment, onSelectHashtag }) => {
+const PostCard = ({ post, currentUser, onDeletePost, onViewProfile, onToggleLike, onToggleReaction, onAddComment, onSelectHashtag, onReportPost }) => {
     const [showReactions, setShowReactions] = useState(false);
     const [showComments, setShowComments] = useState(false);
     const [comment, setComment] = useState('');
@@ -46,11 +46,18 @@ const PostCard = ({ post, currentUser, onDeletePost, onViewProfile, onToggleLike
                             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{post.timestamp}</p>
                         </div>
                     </button>
-                    {(currentUser.role === 'admin' || currentUser.id === post.author.id) && (
-                        <button onClick={() => onDeletePost(post.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all">
-                            <TrashIcon className="h-5 w-5" />
-                        </button>
-                    )}
+                    <div className="flex items-center space-x-1">
+                        {currentUser.role !== 'admin' && currentUser.id !== post.author.id && (
+                            <button onClick={() => onReportPost(post.id)} className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-full transition-all" title="Report post">
+                                <FlagIcon className="h-5 w-5" />
+                            </button>
+                        )}
+                        {(currentUser.role === 'admin' || currentUser.id === post.author.id) && (
+                            <button onClick={() => onDeletePost(post.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all" title="Delete post">
+                                <TrashIcon className="h-5 w-5" />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <p className="my-4 text-gray-700 dark:text-gray-200 leading-relaxed text-[15px]">{post.content}</p>

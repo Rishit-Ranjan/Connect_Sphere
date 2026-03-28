@@ -188,5 +188,19 @@ export const usePosts = (currentUser, users, addNotification) => {
         }
     };
 
-    return { posts, addPost, deletePost, handleToggleLike, handleToggleReaction, handleAddComment, handleDeleteComment };
+    const handleReportPost = async (postId) => {
+        if (!currentUser) return;
+        try {
+            const postRef = doc(db, "posts", postId);
+            await updateDoc(postRef, {
+                isReported: true,
+                reportedBy: arrayUnion(currentUser.id)
+            });
+            alert("Post reported successfully. Admins will review it soon.");
+        } catch (error) {
+            console.error("Error reporting post:", error);
+        }
+    };
+
+    return { posts, addPost, deletePost, handleToggleLike, handleToggleReaction, handleAddComment, handleDeleteComment, handleReportPost };
 };

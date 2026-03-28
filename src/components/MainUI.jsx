@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { HomeIcon, MessageIcon, LogoutIcon, SendIcon, PhotoIcon, TrashIcon, LogoIcon, EditIcon, BanIcon, UserCheckIcon, SunIcon, MoonIcon, BellIcon, PaperclipIcon, UserIcon, SearchIcon, UsersIcon, PlusIcon, XIcon, HashtagIcon, LockClosedIcon, Cog6ToothIcon, MegaphoneIcon, FolderIcon, FileTextIcon, UploadCloudIcon, CommentIcon } from './Icons';
+import { HomeIcon, MessageIcon, LogoutIcon, SendIcon, PhotoIcon, TrashIcon, LogoIcon, EditIcon, BanIcon, UserCheckIcon, SunIcon, MoonIcon, BellIcon, PaperclipIcon, UserIcon, SearchIcon, UsersIcon, PlusIcon, XIcon, HashtagIcon, LockClosedIcon, Cog6ToothIcon, MegaphoneIcon, FolderIcon, FileTextIcon, UploadCloudIcon, CommentIcon, CameraIcon, ChartBarSquareIcon, FlagIcon } from './Icons';
 import * as cryptoService from '../services/cryptoService';
 // import { generateReplySuggestions } from '../services/geminiService';
 // Import newly created UI components
@@ -53,6 +53,7 @@ const MainUI = ({
     onToggleTheme,
     onMarkNotificationsAsRead,
     onMarkChatAsRead,
+    onReportPost,
     // Connection props
     connectionRequests,
     onSendConnectionRequest,
@@ -62,7 +63,7 @@ const MainUI = ({
     // Privacy map
     privacyMap = {}
 }) => {
-    const [activeView, setActiveView] = useState('feed'); // 'feed', 'chat', 'notices', 'resources', 'notifications'
+    const [activeView, setActiveView] = useState('feed'); // 'feed', 'chat', 'notices', 'resources', 'notifications', 'admin_dashboard'
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
     const [isCreateRoomModalOpen, setIsCreateRoomModalOpen] = useState(false);
@@ -507,6 +508,92 @@ const MainUI = ({
                 </div>
             </div>);
         }
+        if (activeView === 'admin_dashboard') {
+            const reportedPosts = posts.filter(p => p.isReported);
+            const stats = [
+                { label: 'Total Users', value: users.length, icon: <UsersIcon className="h-6 w-6" />, color: 'text-blue-500' },
+                { label: 'Total Posts', value: posts.length, icon: <MegaphoneIcon className="h-6 w-6" />, color: 'text-indigo-500' },
+                { label: 'Active Rooms', value: availableRooms.length, icon: <HashtagIcon className="h-6 w-6" />, color: 'text-green-500' },
+                { label: 'Cloud Resources', value: (resources || []).length, icon: <FolderIcon className="h-6 w-6" />, color: 'text-orange-500' },
+            ];
+
+            return (
+                <div className="animate-fade-in space-y-8">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center">
+                            <ChartBarSquareIcon className="h-7 w-7 mr-3 text-primary" /> Admin Dashboard
+                        </h2>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            {stats.map(s => (
+                                <div key={s.label} className="glass p-5 rounded-3xl flex items-center space-x-4">
+                                    <div className={`p-3 rounded-2xl bg-gray-100 dark:bg-gray-800 ${s.color}`}>{s.icon}</div>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest truncate">{s.label}</p>
+                                        <p className="text-2xl font-black text-gray-800 dark:text-white">{s.value}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="glass rounded-3xl overflow-hidden shadow-glass border border-white/20 dark:border-slate-700/30">
+                        <div className="bg-orange-500/10 p-5 border-b border-orange-500/20 flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-orange-600 dark:text-orange-400 flex items-center">
+                                <FlagIcon className="h-6 w-6 mr-2 animate-pulse" /> Mod Queue (Reported Content)
+                            </h3>
+                            <span className="px-3 py-1 bg-orange-500 text-white text-[10px] font-black rounded-full uppercase tracking-tighter">{reportedPosts.length} pending reports</span>
+                        </div>
+                        <div className="p-0">
+                            {reportedPosts.length > 0 ? (
+                                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                                    {reportedPosts.map(post => (
+                                        <div key={post.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                                            <div className="flex items-center space-x-4 overflow-hidden">
+                                                <UserAvatar user={post.author} className="h-12 w-12 flex-shrink-0" />
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-gray-800 dark:text-white truncate">{post.author.name}</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 italic truncate max-w-lg mb-1">"{post.content}"</p>
+                                                    <div className="flex items-center space-x-2">
+                                                        <span className="text-[10px] text-orange-500 font-bold bg-orange-500/10 px-1.5 py-0.5 rounded">REPORTED</span>
+                                                        <span className="text-[10px] text-gray-400 font-medium">{post.timestamp}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <button 
+                                                    onClick={() => setViewingPost(post)} 
+                                                    className="flex-1 md:flex-none px-5 py-2 text-sm font-bold text-primary bg-primary/10 rounded-xl hover:bg-primary/20 transition-all active:scale-95"
+                                                >
+                                                    Review
+                                                </button>
+                                                <button 
+                                                    onClick={() => {
+                                                        if(window.confirm("Delete this reported post permanently?")) {
+                                                            onDeletePost(post.id);
+                                                        }
+                                                    }} 
+                                                    className="flex-1 md:flex-none px-5 py-2 text-sm font-bold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 active:scale-95 font-sans"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-20 bg-gray-50/30 dark:bg-gray-800/20">
+                                    <div className="h-20 w-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/20">
+                                        <UserCheckIcon className="h-10 w-10 text-green-500" />
+                                    </div>
+                                    <h4 className="text-gray-800 dark:text-white font-bold text-lg mb-1">All Clear!</h4>
+                                    <p className="text-gray-500 dark:text-gray-400 max-w-xs mx-auto">The moderation queue is currently empty. No new reports to review.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
         return null;
     };
     const NavItem = ({ icon, label, isActive, onClick, badgeCount }) => (
@@ -629,6 +716,9 @@ const MainUI = ({
                                 onBackToFeed();
                                 onMarkNotificationsAsRead();
                             }} badgeCount={unreadCount} />
+                            {currentUser.role === 'admin' && (
+                                <NavItem icon={<ChartBarSquareIcon className="h-6 w-6" />} label="Dashboard" isActive={activeView === 'admin_dashboard'} onClick={() => { setActiveView('admin_dashboard'); onBackToFeed(); }} />
+                            )}
                         </nav>
                         <div className="flex-grow"></div>
                         <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-auto">

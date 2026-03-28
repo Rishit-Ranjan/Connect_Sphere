@@ -82,7 +82,7 @@ const WelcomeScreen = ({ onLoginClick, onSignupClick, onSetAuthFlow }) => {
           <div className="text-center mt-6">
             <button
               onClick={() => handleSelect('admin')}
-              className="text-xs text-slate-500 hover:text-slate-100 transition-colors underline underline-offset-2"
+              className="text-xs text-slate-400 hover:text-slate-100 transition-colors underline underline-offset-2"
             >
               If you are an Administrator, Sign in here
             </button>
