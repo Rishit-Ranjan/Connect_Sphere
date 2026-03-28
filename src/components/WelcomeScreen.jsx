@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { LogoIcon, ArrowLeftIcon } from './Icons';
+
 const WelcomeScreen = ({ onLoginClick, onSignupClick, onSetAuthFlow }) => {
   const [selection, setSelection] = useState(null); // 'admin' or 'participant'
 
@@ -10,27 +11,80 @@ const WelcomeScreen = ({ onLoginClick, onSignupClick, onSetAuthFlow }) => {
 
   if (!selection) {
     return (
-      <div className="min-h-screen bg-light dark:bg-dark flex flex-col items-center justify-center p-4 font-sans transition-colors duration-300">
-        <div className="w-full max-w-md mx-auto space-y-8 bg-white dark:bg-secondary p-10 rounded-2xl shadow-2xl">
-          <div className="flex flex-col items-center space-y-4 text-center">
-            <LogoIcon className="h-16 w-16 text-primary" />
-            <h1 className="text-4xl font-bold text-gray-800 dark:text-white">Welcome to ConnectSphere</h1>
-            <p className="text-lg text-gray-500 dark:text-gray-400">Select a profile to continue</p>
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden bg-slate-950">
+
+        {/* Animated gradient orbs */}
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/20 blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-[40%] right-[10%] w-[300px] h-[300px] rounded-full bg-blue-500/10 blur-[90px] animate-pulse" style={{ animationDelay: '2s' }} />
+
+        {/* Subtle grid overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+            backgroundSize: '50px 50px'
+          }}
+        />
+
+        {/* Content card */}
+        <div className="w-full max-w-md mx-auto relative z-10">
+
+          {/* Logo + brand */}
+          <div className="flex flex-col items-center space-y-4 mb-10 text-center">
+            <div className="relative">
+              <div className="absolute inset-0 bg-indigo-500/40 rounded-2xl blur-xl scale-150" />
+              <div className="relative bg-indigo-600 p-4 rounded-2xl shadow-2xl shadow-indigo-500/40">
+                <LogoIcon className="h-10 w-10 text-white" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-4xl font-extrabold text-white tracking-tight">
+                Connect<span className="text-indigo-400">Sphere</span>
+              </h1>
+              <p className="text-slate-400 mt-2 text-base">Where your community comes together.</p>
+            </div>
           </div>
-          <div className="space-y-4">
-            <button onClick={() => handleSelect('admin')} className="w-full flex items-center p-4 space-x-4 bg-white dark:bg-gray-800/50 rounded-xl shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
-              <img className="h-14 w-14 rounded-full object-cover" src="https://picsum.photos/seed/admin/100" alt="Admin" />
-              <div className="text-left">
-                <p className="font-bold text-lg text-gray-800 dark:text-white">Admin User</p>
-                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">admin</span>
+
+          {/* Feature pills */}
+          <div className="flex justify-center flex-wrap gap-2 mb-8">
+            {['💬 Rooms', '📢 Announcements', '🤝 Connect', '🤖 AI Assistant'].map(f => (
+              <span key={f} className="px-3 py-1 text-xs font-semibold bg-white/5 text-slate-300 border border-white/10 rounded-full backdrop-blur-sm">
+                {f}
+              </span>
+            ))}
+          </div>
+
+          {/* Main CTA card */}
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl space-y-4">
+            <button
+              onClick={() => handleSelect('participant')}
+              className="w-full flex items-center p-4 space-x-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-500/30 group"
+            >
+              <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center text-2xl flex-shrink-0">
+                👤
               </div>
+              <div className="text-left flex-1">
+                <p className="font-bold text-lg text-white">Get Started</p>
+                <p className="text-sm text-indigo-200">Log in or create your account</p>
+              </div>
+              <svg className="w-5 h-5 text-indigo-200 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
-            <button onClick={() => handleSelect('participant')} className="w-full flex items-center p-4 space-x-4 bg-white dark:bg-gray-800/50 rounded-xl shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
-              <img className="h-14 w-14 rounded-full object-cover" src="https://picsum.photos/seed/participant-generic/100" alt="Participant" />
-              <div className="text-left">
-                <p className="font-bold text-lg text-gray-800 dark:text-white">Participant User</p>
-                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">participant</span>
-              </div>
+
+            <p className="text-center text-slate-500 text-xs">
+              By continuing, you agree to our Terms of Service and Privacy Policy.
+            </p>
+          </div>
+
+          {/* Subtle admin link */}
+          <div className="text-center mt-6">
+            <button
+              onClick={() => handleSelect('admin')}
+              className="text-xs text-slate-500 hover:text-slate-100 transition-colors underline underline-offset-2"
+            >
+              If you are an Administrator, Sign in here
             </button>
           </div>
         </div>
@@ -39,49 +93,77 @@ const WelcomeScreen = ({ onLoginClick, onSignupClick, onSetAuthFlow }) => {
   }
 
   return (
-    <div className="min-h-screen bg-light dark:bg-dark flex flex-col items-center justify-center p-4 font-sans transition-colors duration-300 relative overflow-hidden">
-      {/* Background Graphics */}
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <img
-          src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1920&q=80"
-          alt="Background"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm" />
-      </div>
-      <div className="w-full max-w-md mx-auto relative">
-        <button onClick={() => setSelection(null)} className="absolute top-4 left-4 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition z-10 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Go back to profile selection">
-          <ArrowLeftIcon className="w-6 h-6" />
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden bg-slate-950">
+
+      {/* Animated gradient orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/20 blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+
+      {/* Grid overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+          backgroundSize: '50px 50px'
+        }}
+      />
+
+      <div className="w-full max-w-md mx-auto relative z-10">
+
+        {/* Back button */}
+        <button
+          onClick={() => setSelection(null)}
+          className="flex items-center space-x-1 text-slate-400 hover:text-white transition-colors mb-6 group"
+          aria-label="Go back"
+        >
+          <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          <span className="text-sm">Back</span>
         </button>
-        <div className="bg-white dark:bg-secondary shadow-2xl rounded-2xl p-8 space-y-8 text-center overflow-hidden">
-          <div className="w-full h-48 bg-gray-100 dark:bg-gray-800 rounded-xl mb-6 overflow-hidden relative group">
-            <img
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
-              alt="Community"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+
+        {/* Card */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl space-y-8 text-center">
+
+          {/* Logo */}
+          <div className="flex flex-col items-center space-y-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-indigo-500/40 rounded-2xl blur-xl scale-150" />
+              <div className="relative bg-indigo-600 p-4 rounded-2xl shadow-2xl shadow-indigo-500/40">
+                <LogoIcon className="h-10 w-10 text-white" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl font-extrabold text-white tracking-tight">
+                Connect<span className="text-indigo-400">Sphere</span>
+              </h1>
+              <p className="text-slate-400 mt-1 text-sm">Your new community awaits.</p>
+            </div>
           </div>
-          <div className="flex flex-col items-center space-y-2">
-            <LogoIcon className="h-12 w-12 text-primary" />
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-              Welcome to ConnectSphere
-            </h1>
-            <p className="text-gray-500 dark:text-gray-400">
-              Your new community awaits.
-            </p>
-          </div>
-          <div className="space-y-4">
-            <button onClick={onLoginClick} className="w-full py-3 px-4 font-semibold text-white bg-primary rounded-full hover:bg-indigo-700 transition-transform transform hover:scale-105">
+
+          {/* Action buttons */}
+          <div className="space-y-3">
+            <button
+              onClick={onLoginClick}
+              className="w-full py-3 px-4 font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-500/30"
+            >
               Log In
             </button>
-            {(selection === 'participant' || selection === 'admin') && (<button onClick={onSignupClick} className="w-full py-3 px-4 font-semibold text-primary dark:text-indigo-400 bg-primary/10 dark:bg-primary/20 rounded-full hover:bg-primary/20 dark:hover:bg-primary/30 transition-transform transform hover:scale-105">
-              Sign Up
-            </button>)}
+            {(selection === 'participant' || selection === 'admin') && (
+              <button
+                onClick={onSignupClick}
+                className="w-full py-3 px-4 font-bold text-indigo-400 hover:text-white bg-white/5 hover:bg-indigo-600/30 border border-white/10 hover:border-indigo-500/50 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Sign Up
+              </button>
+            )}
           </div>
+
+          <p className="text-xs text-slate-600">
+            By continuing, you agree to our Terms of Service and Privacy Policy.
+          </p>
         </div>
       </div>
-    </div>);
+    </div>
+  );
 };
+
 export default WelcomeScreen;
