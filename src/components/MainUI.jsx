@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { HomeIcon, MessageIcon, LogoutIcon, SendIcon, PhotoIcon, TrashIcon, LogoIcon, EditIcon, BanIcon, UserCheckIcon, SunIcon, MoonIcon, BellIcon, PaperclipIcon, UserIcon, SearchIcon, UsersIcon, PlusIcon, XIcon, HashtagIcon, LockClosedIcon, Cog6ToothIcon, MegaphoneIcon, FolderIcon, FileTextIcon, UploadCloudIcon, CommentIcon, CameraIcon, ChartBarSquareIcon, FlagIcon } from './Icons';
+import { HomeIcon, MessageIcon, LogoutIcon, SendIcon, PhotoIcon, TrashIcon, LogoIcon, EditIcon, BanIcon, UserCheckIcon, SunIcon, MoonIcon, BellIcon, PaperclipIcon, UserIcon, SearchIcon, UsersIcon, PlusIcon, XIcon, HashtagIcon, LockClosedIcon, Cog6ToothIcon, MegaphoneIcon, FolderIcon, FileTextIcon, UploadCloudIcon, CommentIcon, CameraIcon, ChartBarSquareIcon, FlagIcon, EllipsisVerticalIcon } from './Icons';
 import * as cryptoService from '../services/cryptoService';
 // import { generateReplySuggestions } from '../services/geminiService';
 // Import newly created UI components
@@ -63,6 +63,20 @@ const MainUI = ({
     // Privacy map
     privacyMap = {}
 }) => {
+    const themes = {
+        slate: { name: 'Slate', bg: 'bg-slate-950', primary: 'indigo-600', orbs: ['bg-indigo-600/30', 'bg-violet-600/20'] },
+        indigo: { name: 'Indigo', bg: 'bg-indigo-950', primary: 'violet-600', orbs: ['bg-violet-600/30', 'bg-blue-600/20'] },
+        rose: { name: 'Rose', bg: 'bg-rose-950', primary: 'pink-600', orbs: ['bg-pink-600/30', 'bg-red-600/20'] },
+        emerald: { name: 'Emerald', bg: 'bg-emerald-950', primary: 'teal-600', orbs: ['bg-teal-600/30', 'bg-emerald-600/20'] }
+    };
+
+    const [selectedTheme, setSelectedTheme] = useState(() => localStorage.getItem('cs_theme') || 'slate');
+    const themeConfig = themes[selectedTheme] || themes.slate;
+
+    useEffect(() => {
+        localStorage.setItem('cs_theme', selectedTheme);
+    }, [selectedTheme]);
+
     const [activeView, setActiveView] = useState('feed'); // 'feed', 'chat', 'notices', 'resources', 'notifications', 'admin_dashboard'
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
@@ -599,9 +613,9 @@ const MainUI = ({
     const NavItem = ({ icon, label, isActive, onClick, badgeCount }) => (
         <button
             onClick={onClick}
-            className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${isActive
-                ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02]'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-white/80 dark:hover:bg-slate-800/80 hover:shadow-md hover:scale-[1.02]'
+            className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl transition-all duration-500 relative group ${isActive
+                ? 'bg-primary text-white shadow-lg shadow-primary/40 scale-[1.02]'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-all duration-300'
                 }`}
         >
             <div className={`transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
@@ -694,18 +708,28 @@ const MainUI = ({
         {isManageRoomModalOpen && (<ManageRoomModal room={isManageRoomModalOpen} allUsers={users} currentUser={currentUser} onClose={() => setIsManageRoomModalOpen(null)} onSaveMembers={onManageRoomMembers} onSaveSettings={onUpdateRoomSettings} onDeleteRoom={onDeleteRoom} />)}
         {viewingPost && <PostDetailModal post={viewingPost} currentUser={currentUser} onClose={() => setViewingPost(null)} onAddComment={onAddComment} onDeleteComment={onDeleteComment} />}
         {isSettingsModalOpen && (<SettingsModal currentUser={currentUser} onUpdateUser={onUpdateUser} onClose={() => setIsSettingsModalOpen(false)} />)}
-        <div className="min-h-screen bg-light dark:bg-dark text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
-            <div className="container mx-auto grid grid-cols-12 gap-4 md:gap-6 p-2 md:p-4">
+        <div
+            className={`min-h-screen relative overflow-hidden font-sans transition-all duration-700 ${theme === 'dark' ? themeConfig.bg : 'bg-slate-50'} text-slate-800 dark:text-slate-200`}
+            style={{
+                '--primary-hex': themeConfig.primary,
+            }}
+        >
+            {/* Animated Background Orbs */}
+            <div className={`absolute top-0 -left-4 w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-30 animate-blob pointer-events-none transition-colors duration-1000 ${themeConfig.orbs[0]}`}></div>
+            <div className={`absolute top-0 -right-4 w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-30 animate-blob animation-delay-2000 pointer-events-none transition-colors duration-1000 ${themeConfig.orbs[1]}`}></div>
+            <div className="absolute -bottom-8 left-20 w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 animate-blob animation-delay-4000 pointer-events-none bg-purple-600/20 transition-colors duration-1000"></div>
+
+            <div className="relative z-10 container mx-auto grid grid-cols-12 gap-4 md:gap-6 p-2 md:p-4 min-h-screen">
                 {/* Left Sidebar */}
                 <aside className="col-span-2 lg:col-span-2 hidden sm:block z-20">
-                    <div className="sticky top-4 flex flex-col h-[calc(100vh-2rem)]">
-                        <div className="flex justify-center lg:justify-start items-center p-2 space-x-3 mb-6">
-                            <div className="bg-primary/10 p-2 rounded-xl">
-                                <LogoIcon className="h-8 w-8 text-primary" />
+                    <div className="sticky top-4 flex flex-col h-[calc(100vh-2rem)] glass p-3 lg:p-4 rounded-[2.5rem] border-white/10 dark:border-white/5">
+                        <div className="flex justify-center lg:justify-start items-center p-2 space-x-3 mb-8">
+                            <div className="bg-primary/20 p-2.5 rounded-2xl shadow-lg shadow-primary/20 ring-1 ring-primary/50">
+                                <LogoIcon className="h-7 w-7 text-primary" />
                             </div>
-                            <span className="text-2xl font-bold hidden lg:inline bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">Connect Sphere</span>
+                            <span className="text-xl font-black hidden lg:inline bg-clip-text text-transparent bg-gradient-to-br from-white via-primary to-purple-400">Sphere</span>
                         </div>
-                        <nav className="space-y-2 mt-4">
+                        <nav className="space-y-1.5 flex-1 overflow-y-auto no-scrollbar">
                             <NavItem icon={<HomeIcon className="h-6 w-6" />} label="Home" isActive={activeView === 'feed' && !viewingProfile} onClick={() => { setActiveView('feed'); onBackToFeed(); }} />
                             <NavItem icon={<MegaphoneIcon className="h-6 w-6" />} label="Notices" isActive={activeView === 'notices'} onClick={() => { setActiveView('notices'); onBackToFeed(); }} />
                             <NavItem icon={<FolderIcon className="h-6 w-6" />} label="Resources" isActive={activeView === 'resources'} onClick={() => { setActiveView('resources'); onBackToFeed(); }} />
@@ -744,23 +768,42 @@ const MainUI = ({
                                                 <span className="font-semibold">Settings</span>
                                             </button>
                                         </li>
-                                        <li>
-                                            <button onClick={onLogout} className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors">
+                                        <li>                                            <button onClick={onLogout} className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors">
                                                 <LogoutIcon className="h-5 w-5" />
                                                 <span className="font-semibold">Logout</span>
                                             </button>
                                         </li>
                                     </ul>
                                 </div>)}
-                                <button onClick={() => setIsProfileMenuOpen(prev => !prev)} className="flex items-center space-x-3 p-2 w-full hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-2xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 mt-4">
-                                    <UserAvatar user={currentUser} />
-                                    <div className="hidden lg:inline text-left">
-                                        <p className="font-semibold text-sm">{currentUser.name}</p>
-                                        <p className="text-xs text-gray-500">
-                                            {(privacyMap[currentUser.id] && privacyMap[currentUser.id].statusMessage) ? privacyMap[currentUser.id].statusMessage : currentUser.role}
-                                        </p>
+
+                                <div className="mt-4 p-4 glass rounded-2xl">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">APPEARANCE</p>
+                                    <div className="flex items-center space-x-2">
+                                        {Object.entries(themes).map(([key, cfg]) => (
+                                            <button
+                                                key={key}
+                                                onClick={() => setSelectedTheme(key)}
+                                                className={`h-6 w-6 rounded-full border-2 transition-all transform hover:scale-110 ${selectedTheme === key ? 'border-primary ring-2 ring-primary/20 scale-125 shadow-lg' : 'border-white/20'}`}
+                                                style={{ backgroundColor: cfg.bg.replace('bg-', '') === 'slate-950' ? '#0f172a' : cfg.bg.replace('bg-', '') === 'indigo-950' ? '#1e1b4b' : cfg.bg.replace('bg-', '') === 'rose-950' ? '#4c0519' : '#064e3b' }}
+                                                title={cfg.name}
+                                            />
+                                        ))}
                                     </div>
-                                </button>
+                                </div>
+
+                                <div className="mt-2 flex items-center justify-between p-4 glass rounded-2xl group cursor-pointer" onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} title="Account Settings">
+                                    <div className="flex items-center space-x-3 overflow-hidden">
+                                        <UserAvatar user={currentUser} className="h-10 w-10 ring-2 ring-primary/20 group-hover:ring-primary transition-all" />
+                                        <div className="flex-1 min-w-0 hidden lg:block text-left">
+                                            <p className="font-bold text-sm text-gray-800 dark:text-white truncate">{currentUser.name}</p>
+                                            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate uppercase tracking-tighter">{currentUser.role === 'admin' ? 'Administrator' : 'Member'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="hidden lg:block">
+                                        <EllipsisVerticalIcon className="h-4 w-4 text-gray-400 group-hover:text-primary transition-colors" />
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>

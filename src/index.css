@@ -6,16 +6,35 @@
 
 :root {
   font-family: 'Outfit', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --primary-hex: #6366f1;
 }
 
 body {
   @apply text-slate-800 dark:text-slate-200 antialiased;
-  background: linear-gradient(135deg, #f0f4ff 0%, #e2e8f0 100%);
+  background: var(--theme-bg, #f0f4ff);
   min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
 }
 
 html.dark body {
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  background: var(--theme-bg-dark, #0f172a);
+}
+
+.text-primary {
+  color: var(--primary-hex) !important;
+}
+
+.bg-primary {
+  background-color: var(--primary-hex) !important;
+}
+
+.border-primary {
+  border-color: var(--primary-hex) !important;
+}
+
+.ring-primary {
+  --tw-ring-color: var(--primary-hex) !important;
 }
 
 /* Custom Scrollbar */
@@ -41,5 +60,9 @@ html.dark body {
 }
 
 .glass {
-  @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/30 shadow-glass;
+  @apply bg-white/70 dark:bg-slate-900/60 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-glass-sm hover:shadow-glass transition-all duration-300;
+}
+
+.shadow-glass {
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
 }
