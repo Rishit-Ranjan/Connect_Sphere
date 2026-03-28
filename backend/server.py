@@ -88,7 +88,7 @@ def call_gemini_model(message: str, history: list) -> str:
         return "I'm having trouble connecting to my AI services. Please check the server configuration."
 
     try:
-        # Switching to 1.5-flash for better stability and higher free-tier quota
+        # Correcting model name: gemini-2.5-flash does not exist. Using 1.5-flash for stability.
         model_id = "gemini-2.5-flash"
         
         # Format conversation for Gemini

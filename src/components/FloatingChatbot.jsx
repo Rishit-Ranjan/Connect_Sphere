@@ -122,13 +122,13 @@ const FloatingChatbot = ({ currentUser, isOnline }) => {
     };
     const UserAvatar = ({ user, className = 'h-10 w-10' }) => (<img className={`${className} rounded-full object-cover`} src={user.avatar} alt={user.name}/>);
     return (<>
-      <div className={`fixed bottom-6 right-6 z-40 transition-transform transform ${isOpen ? 'scale-0' : 'scale-100'}`}>
+      <div className={`fixed bottom-6 right-20 z-40 transition-transform transform ${isOpen ? 'scale-0' : 'scale-100'}`}>
         <button onClick={() => setIsOpen(true)} className="bg-primary text-white rounded-full p-4 shadow-lg hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all duration-300 hover:scale-110" aria-label="Open AI Assistant">
           <MessageIcon className="h-8 w-8"/>
         </button>
       </div>
 
-      <div className={`fixed bottom-0 right-0 sm:bottom-6 sm:right-6 w-full h-full sm:w-96 sm:h-[70vh] max-h-[600px] bg-white dark:bg-secondary rounded-none sm:rounded-2xl shadow-2xl flex flex-col z-50 transition-all duration-300 ease-in-out ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full sm:translate-y-16'}`} style={{ pointerEvents: isOpen ? 'auto' : 'none' }} role="dialog" aria-modal="true" aria-hidden={!isOpen} aria-labelledby="chatbot-heading">
+      <div className={`fixed bottom-0 right-0 sm:bottom-6 sm:right-20 w-full h-full sm:w-96 sm:h-[70vh] max-h-[600px] bg-white dark:bg-secondary rounded-none sm:rounded-2xl shadow-2xl flex flex-col z-50 transition-all duration-300 ease-in-out ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full sm:translate-y-16'}`} style={{ pointerEvents: isOpen ? 'auto' : 'none' }} role="dialog" aria-modal="true" aria-hidden={!isOpen} aria-labelledby="chatbot-heading">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="flex items-center space-x-3">
