@@ -60,8 +60,10 @@ export const usePosts = (currentUser, users, addNotification) => {
             authorId: currentUser.id,
             content: postData.content,
             imageUrl: postData.imageUrl || null,
+            hashtags: postData.hashtags || [],
             timestamp: serverTimestamp(),
             likedBy: [],
+            reactions: {},
             comments: [],
             isAnnouncement: !!postData.isAnnouncement && currentUser.role === 'admin',
         };
@@ -158,5 +160,33 @@ export const usePosts = (currentUser, users, addNotification) => {
         }
     };
 
-    return { posts, addPost, deletePost, handleToggleLike, handleAddComment, handleDeleteComment };
+    const handleToggleReaction = async (postId, emoji) => {
+        if (!currentUser) return;
+
+        const postRef = doc(db, "posts", postId);
+        const post = posts.find(p => p.id === postId);
+        if (!post) return;
+
+        const currentReactions = post.reactions || {};
+        const userHasThisReaction = currentReactions[emoji]?.includes(currentUser.id);
+
+        try {
+            if (userHasThisReaction) {
+                // Remove the reaction
+                await updateDoc(postRef, {
+                    [`reactions.${emoji}`]: arrayRemove(currentUser.id)
+                });
+            } else {
+                // Add the reaction (and optionally remove others from this user, though we'll allow multiple for now for simplicity)
+                await updateDoc(postRef, {
+                    [`reactions.${emoji}`]: arrayUnion(currentUser.id)
+                });
+                addNotification(post.author.id, 'reaction', currentUser, post, `reacted ${emoji} to your post`);
+            }
+        } catch (error) {
+            console.error("Error toggling reaction: ", error);
+        }
+    };
+
+    return { posts, addPost, deletePost, handleToggleLike, handleToggleReaction, handleAddComment, handleDeleteComment };
 };

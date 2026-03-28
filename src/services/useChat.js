@@ -172,7 +172,7 @@ export const useChat = (currentUser, users, addNotification) => {
         }
     };
 
-    const handleCreateRoom = async (name, privacy, password, initialMembers = []) => {
+    const handleCreateRoom = async (name, privacy, password, initialMembers = [], category = 'General') => {
         if (!currentUser || !name.trim())
             return;
         try {
@@ -184,6 +184,7 @@ export const useChat = (currentUser, users, addNotification) => {
                 name,
                 type: 'room',
                 roomPrivacy: privacy,
+                category,
                 password: privacy === 'password_protected' ? password : null,
                 participantIds: uniqueParticipantIds,
                 messages: [],

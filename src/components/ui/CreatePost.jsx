@@ -9,26 +9,114 @@ const CreatePost = ({ onAddPost, currentUser }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const imageInputRef = useRef(null);
     const fileInputRef = useRef(null);
+    const editorRef = useRef(null);
+
+    // Walk the DOM tree to extract plain text (converts <br> → \n)
+    const getPlainText = () => {
+        if (!editorRef.current) return '';
+        let text = '';
+        const walk = (node) => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                text += node.textContent;
+            } else if (node.nodeName === 'BR') {
+                text += '\n';
+            } else {
+                node.childNodes.forEach(walk);
+            }
+        };
+        walk(editorRef.current);
+        return text;
+    };
+
+    // Save cursor offset (in characters) before innerHTML rewrite
+    const saveCaretOffset = () => {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0 || !editorRef.current) return 0;
+        const range = sel.getRangeAt(0);
+        const pre = range.cloneRange();
+        pre.selectNodeContents(editorRef.current);
+        pre.setEnd(range.endContainer, range.endOffset);
+        return pre.toString().length;
+    };
+
+    // Restore cursor to saved character offset after rewrite
+    const restoreCaretOffset = (offset) => {
+        if (!editorRef.current) return;
+        const walker = document.createTreeWalker(editorRef.current, NodeFilter.SHOW_TEXT);
+        let pos = 0;
+        let node;
+        while ((node = walker.nextNode())) {
+            const len = node.textContent.length;
+            if (pos + len >= offset) {
+                try {
+                    const range = document.createRange();
+                    range.setStart(node, offset - pos);
+                    range.collapse(true);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                } catch (_) {}
+                return;
+            }
+            pos += len;
+        }
+        // Fallback: move caret to end
+        try {
+            const range = document.createRange();
+            range.selectNodeContents(editorRef.current);
+            range.collapse(false);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+        } catch (_) {}
+    };
+
+    // Called on every keystroke — rewrites innerHTML with colored spans for hashtags
+    const applyHighlighting = () => {
+        if (!editorRef.current) return;
+        const text = getPlainText();
+        setContent(text);
+        const caretOffset = saveCaretOffset();
+
+        // Sanitize and highlight
+        const html = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/#([a-zA-Z0-9_]+)/g, '<span style="color:#6366f1;font-weight:700;">#$1</span>')
+            .replace(/\n/g, '<br>');
+
+        editorRef.current.innerHTML = html;
+        restoreCaretOffset(caretOffset);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if ((!content.trim() && !image && !file) || isSubmitting) return;
+        const text = getPlainText().trim();
+        if ((!text && !image && !file) || isSubmitting) return;
 
         setIsSubmitting(true);
         try {
+            // Extract hashtags from the content
+            const extractedHashtags = text.match(/#[a-zA-Z0-9_]+/g);
+            const hashtags = extractedHashtags ? extractedHashtags.map(h => h.toLowerCase()) : [];
+
             await onAddPost({
-                content,
+                content: text,
+                hashtags,
                 imageUrl: image || undefined,
                 fileName: file?.name,
-                fileUrl: file ? URL.createObjectURL(file) : undefined
+                fileUrl: file ? URL.createObjectURL(file) : undefined,
             });
+
+            // Reset
+            if (editorRef.current) editorRef.current.innerHTML = '';
             setContent('');
             setImage(null);
             setFile(null);
-            if (imageInputRef.current) imageInputRef.current.value = "";
-            if (fileInputRef.current) fileInputRef.current.value = "";
+            if (imageInputRef.current) imageInputRef.current.value = '';
+            if (fileInputRef.current) fileInputRef.current.value = '';
         } catch (error) {
-            console.error("Failed to add post", error);
+            console.error('Failed to add post', error);
         } finally {
             setIsSubmitting(false);
         }
@@ -37,9 +125,7 @@ const CreatePost = ({ onAddPost, currentUser }) => {
     const handleImageSelect = (e) => {
         if (e.target.files && e.target.files[0]) {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setImage(reader.result);
-            };
+            reader.onloadend = () => setImage(reader.result);
             reader.readAsDataURL(e.target.files[0]);
         }
     };
@@ -56,15 +142,23 @@ const CreatePost = ({ onAddPost, currentUser }) => {
                 <div className="flex-shrink-0">
                     <UserAvatar user={currentUser} className="h-12 w-12 ring-2 ring-primary/20" />
                 </div>
-                <div className="flex-1">
-                    <textarea
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        className="w-full p-4 border-none rounded-xl bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary/50 transition-all resize-none text-lg placeholder:text-gray-400"
-                        rows={3}
-                        placeholder={`What's on your mind, ${currentUser.name}?`}
-                        disabled={isSubmitting}
+                <div className="flex-1 relative">
+                    {/* contentEditable rich-text editor with live hashtag highlighting */}
+                    <div
+                        ref={editorRef}
+                        contentEditable={!isSubmitting}
+                        suppressContentEditableWarning
+                        onInput={applyHighlighting}
+                        className="w-full min-h-[5rem] p-4 border-none rounded-xl bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary/50 focus:outline-none transition-all text-lg leading-relaxed"
+                        style={{ wordBreak: 'break-word' }}
                     />
+                    {/* Placeholder — shown only when editor is empty */}
+                    {!content && (
+                        <p className="absolute top-4 left-4 text-gray-400 dark:text-gray-500 text-lg pointer-events-none select-none">
+                            {`What's on your mind, ${currentUser.name}? `}
+                            <span className="font-bold" style={{ color: '#6366f1' }}>#hashtags</span>!
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -104,7 +198,6 @@ const CreatePost = ({ onAddPost, currentUser }) => {
                 <div className="flex space-x-2">
                     <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageSelect} className="hidden" disabled={isSubmitting} />
                     <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" disabled={isSubmitting} />
-
                     <button
                         onClick={() => imageInputRef.current?.click()}
                         className="flex items-center space-x-2 px-4 py-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all group disabled:opacity-50"

@@ -47,6 +47,7 @@ const MainUI = ({
     onBackToFeed,
     onToggleFollow,
     onToggleLike,
+    onToggleReaction,
     onDeleteComment, // New prop
     onAddComment,
     onToggleTheme,
@@ -69,6 +70,8 @@ const MainUI = ({
     const [isManageRoomModalOpen, setIsManageRoomModalOpen] = useState(null);
     const [viewingPost, setViewingPost] = useState(null); // For post detail modal
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const [sharingPost, setSharingPost] = useState(null);
+    const [selectedHashtag, setSelectedHashtag] = useState(null);
     const [userSearchQuery, setUserSearchQuery] = useState('');
     const [message, setMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
@@ -84,9 +87,9 @@ const MainUI = ({
 
     const { announcements, regularPosts } = useMemo(() => {
         const announcements = posts.filter(p => p.isAnnouncement).sort((a, b) => b.id - a.id);
-        const regularPosts = posts.filter(p => !p.isAnnouncement).sort((a, b) => b.id - a.id);
+        const regularPosts = posts.filter(p => !p.isAnnouncement && (!selectedHashtag || (p.hashtags && p.hashtags.includes(selectedHashtag)))).sort((a, b) => b.id - a.id);
         return { announcements, regularPosts };
-    }, [posts]);
+    }, [posts, selectedHashtag]);
 
     const sortedResources = useMemo(() => {
         return [...resources].sort((a, b) => b.id - a.id);
@@ -220,8 +223,14 @@ const MainUI = ({
         if (activeView === 'feed') {
             return (<div className="animate-fade-in">
                 <CreatePost onAddPost={onAddPost} currentUser={currentUser} />
+                {selectedHashtag && (
+                    <div className="mb-4 flex items-center justify-between bg-primary/10 p-3 rounded-xl border border-primary/20">
+                        <span className="text-primary font-bold">Filtering by: {selectedHashtag}</span>
+                        <button onClick={() => setSelectedHashtag(null)} className="text-sm text-gray-500 hover:text-red-500 underline">Clear Filter</button>
+                    </div>
+                )}
                 <div className="space-y-4">
-                    {regularPosts.map(post => <PostCard key={post.id} post={post} currentUser={currentUser} onDeletePost={onDeletePost} onViewProfile={onViewProfile} onToggleLike={onToggleLike} onAddComment={onAddComment} />)}
+                    {regularPosts.map(post => <PostCard key={post.id} post={post} currentUser={currentUser} onDeletePost={onDeletePost} onViewProfile={onViewProfile} onToggleLike={onToggleLike} onToggleReaction={onToggleReaction} onAddComment={onAddComment} onSelectHashtag={setSelectedHashtag} />)}
                 </div>
             </div>);
         }

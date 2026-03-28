@@ -3,6 +3,7 @@ import { XIcon, LockClosedIcon, UserPlusIcon, SpinnerIcon, UsersIcon, SearchIcon
 const CreateRoomModal = ({ users, currentUser, onCreateRoom, onClose }) => {
     const [roomName, setRoomName] = useState('');
     const [privacy, setPrivacy] = useState('invite_only');
+    const [category, setCategory] = useState('General');
     const [password, setPassword] = useState('');
     const [selectedMembers, setSelectedMembers] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -14,7 +15,7 @@ const CreateRoomModal = ({ users, currentUser, onCreateRoom, onClose }) => {
             return;
         setIsCreating(true);
         try {
-            await onCreateRoom(roomName, privacy, password, selectedMembers);
+            await onCreateRoom(roomName, privacy, password, selectedMembers, category);
             onClose();
         }
         catch (error) {
@@ -82,6 +83,19 @@ const CreateRoomModal = ({ users, currentUser, onCreateRoom, onClose }) => {
                             </div>
                         </button>
                     </div>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Room Category</label>
+                    <select 
+                        value={category} 
+                        onChange={(e) => setCategory(e.target.value)} 
+                        className="block w-full px-4 py-3 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-700/50 text-gray-800 dark:text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 appearance-none cursor-pointer"
+                        disabled={isCreating}
+                    >
+                        {['General', 'Tech', 'Gaming', 'Career', 'Study', 'Social'].map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
                 </div>
                 <div>
                     <label htmlFor="roomName" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Room Name</label>

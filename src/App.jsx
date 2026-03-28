@@ -604,7 +604,7 @@ const App = () => {
         setAuthFlow(flow);
     };
     // Call the usePosts hook and pass dependencies
-    const { posts, addPost: addPostToDb, deletePost, handleToggleLike, handleAddComment, handleDeleteComment } = usePosts(currentUser, users, addNotification);
+    const { posts, addPost: addPostToDb, deletePost, handleToggleLike, handleToggleReaction, handleAddComment, handleDeleteComment } = usePosts(currentUser, users, addNotification);
     const handleViewProfile = (user) => {
         navigate(`/profile/${user.id}`);
     };
@@ -866,6 +866,7 @@ const App = () => {
         onDeclineConnectionRequest: declineConnectionRequest,
         onCancelConnectionRequest: cancelConnectionRequest,
         onToggleLike: handleToggleLike,
+        onToggleReaction: handleToggleReaction,
         onAddComment: handleAddComment,
         onDeleteComment: handleDeleteComment,
         onToggleTheme: handleToggleTheme,

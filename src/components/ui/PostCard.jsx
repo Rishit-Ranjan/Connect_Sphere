@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { TrashIcon, HeartIcon, CommentIcon, PaperclipIcon, SendIcon, SpinnerIcon } from '../Icons';
 import UserAvatar from './UserAvatar';
 
-const PostCard = ({ post, currentUser, onDeletePost, onViewProfile, onToggleLike, onAddComment }) => {
+const PostCard = ({ post, currentUser, onDeletePost, onViewProfile, onToggleLike, onToggleReaction, onAddComment, onSelectHashtag }) => {
+    const [showReactions, setShowReactions] = useState(false);
     const [showComments, setShowComments] = useState(false);
     const [comment, setComment] = useState('');
     const [isLiking, setIsLiking] = useState(false);
@@ -53,6 +54,19 @@ const PostCard = ({ post, currentUser, onDeletePost, onViewProfile, onToggleLike
                 </div>
 
                 <p className="my-4 text-gray-700 dark:text-gray-200 leading-relaxed text-[15px]">{post.content}</p>
+                {post.hashtags && post.hashtags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        {post.hashtags.map(tag => (
+                            <button
+                                key={tag}
+                                onClick={() => onSelectHashtag(tag)}
+                                className="text-xs font-bold text-primary hover:underline bg-primary/5 px-2 py-1 rounded-full"
+                            >
+                                {tag}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {post.fileName && post.fileUrl && (
@@ -77,12 +91,37 @@ const PostCard = ({ post, currentUser, onDeletePost, onViewProfile, onToggleLike
 
             <div className="flex justify-between items-center px-5 py-3 text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/30">
                 <div className="flex space-x-6">
-                    <button onClick={handleToggleLike} disabled={isLiking} className={`flex items-center space-x-2 transition-all group disabled:opacity-50 disabled:cursor-not-allowed ${hasLiked ? 'text-red-500' : 'hover:text-red-500'}`}>
-                        <div className={`p-1.5 rounded-full transition-colors ${hasLiked ? 'bg-red-50 dark:bg-red-900/20' : 'group-hover:bg-red-50 dark:group-hover:bg-red-900/20'}`}>
-                            <HeartIcon className={`w-5 h-5 ${hasLiked ? 'fill-current' : 'fill-none stroke-current'}`} />
-                        </div>
-                        <span className="font-medium text-sm">{post.likedBy.length}</span>
-                    </button>
+                    <div className="relative group">
+                        <button
+                            onMouseEnter={() => setShowReactions(true)}
+                            onClick={handleToggleLike}
+                            disabled={isLiking}
+                            className={`flex items-center space-x-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${hasLiked ? 'text-red-500' : 'hover:text-red-500'}`}
+                        >
+                            <div className={`p-1.5 rounded-full transition-colors ${hasLiked ? 'bg-red-50 dark:bg-red-900/20' : 'hover:bg-red-50 dark:hover:bg-red-900/20'}`}>
+                                <HeartIcon className={`w-5 h-5 ${hasLiked ? 'fill-current' : 'fill-none stroke-current'}`} />
+                            </div>
+                            <span className="font-medium text-sm">{post.likedBy.length}</span>
+                        </button>
+                        
+                        {showReactions && (
+                            <div
+                                onMouseLeave={() => setShowReactions(false)}
+                                className="absolute bottom-full left-0 mb-2 flex items-center space-x-2 bg-white dark:bg-gray-800 p-2 rounded-full shadow-xl border dark:border-gray-700 animate-slide-up"
+                            >
+                                {['👍', '❤️', '😂', '😮', '😢', '😡'].map(emoji => (
+                                    <button
+                                        key={emoji}
+                                        onClick={() => { onToggleReaction(post.id, emoji); setShowReactions(false); }}
+                                        className="text-xl hover:scale-120 transition-transform p-1"
+                                    >
+                                        {emoji}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    
                     <button onClick={() => setShowComments(!showComments)} className="flex items-center space-x-2 hover:text-primary transition-all group">
                         <div className="p-1.5 rounded-full group-hover:bg-primary/10 transition-colors">
                             <CommentIcon className="w-5 h-5" />
@@ -97,6 +136,19 @@ const PostCard = ({ post, currentUser, onDeletePost, onViewProfile, onToggleLike
                     <span className="text-sm font-medium">Share</span>
                 </button>
             </div>
+
+            {post.reactions && Object.keys(post.reactions).length > 0 && (
+                <div className="flex flex-wrap gap-2 px-5 py-2 border-t border-gray-100 dark:border-gray-700/50 bg-gray-50/30 dark:bg-gray-800/20">
+                    {Object.entries(post.reactions).map(([emoji, users]) => (
+                        users.length > 0 && (
+                            <div key={emoji} className="flex items-center space-x-1 bg-white dark:bg-gray-700 px-2 py-0.5 rounded-full shadow-sm text-xs">
+                                <span>{emoji}</span>
+                                <span className="font-bold text-gray-500">{users.length}</span>
+                            </div>
+                        )
+                    ))}
+                </div>
+            )}
 
             {showComments && (
                 <div className="p-5 border-t border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/50 backdrop-blur-sm">
