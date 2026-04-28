@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { HomeIcon, MessageIcon, LogoutIcon, SendIcon, PhotoIcon, TrashIcon, LogoIcon, EditIcon, BanIcon, UserCheckIcon, SunIcon, MoonIcon, BellIcon, PaperclipIcon, UserIcon, SearchIcon, UsersIcon, PlusIcon, XIcon, HashtagIcon, LockClosedIcon, Cog6ToothIcon, MegaphoneIcon, FolderIcon, FileTextIcon, UploadCloudIcon, CommentIcon, CameraIcon, ChartBarSquareIcon, FlagIcon, EllipsisVerticalIcon } from './Icons';
 import * as cryptoService from '../services/cryptoService';
-// import { generateReplySuggestions } from '../services/geminiService';
-// Import newly created UI components
+
 import UserAvatar from './ui/UserAvatar';
 import PostCard from './ui/PostCard';
 import CreatePost from './ui/CreatePost';
@@ -754,7 +753,7 @@ const MainUI = ({
                             </button>
 
                             <div ref={profileMenuRef} className="relative mt-2">
-                                {isProfileMenuOpen && (<div className="absolute bottom-full left-0 right-0 mb-2 w-full bg-white dark:bg-secondary rounded-lg shadow-lg border dark:border-gray-700 p-2 z-40">
+                                {isProfileMenuOpen && (<div className="absolute bottom-14 left-0 right-0 mb-2 w-full bg-white dark:bg-secondary rounded-lg shadow-lg border dark:border-gray-700 p-2 z-40">
                                     <ul className="space-y-1">
                                         <li>
                                             <button onClick={() => { onViewProfile(currentUser); setIsProfileMenuOpen(false); }} className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">

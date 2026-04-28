@@ -506,6 +506,7 @@ const App = () => {
                 batch.update(notificationRef, { read: true });
             });
             await batch.commit();
+            
             // The onSnapshot listener will automatically update the UI.
         } catch (error) {
             console.error("Error marking notifications as read:", error);
