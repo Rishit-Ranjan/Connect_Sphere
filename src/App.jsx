@@ -430,6 +430,7 @@ const App = () => {
             window.removeEventListener('offline', handleOffline);
         };
     }, []);
+    
     useEffect(() => {
         if (theme === 'dark') {
             document.documentElement.classList.add('dark');
