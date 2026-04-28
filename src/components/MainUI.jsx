@@ -63,10 +63,10 @@ const MainUI = ({
     privacyMap = {}
 }) => {
     const themes = {
-        slate: { name: 'Slate', bg: 'bg-slate-950', primary: 'indigo-600', orbs: ['bg-indigo-600/30', 'bg-violet-600/20'] },
-        indigo: { name: 'Indigo', bg: 'bg-indigo-950', primary: 'violet-600', orbs: ['bg-violet-600/30', 'bg-blue-600/20'] },
-        rose: { name: 'Rose', bg: 'bg-rose-950', primary: 'pink-600', orbs: ['bg-pink-600/30', 'bg-red-600/20'] },
-        emerald: { name: 'Emerald', bg: 'bg-emerald-950', primary: 'teal-600', orbs: ['bg-teal-600/30', 'bg-emerald-600/20'] }
+        slate: { name: 'Slate', bg: 'bg-slate-950', lightBg: 'bg-slate-700', primary: 'indigo-600', orbs: ['bg-indigo-600/30', 'bg-violet-600/20'] },
+        indigo: { name: 'Indigo', bg: 'bg-indigo-950', lightBg: 'bg-indigo-100', primary: 'violet-600', orbs: ['bg-violet-600/30', 'bg-blue-600/20'] },
+        rose: { name: 'Rose', bg: 'bg-rose-950', lightBg: 'bg-rose-50', primary: 'pink-600', orbs: ['bg-pink-600/30', 'bg-red-600/20'] },
+        emerald: { name: 'Emerald', bg: 'bg-emerald-950', lightBg: 'bg-emerald-100', primary: 'teal-600', orbs: ['bg-teal-600/30', 'bg-emerald-600/20'] }
     };
 
     const [selectedTheme, setSelectedTheme] = useState(() => localStorage.getItem('cs_theme') || 'slate');
@@ -708,7 +708,7 @@ const MainUI = ({
         {viewingPost && <PostDetailModal post={viewingPost} currentUser={currentUser} onClose={() => setViewingPost(null)} onAddComment={onAddComment} onDeleteComment={onDeleteComment} />}
         {isSettingsModalOpen && (<SettingsModal currentUser={currentUser} onUpdateUser={onUpdateUser} onClose={() => setIsSettingsModalOpen(false)} />)}
         <div
-            className={`min-h-screen relative overflow-hidden font-sans transition-all duration-700 ${theme === 'dark' ? themeConfig.bg : 'bg-slate-50'} text-slate-800 dark:text-slate-200`}
+            className={`min-h-screen relative overflow-hidden font-sans transition-all duration-700 ${theme === 'dark' ? themeConfig.bg : themeConfig.lightBg} text-slate-800 dark:text-slate-200`}
             style={{
                 '--primary-hex': themeConfig.primary,
             }}
@@ -726,7 +726,7 @@ const MainUI = ({
                             <div className="bg-primary/20 p-2.5 rounded-2xl shadow-lg shadow-primary/20 ring-1 ring-primary/50">
                                 <LogoIcon className="h-7 w-7 text-primary" />
                             </div>
-                            <span className="text-xl font-black hidden lg:inline bg-clip-text text-transparent bg-gradient-to-br from-white via-primary to-purple-400">ConnectSphere</span>
+                            <span className="text-xl font-black hidden lg:inline-block max-w-full truncate bg-clip-text text-transparent bg-gradient-to-br from-white via-primary to-purple-400">ConnectSphere</span>
                         </div>
                         <nav className="space-y-1.5 flex-1">
                             <NavItem icon={<HomeIcon className="h-6 w-6" />} label="Home" isActive={activeView === 'feed' && !viewingProfile} onClick={() => { setActiveView('feed'); onBackToFeed(); }} />
