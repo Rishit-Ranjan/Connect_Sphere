@@ -30,7 +30,6 @@ Before you begin, ensure you have the following installed on your system:
 
 - [Node.js](https://nodejs.org/en/) (v16 or later recommended)
 - [npm](https://www.npmjs.com/)
-- A [Firebase project](https://console.firebase.google.com/)
 
 ## ⚙️ Getting Started
 
