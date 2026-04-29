@@ -7,7 +7,7 @@
   "scripts": {
     "server": "python backend/server.py",
     "start": "npm run dev",
-    "dev": "concurrently \"npm run server\" \"npm run dev:client\"",
+    "dev": "npm run dev:client & concurrently \"npm run dev:client\" \"cd gateway && node server-local.js\"",
     "dev:client": "vite",
     "build": "vite build",
     "lint": "eslint .",

@@ -27,11 +27,29 @@ const auth = getAuth(app);
 setPersistence(auth, browserLocalPersistence);
 
 // Initialize Firestore with offline persistence enabled
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager() 
-  })
-});
+// Handle offline scenarios gracefully
+let db;
+try {
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+    })
+  });
+} catch (error) {
+  console.warn('Firestore offline persistence not available:', error.message);
+  // Fallback to Firestore without persistence
+  db = initializeFirestore(app);
+}
+
+// Helper to check if we're online
+export const isOnline = () => navigator.onLine;
+
+// Helper to check if a Firestore error is due to being offline
+export const isOfflineError = (error) => {
+  return error?.code === 'failed-precondition' || 
+         error?.message?.includes('offline') ||
+         error?.code === 'unavailable';
+};
 
 const rtdb = getDatabase(app); 
 
