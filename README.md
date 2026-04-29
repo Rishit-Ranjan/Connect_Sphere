@@ -29,7 +29,7 @@ This project is built with a modern and scalable tech stack:
 Before you begin, ensure you have the following installed on your system:
 
 - [Node.js](https://nodejs.org/en/) (v16 or later recommended)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [npm](https://www.npmjs.com/)
 - A [Firebase project](https://console.firebase.google.com/)
 
 ## ⚙️ Getting Started
