@@ -29,7 +29,7 @@ This project is built with a modern and scalable tech stack:
 Before you begin, ensure you have the following installed on your system:
 
 - [Node.js](https://nodejs.org/en/) (v16 or later recommended)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [npm](https://www.npmjs.com/)
 - A [Firebase project](https://console.firebase.google.com/)
 
 ## ⚙️ Getting Started
@@ -92,14 +92,6 @@ Users can send and manage connection requests (LinkedIn-style). The repository n
 
 To enable the Cloud Function, deploy the `functions` folder with the Firebase CLI and configure proper service account permissions.<br/><br/>
 
-**Welcome Page**<br/><br/>
-<img width="1858" height="959" alt="image" src="https://github.com/user-attachments/assets/f14778c9-18c2-4143-bde3-852b745f3608" /><br/><br/>
-
-**Participant User Module**<br/><br/>
-<img width="1864" height="973" alt="image" src="https://github.com/user-attachments/assets/4e912e26-b777-4dbb-9cd8-77230c507ba3" /><br/><br/>
-
-**System Admin Module**<br/><br/>
-<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/76730b78-d43c-4f34-9810-35194bf4f31d" />
 
 
 
