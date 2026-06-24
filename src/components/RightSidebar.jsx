@@ -39,7 +39,7 @@ export default function RightSidebar({ currentUser, users, onConnect, onFollow, 
           </div>
         </div>)}
 
-      {/* 2. Who to Connect With (Human-crafted styled recommendations) */}
+      {/* 2. Who to Connect With */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-display font-bold text-slate-900 text-xs uppercase tracking-wider">Discover People</h3>
