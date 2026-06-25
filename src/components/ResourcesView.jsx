@@ -10,9 +10,9 @@ export default function ResourcesView({ currentUser, resources, onAddResource, o
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [category, setCategory] = useState('Lecture Slides');
-    const [fileType, setFileType] = useState('PDF');
-    const [fileSize, setFileSize] = useState('12.5 MB');
+    const [category, setCategory] = useState('');
+    const [fileType, setFileType] = useState('');
+    const [fileSize, setFileSize] = useState('');
     // Download simulation state
     const [downloadingId, setDownloadingId] = useState(null);
     const [downloadProgress, setDownloadProgress] = useState(0);
@@ -36,9 +36,9 @@ export default function ResourcesView({ currentUser, resources, onAddResource, o
         onAddResource(newResource);
         setTitle('');
         setDescription('');
-        setCategory('Lecture Slides');
-        setFileType('PDF');
-        setFileSize('12.5 MB');
+        setCategory('');
+        setFileType('');
+        setFileSize('');
         setShowUploadForm(false);
     };
     const startDownloadSimulation = (res) => {

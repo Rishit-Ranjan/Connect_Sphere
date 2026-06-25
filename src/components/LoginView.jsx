@@ -11,8 +11,8 @@ export default function LoginView({ onLogin, users, onAddUser }) {
     const [name, setName] = useState('');
     const [handle, setHandle] = useState('');
     const [email, setEmail] = useState('');
-    const [role, setRole] = useState('participant');
-    const [department, setDepartment] = useState('Computer Science');
+    const [role, setRole] = useState('');
+    const [department, setDepartment] = useState('');
     const [bio, setBio] = useState('');
 
     // Sign In States

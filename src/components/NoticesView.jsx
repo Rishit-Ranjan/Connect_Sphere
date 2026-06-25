@@ -9,7 +9,7 @@ export default function NoticesView({ currentUser, notices, onAddNotice, onDelet
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [category, setCategory] = useState('General');
+    const [category, setCategory] = useState('');
     const [isUrgent, setIsUrgent] = useState(false);
     const categories = ['All', 'Placements', 'Academics', 'Schedules', 'General'];
     const handleSubmitNotice = (e) => {
@@ -28,7 +28,7 @@ export default function NoticesView({ currentUser, notices, onAddNotice, onDelet
         onAddNotice(newNotice);
         setTitle('');
         setContent('');
-        setCategory('General');
+        setCategory('');
         setIsUrgent(false);
         setShowCreateForm(false);
     };

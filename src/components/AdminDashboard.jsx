@@ -6,14 +6,8 @@ import React, { useState } from 'react';
 import { Shield, Users, FileText, Bell, Download, Trash2, Activity, CheckCircle } from 'lucide-react';
 export default function AdminDashboard({ currentUser, users, posts, notices, resources, onRemoveUser, onUpdateUserRole }) {
     const [searchUserQuery, setSearchUserQuery] = useState('');
-    // Simulated audit logs
-    const [auditLogs, setAuditLogs] = useState([
-        { id: 1, action: 'User login registered', user: 'System Admin', time: '10:36:09 AM', details: 'Authorized securely from IP' },
-        { id: 2, action: 'Published Placement Notice', user: 'Placement Cell', time: '10:15:22 AM', details: 'Google Placement Internship notice broadcasted' },
-        { id: 3, action: 'File downloaded', user: 'Rhodimus Prime', time: '09:42:01 AM', details: 'Downloaded Computational Genomics slides (14.2 MB)' },
-        { id: 4, action: 'Course resource uploaded', user: 'Dr. Julian Bashir', time: '09:00:15 AM', details: 'Uploaded computational genomics textbook chapter' },
-        { id: 5, action: 'Community post added', user: 'Clara Oswald', time: 'Yesterday', details: 'Posted philosophy quotes in General Feed' }
-    ]);
+    // Real audit logs should be generated from actual user actions
+    // Simulated audit logs removed to eliminate hardcoded placeholder data
     // Statistics calculation
     const totalDownloads = resources.reduce((acc, curr) => acc + curr.downloadCount, 0);
     const filteredUsers = users.filter((u) => {

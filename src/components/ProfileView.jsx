@@ -35,9 +35,7 @@ export default function ProfileView({
   // Edit Profile States
   const [name, setName] = useState(currentUser.name);
   const [bio, setBio] = useState(currentUser.bio || "");
-  const [department, setDepartment] = useState(
-    currentUser.department || "Computer Science",
-  );
+  const [department, setDepartment] = useState(currentUser.department || "");
   const [email, setEmail] = useState(currentUser.email);
   const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl);
   const [saveSuccess, setSaveSuccess] = useState(false);

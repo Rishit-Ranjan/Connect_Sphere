@@ -4,13 +4,6 @@
  */
 import React, { useState } from 'react';
 import { Heart, MessageCircle, Image as ImageIcon, Paperclip, Send, Trash2, Search, FileText, X } from 'lucide-react';
-const IMAGE_PRESETS = [
-    { name: 'Workspace', url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80' },
-    { name: 'Study Group', url: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop&q=80' },
-    { name: 'Campus Library', url: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&auto=format&fit=crop&q=80' },
-    { name: 'Coffee break', url: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800&auto=format&fit=crop&q=80' },
-    { name: 'Celebration', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&auto=format&fit=crop&q=80' }
-];
 export default function FeedView({ currentUser, posts, onAddPost, onDeletePost, onLikePost, onAddComment }) {
     const [searchText, setSearchText] = useState('');
     const [newPostText, setNewPostText] = useState('');

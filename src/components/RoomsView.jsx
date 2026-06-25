@@ -21,24 +21,8 @@ export default function RoomsView({ currentUser, rooms, roomMessages, onAddRoomM
         onAddRoomMessage(selectedRoomId, typedMessage, currentUser);
         const textToSend = typedMessage;
         setTypedMessage('');
-        // Simulated Smart Room Reply after 1.2 seconds!
-        setTimeout(() => {
-            // Find another user from the list that isn't the current user to trigger response
-            const responders = users.filter((u) => u.id !== currentUser.id);
-            if (responders.length === 0)
-                return;
-            const randomResponder = responders[Math.floor(Math.random() * responders.length)];
-            const collegeReplies = [
-                `That sounds really interesting. Does anyone have more insights on this?`,
-                `Completely agree with that. We discussed something similar in class yesterday!`,
-                `Thanks for sharing! Let's follow up on this during the seminar tomorrow.`,
-                `Oh cool! Could you upload some related reading papers to our Resource Library?`,
-                `I had the same issue, but checking slide 15 of computational genomics cleared it right up!`,
-                `Perfect! Let's arrange a brief Google Meet study session for this tonight.`
-            ];
-            const randomReply = collegeReplies[Math.floor(Math.random() * collegeReplies.length)];
-            onAddRoomMessage(selectedRoomId, randomReply, randomResponder);
-        }, 1500);
+        // Note: Real-time chat responses should come from actual users
+        // Simulated responses removed to eliminate hardcoded placeholder data
     };
     return (<div className="flex-1 flex h-[calc(100vh-2px)] overflow-hidden font-sans bg-white border border-slate-200 rounded-3xl m-3 shadow-sm">
       

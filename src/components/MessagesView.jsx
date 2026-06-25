@@ -31,56 +31,8 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
         onSendDirectMessage(currentRecipientId, typedMessage);
         const textSent = typedMessage;
         setTypedMessage('');
-        // Trigger customized Simulated Reply based on recipient persona in 1.2 seconds!
-        setTimeout(() => {
-            let simulatedReply = "Hi! Thanks for reaching out. I'm currently busy with lectures but I'll get back to you shortly!";
-            const lower = textSent.toLowerCase();
-            if (currentRecipientId === 'admin-1') {
-                simulatedReply = "Hello! ConnectSphere Server is operational. Let me know if you need student permissions, notice pinning, or help clearing inappropriate feeds.";
-                if (lower.includes('post') || lower.includes('delete') || lower.includes('feed')) {
-                    simulatedReply = "Understood. As administrator, I can instantly delete any feed or comment. Please send me the post ID or author name to moderate.";
-                }
-                else if (lower.includes('pin') || lower.includes('announcement') || lower.includes('notice')) {
-                    simulatedReply = "No problem! I will ensure important notices are featured in the right-hand announcement carousel for maximum student visibility.";
-                }
-            }
-            else if (currentRecipientId === 'user-1') {
-                // Rhodimus Prime
-                simulatedReply = "Hey there! I'm coordinating team signups for the campus Hackathon. Are you looking to join a team, or do you have a prototype idea ready?";
-                if (lower.includes('code') || lower.includes('react') || lower.includes('react native') || lower.includes('developer')) {
-                    simulatedReply = "Awesome! I primarily code in React Native and TypeScript. We have a CS room where we review parser conflicts and compiler guides. Join us there!";
-                }
-                else if (lower.includes('placement') || lower.includes('google') || lower.includes('job')) {
-                    simulatedReply = "Google's hiring drive is active! Download my consolidated 'Google Recruitment Prep Kit' ZIP file from the Resource Library tab. It includes extensive algorithmic questions.";
-                }
-            }
-            else if (currentRecipientId === 'user-2') {
-                // Clara Oswald
-                simulatedReply = "Hi! I'm sitting by the window in the central library, sipping a cinnamon latte and reading some romantic philosophy. What are you up to?";
-                if (lower.includes('book') || lower.includes('study') || lower.includes('exam') || lower.includes('write')) {
-                    simulatedReply = "Studying can be hectic! I find wrapping up summaries with Alan Watts concepts really keeps the stress down. Let me know if you want to share coffee!";
-                }
-                else if (lower.includes('hackathon') || lower.includes('design')) {
-                    simulatedReply = "I'm joining the hackathon for UI/UX wireframing and user stories! Multi-disciplinary student teams make the best designs.";
-                }
-            }
-            else if (currentRecipientId === 'user-3') {
-                // Dr. Julian Bashir
-                simulatedReply = "Greetings! I'm currently grading research outlines in computational genomics. Let me know if you need guidance on seq-alignment algorithms.";
-                if (lower.includes('quiz') || lower.includes('exam') || lower.includes('test') || lower.includes('slide')) {
-                    simulatedReply = "Make sure to review seq-alignment matrices and dynamic programming algorithms. I've uploaded the full BMS-402 PDF slide deck under the Resources tab. Download it!";
-                }
-            }
-            else if (currentRecipientId === 'user-4') {
-                // Sarah Chen
-                simulatedReply = "Hey! Coding under the stars here. Wrapping up a React website project. Are you building anything interesting?";
-            }
-            onSendDirectMessage(currentUser.id, simulatedReply);
-            // Ensure the senderId is simulated as recipient
-            // Wait, in onSendDirectMessage, the function takes: (receiverId, text, optional senderId)
-            // Let's adjust the state callback in App.tsx to handle simulating recipient replying to me.
-            // We will define a general onSendDirectMessage that handles custom sender/receiver easily.
-        }, 1200);
+        // Note: Real-time chat responses should come from actual users
+        // Simulated persona-based responses removed to eliminate hardcoded placeholder data
     };
     const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchText.toLowerCase()) ||
         c.handle.toLowerCase().includes(searchText.toLowerCase()));
