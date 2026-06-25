@@ -68,7 +68,7 @@ export default function FeedView({ currentUser, posts, onAddPost, onDeletePost, 
       {/* Editorial Header */}
       <div className="flex items-center justify-between pb-4 border-b border-slate-200">
         <div>
-          <h1 className="font-display font-extrabold text-slate-900 text-2xl tracking-tight">Community Feed</h1>
+          <h1 className="font-display font-extrabold text-slate-900 text-2xl tracking-tight">Home</h1>
           <p className="text-slate-500 text-xs">Share projects, thoughts, announcements, and campus updates.</p>
         </div>
         <div className="relative w-48 sm:w-64">

@@ -14,7 +14,7 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, onLogout
         localStorage.setItem('sidebar_collapsed', String(isCollapsed));
     }, [isCollapsed]);
     const menuItems = [
-        { id: 'feed', label: 'Community Feed', icon: Home, badge: 0 },
+        { id: 'feed', label: 'Home', icon: Home, badge: 0 },
         { id: 'notices', label: 'Notices & Schedules', icon: Bell, badge: noticeCount },
         { id: 'resources', label: 'Resource Library', icon: BookOpen, badge: 0 },
         { id: 'rooms', label: 'Campus Rooms', icon: Users, badge: 0 },
