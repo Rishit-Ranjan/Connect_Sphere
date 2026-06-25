@@ -190,7 +190,7 @@ export default function ProfileView({
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar size={12} className="text-slate-400" />
-                  <span>Joined Semester: Autumn 2026</span>
+                  <span>Joined Semester: </span>
                 </div>
               </div>
             </div>
