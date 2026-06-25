@@ -30,8 +30,8 @@ export default function App() {
     // Selected direct message recipient
     const [selectedRecipient, setSelectedRecipient] = useState(null);
     // Direct notifications and badges state simulations
-    const [unreadCount, setUnreadCount] = useState(1);
-    const [noticeCount, setNoticeCount] = useState(2);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [noticeCount, setNoticeCount] = useState(0);
     // Persist state updates to localStorage
     useEffect(() => {
         saveState('cs_current_user', currentUser);
