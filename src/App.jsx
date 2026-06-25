@@ -2,10 +2,6 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
 import React, { useState, useEffect } from 'react';
 import { INITIAL_USERS, INITIAL_POSTS, INITIAL_NOTICES, INITIAL_RESOURCES, INITIAL_ROOMS, INITIAL_ROOM_MESSAGES, INITIAL_DIRECT_MESSAGES, getSavedState, saveState } from './mockData';
 import Sidebar from './components/Sidebar';
