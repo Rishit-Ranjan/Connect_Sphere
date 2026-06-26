@@ -5,7 +5,22 @@
 
 // Seed state intentionally starts empty to remove curated/demo placeholder data
 // and force the app to rely on user-created content stored in localStorage.
-export const INITIAL_USERS = [];
+export const INITIAL_USERS = [
+  {
+    id: 'admin-1',
+    name: 'System Admin',
+    handle: 'admin',
+    email: 'admin@connectsphere.com',
+    password: 'admin123',
+    role: 'admin',
+    department: 'Administration',
+    bio: 'Platform administrator account.',
+    avatarUrl: null,
+    connected: false,
+    following: false
+  }
+];
+
 export const INITIAL_POSTS = [];
 export const INITIAL_NOTICES = [];
 export const INITIAL_RESOURCES = [];

@@ -4,7 +4,7 @@
  */
 import React, { useState } from 'react';
 import { Shield, Users, FileText, Bell, Download, Trash2, Activity, CheckCircle } from 'lucide-react';
-export default function AdminDashboard({ currentUser, users, posts, notices, resources, onRemoveUser, onUpdateUserRole }) {
+export default function AdminDashboard({ currentUser, users, posts, notices, resources, onRemoveUser, onUpdateUserRole, onDeletePost }) {
     const [searchUserQuery, setSearchUserQuery] = useState('');
     // Real audit logs should be generated from actual user actions
     // Simulated audit logs removed to eliminate hardcoded placeholder data
@@ -191,5 +191,35 @@ export default function AdminDashboard({ currentUser, users, posts, notices, res
 
       </div>
 
+      {/* Post Moderation Section */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mt-6">
+        <h2 className="text-xl font-semibold text-slate-900 mb-4">Post Moderation</h2>
+
+        <div className="space-y-4">
+          {posts.slice(0, 8).map((post) => (
+            <div
+              key={post.id}
+              className="flex items-start justify-between gap-4 border border-slate-200 rounded-xl p-4"
+            >
+              <div className="min-w-0">
+                <p className="font-medium text-slate-900">
+                  {post.author?.name || 'Unknown User'}
+                </p>
+                <p className="text-sm text-slate-600 break-words">
+                  {post.text || 'No text content'}
+                </p>
+              </div>
+
+              <button
+                onClick={() => onDeletePost(post.id)}
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                <Trash2 size={16} />
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>);
 }

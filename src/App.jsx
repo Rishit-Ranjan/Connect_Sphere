@@ -228,9 +228,18 @@ export default function App() {
 
         {activeTab === 'messages' && (<MessagesView currentUser={currentUser} users={users} directMessages={directMessages} onSendDirectMessage={handleSendDirectMessage} selectedRecipient={selectedRecipient} setSelectedRecipient={setSelectedRecipient}/>)}
 
-        {activeTab === 'admin' && currentUser.role === 'admin' && (<AdminDashboard currentUser={currentUser} users={users} posts={posts} notices={notices} resources={resources} onRemoveUser={handleRemoveUser} onUpdateUserRole={handleUpdateUserRole}/>)}
-        
-        {activeTab === 'admin' && isAdmin && (<AdminDashboard currentUser={currentUser} users={users} posts={posts} notices={notices} resources={resources} onRemoveUser={handleRemoveUser} onUpdateUserRole={handleUpdateUserRole}/>)}
+        {activeTab === 'admin' && isAdmin && (
+          <AdminDashboard
+            currentUser={currentUser}
+            users={users}
+            posts={posts}
+            notices={notices}
+            resources={resources}
+            onRemoveUser={handleRemoveUser}
+            onUpdateUserRole={handleUpdateUserRole}
+            onDeletePost={handleDeletePost}
+          />
+        )}
 
         {activeTab === 'profile' && (<ProfileView currentUser={currentUser} users={users} posts={posts} resources={resources} onUpdateProfile={handleUpdateProfile} onNavigateTab={setActiveTab}/>)}
       </main>
