@@ -16,15 +16,15 @@ import LoginView from './components/LoginView';
 import ProfileView from './components/ProfileView';
 export default function App() {
     // Current logged in profile state
-    const [currentUser, setCurrentUser] = useState(() => getSavedState('cs_current_user', null));
+    const [currentUser, setCurrentUser] = useState(() => getSavedState('current_user', null));
     // Core records lists
-    const [users, setUsers] = useState(() => getSavedState('cs_users', INITIAL_USERS));
-    const [posts, setPosts] = useState(() => getSavedState('cs_posts', INITIAL_POSTS));
-    const [notices, setNotices] = useState(() => getSavedState('cs_notices', INITIAL_NOTICES));
-    const [resources, setResources] = useState(() => getSavedState('cs_resources', INITIAL_RESOURCES));
-    const [rooms, setRooms] = useState(() => getSavedState('cs_rooms', INITIAL_ROOMS));
-    const [roomMessages, setRoomMessages] = useState(() => getSavedState('cs_room_messages', INITIAL_ROOM_MESSAGES));
-    const [directMessages, setDirectMessages] = useState(() => getSavedState('cs_direct_messages', INITIAL_DIRECT_MESSAGES));
+    const [users, setUsers] = useState(() => getSavedState('users', INITIAL_USERS));
+    const [posts, setPosts] = useState(() => getSavedState('posts', INITIAL_POSTS));
+    const [notices, setNotices] = useState(() => getSavedState('notices', INITIAL_NOTICES));
+    const [resources, setResources] = useState(() => getSavedState('resources', INITIAL_RESOURCES));
+    const [rooms, setRooms] = useState(() => getSavedState('rooms', INITIAL_ROOMS));
+    const [roomMessages, setRoomMessages] = useState(() => getSavedState('room_messages', INITIAL_ROOM_MESSAGES));
+    const [directMessages, setDirectMessages] = useState(() => getSavedState('direct_messages', INITIAL_DIRECT_MESSAGES));
     // Active view tabs
     const [activeTab, setActiveTab] = useState('feed');
     // Selected direct message recipient
@@ -34,28 +34,28 @@ export default function App() {
     const [noticeCount, setNoticeCount] = useState(0);
     // Persist state updates to localStorage
     useEffect(() => {
-        saveState('cs_current_user', currentUser);
+        saveState('current_user', currentUser);
     }, [currentUser]);
     useEffect(() => {
-        saveState('cs_users', users);
+        saveState('users', users);
     }, [users]);
     useEffect(() => {
-        saveState('cs_posts', posts);
+        saveState('posts', posts);
     }, [posts]);
     useEffect(() => {
-        saveState('cs_notices', notices);
+        saveState('notices', notices);
     }, [notices]);
     useEffect(() => {
-        saveState('cs_resources', resources);
+        saveState('resources', resources);
     }, [resources]);
     useEffect(() => {
-        saveState('cs_rooms', rooms);
+        saveState('rooms', rooms);
     }, [rooms]);
     useEffect(() => {
-        saveState('cs_room_messages', roomMessages);
+        saveState('room_messages', roomMessages);
     }, [roomMessages]);
     useEffect(() => {
-        saveState('cs_direct_messages', directMessages);
+        saveState('direct_messages', directMessages);
     }, [directMessages]);
     // Handle Tab Switch (clears counts on visiting matching tabs)
     useEffect(() => {
