@@ -15,36 +15,40 @@ export default function LoginView({ onLogin, users, onAddUser }) {
     const [role, setRole] = useState('');
     const [department, setDepartment] = useState('');
     const [bio, setBio] = useState('');
+    const [password, setPassword] = useState(''); // New state for create account password
 
     // Sign In States
     const [signInQuery, setSignInQuery] = useState('');
-
+    const [signInPassword, setSignInPassword] = useState(''); // New state for sign in password
     const [signInError, setSignInError] = useState('');
 
     const handleSignIn = (e) => {
         e.preventDefault();
-        if (!signInQuery.trim())
+        if (!signInQuery.trim() || !signInPassword.trim()) {
+            setSignInError('Please enter both handle/email and password.');
             return;
+        }
 
         const query = signInQuery.trim().toLowerCase();
         const cleanQuery = query.startsWith('@') ? query.slice(1) : query;
+        const passwordAttempt = signInPassword.trim();
 
         const found = users.find((u) =>
-            u.handle?.toLowerCase() === cleanQuery ||
-            u.email?.toLowerCase() === query
+            (u.handle?.toLowerCase() === cleanQuery || u.email?.toLowerCase() === query) &&
+            u.password === passwordAttempt // Added password check
         );
 
         if (found) {
             onLogin(found);
         }
         else {
-            setSignInError('No profile found with that handle or email. Try another or register a new one.');
+            setSignInError('No profile found with that handle/email or incorrect password.');
         }
     };
 
     const handleCreateAccount = (e) => {
         e.preventDefault();
-        if (!name || !email)
+        if (!name || !email || !password) // Added password check
             return;
 
         const newUser = {
@@ -52,6 +56,7 @@ export default function LoginView({ onLogin, users, onAddUser }) {
             name,
             handle: handle.toLowerCase() || name.replace(/\s+/g, '').toLowerCase(),
             email,
+            password, // Added password field
             role,
             department,
             bio: bio || `Hi! I'm ${name}, a new participant in ConnectSphere.`,
@@ -168,6 +173,15 @@ export default function LoginView({ onLogin, users, onAddUser }) {
             }} className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"/>
                 </div>
 
+                {/* New password field for Sign In */}
+                <div className="space-y-2">
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Password *</label>
+                    <input type="password" required placeholder="Enter your password" value={signInPassword} onChange={(e) => {
+                        setSignInPassword(e.target.value);
+                        if (signInError) setSignInError('');
+                    }} className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"/>
+                </div>
+
                 <button type="submit" className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer">
                   <ArrowRight size={14}/>
                   Sign In & Sync
@@ -229,6 +243,17 @@ export default function LoginView({ onLogin, users, onAddUser }) {
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Department / Branch</label>
                     <input type="text" placeholder="Literature, Freshman" value={department} onChange={(e) => setDepartment(e.target.value)} className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"/>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Email Address *</label>
+                    <input type="email" required placeholder="jane@connectsphere.edu" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"/>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Password *</label>
+                    <input type="password" required placeholder="Choose a strong password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"/>
                   </div>
                 </div>
 
