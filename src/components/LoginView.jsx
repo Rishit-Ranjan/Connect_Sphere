@@ -12,7 +12,7 @@ export default function LoginView({ onLogin, users, onAddUser }) {
     const [name, setName] = useState('');
     const [handle, setHandle] = useState('');
     const [email, setEmail] = useState('');
-    const [role, setRole] = useState('');
+    
     const [department, setDepartment] = useState('');
     const [bio, setBio] = useState('');
     const [password, setPassword] = useState(''); // New state for create account password
@@ -56,8 +56,8 @@ export default function LoginView({ onLogin, users, onAddUser }) {
             name,
             handle: handle.toLowerCase() || name.replace(/\s+/g, '').toLowerCase(),
             email,
-            password, // Added password field
-            role,
+            password, 
+            role: "student",
             department,
             bio: bio || `Hi! I'm ${name}, a new participant in ConnectSphere.`,
             // No avatar selector UI anymore; allow null avatar.

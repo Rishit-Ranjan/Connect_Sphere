@@ -14,9 +14,10 @@ import MessagesView from './components/MessagesView';
 import AdminDashboard from './components/AdminDashboard';
 import LoginView from './components/LoginView';
 import ProfileView from './components/ProfileView';
+import { useAuth } from "./context/AuthContext";
+
 export default function App() {
-    // Current logged in profile state
-    const [currentUser, setCurrentUser] = useState(() => getSavedState('current_user', null));
+    const { currentUser, setCurrentUser, login, logout } = useAuth();
     // Core records lists
     const [users, setUsers] = useState(() => getSavedState('users', INITIAL_USERS));
     const [posts, setPosts] = useState(() => getSavedState('posts', INITIAL_POSTS));
@@ -32,10 +33,6 @@ export default function App() {
     // Direct notifications and badges state simulations
     const [unreadCount, setUnreadCount] = useState(0);
     const [noticeCount, setNoticeCount] = useState(0);
-    // Persist state updates to localStorage
-    useEffect(() => {
-        saveState('current_user', currentUser);
-    }, [currentUser]);
     useEffect(() => {
         saveState('users', users);
     }, [users]);
@@ -66,11 +63,11 @@ export default function App() {
     }, [activeTab]);
     // 1. Authentications & Session Actions
     const handleLogin = (user) => {
-        setCurrentUser(user);
+        login(user);
         setActiveTab('feed');
     };
     const handleLogout = () => {
-        setCurrentUser(null);
+        logout();
         setSelectedRecipient(null);
     };
     const handleAddUser = (user) => {
