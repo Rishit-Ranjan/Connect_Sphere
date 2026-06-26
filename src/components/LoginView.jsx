@@ -230,7 +230,7 @@ export default function LoginView({ onLogin, users, onAddUser }) {
                     <input type="text" required placeholder="Jane Doe" value={name} onChange={(e) => setName(e.target.value)} className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"/>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Username (Handle)</label>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Username *(Handle)</label>
                     <input type="text" placeholder="janedoe" value={handle} onChange={(e) => setHandle(e.target.value)} className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"/>
                   </div>
                 </div>
@@ -248,30 +248,17 @@ export default function LoginView({ onLogin, users, onAddUser }) {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Email Address *</label>
-                    <input type="email" required placeholder="jane@connectsphere.edu" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"/>
-                  </div>
-                  <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Password *</label>
                     <input type="password" required placeholder="Choose a strong password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"/>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Role Type</label>
-                    <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 bg-white cursor-pointer">
-                      <option value="participant">Participant/ User</option>
 
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Campus Bio</label>
-                    <input type="text" placeholder="Coffee addict, studying algorithms..." value={bio} onChange={(e) => setBio(e.target.value)} className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"/>
-                  </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Campus Bio</label>
+                  <input type="text" placeholder="Coffee addict, studying algorithms..." value={bio} onChange={(e) => setBio(e.target.value)} className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"/>
                 </div>
 
-                {/* Avatar Selection Picker removed (no preset selection) */}
                 <button type="submit" className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer">
                   Register & Sign In
                 </button>
