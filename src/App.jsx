@@ -236,6 +236,10 @@ export default function App() {
       </main>
 
       {/* 3. Widgets Sidebar (Right Column) - only displayed on non-chat pages to maintain layout spaciousness */}
-      {activeTab !== 'messages' && activeTab !== 'rooms' && (<RightSidebar currentUser={currentUser} users={users} onConnect={handleConnectWithUser} onFollow={handleFollowUser} urgentNotices={urgentNotices} onStartDirectMessage={handleStartDirectMessage}/>)}
+      {activeTab !== 'messages' && activeTab !== 'rooms' && (
+        <div className= "w-80">
+            <RightSidebar currentUser={currentUser} users={users} onConnect={handleConnectWithUser} onFollow={handleFollowUser} urgentNotices={urgentNotices} onStartDirectMessage={handleStartDirectMessage}/>
+        </div>
+    )}
     </div>);
 }

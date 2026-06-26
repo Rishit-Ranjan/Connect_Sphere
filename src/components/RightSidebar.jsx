@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React from 'react';
-import { UserPlus, CheckCircle, Bell, ArrowRight, MessageSquare } from 'lucide-react';
+import { UserPlus, XCircle, Bell, ArrowRight, MessageSquare } from 'lucide-react';
 export default function RightSidebar({ currentUser, users, onConnect, onFollow, urgentNotices, onStartDirectMessage }) {
     // Find candidates for the "Who to Connect With" section (excluding current user and already connected ones)
     const connectCandidates = users
@@ -71,8 +71,8 @@ export default function RightSidebar({ currentUser, users, onConnect, onFollow, 
                 </div>
               </div>))}
           </div>) : (<div className="text-center py-4 border border-dashed border-slate-200 rounded-xl">
-            <CheckCircle size={18} className="mx-auto text-slate-300 mb-1.5"/>
-            <p className="text-[10px] text-slate-400 font-medium">You are connected with everyone!</p>
+            <XCircle size={18} className="mx-auto text-slate-300 mb-1.5"/>
+            <p className="text-[10px] text-slate-400 font-medium">You are not connected to anyone!</p>
           </div>)}
       </div>
 
