@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState } from 'react';
-import { Users, ArrowRight, UserPlus, Sparkles } from 'lucide-react';
+import { ArrowRight, UserPlus, Sparkles } from 'lucide-react';
+
 
 export default function LoginView({ onLogin, users, onAddUser }) {
     const [activeTab, setActiveTab] = useState('signin');
@@ -128,10 +129,6 @@ export default function LoginView({ onLogin, users, onAddUser }) {
                     <div>
                         {/* Tabs selector */}
                         <div className="flex border-b border-slate-200 mb-8">
-                            <button onClick={() => setActiveTab('select')} className={`pb-3 text-sm font-semibold tracking-tight relative transition-all mr-6 flex items-center gap-2 cursor-pointer ${activeTab === 'select' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <Users size={16}/>
-                                Explore Demo Profiles
-                            </button>
                             <button onClick={() => {
                                 setSignInError('');
                                 setActiveTab('signin');
@@ -144,6 +141,7 @@ export default function LoginView({ onLogin, users, onAddUser }) {
                                 Create Account
                             </button>
                         </div>
+
 
                         {/* Content: SIGN IN WITH CARD */}
                         {activeTab === 'signin' ? (<form onSubmit={handleSignIn} className="space-y-4 py-2 animate-fadeIn">
@@ -256,13 +254,9 @@ export default function LoginView({ onLogin, users, onAddUser }) {
           </div>
 
           <div className="pt-6 border-t border-slate-100 mt-6 flex items-center justify-between text-[11px] font-medium text-slate-500">
-            {activeTab !== 'select' && (<button onClick={() => setActiveTab('select')} className="text-indigo-600 font-bold hover:underline focus:outline-none cursor-pointer">
-                ← Profile Logins
-              </button>)}
-            
             {/* Removed bottom navigation buttons for Sign In / Create Account */}
-
           </div>
+
         </div>
       </div>
     </div>);
