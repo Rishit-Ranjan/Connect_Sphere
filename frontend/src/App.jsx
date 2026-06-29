@@ -31,7 +31,7 @@ export default function App() {
   const { currentUser, setCurrentUser, logout, loading } = useAuth();
 
   const [users, setUsers] = useState(() => getSavedState('users', INITIAL_USERS));
-  const [posts, setPosts] = useState(() => getSavedState('posts', INITIAL_POSTS));
+  const [posts, setPosts] = useState([]);
   const [notices, setNotices] = useState(() => getSavedState('notices', INITIAL_NOTICES));
   const [resources, setResources] = useState(() => getSavedState('resources', INITIAL_RESOURCES));
   const [rooms, setRooms] = useState(() => getSavedState('rooms', INITIAL_ROOMS));
@@ -47,9 +47,15 @@ export default function App() {
     saveState('users', users);
   }, [users]);
 
-  useEffect(() => {
+  /*useEffect(() => {
     saveState('posts', posts);
-  }, [posts]);
+  }, [posts]);*/
+
+  useEffect(() => {
+  if (currentUser) {
+    fetchPosts();
+  }
+}, [currentUser]);
 
   useEffect(() => {
     saveState('notices', notices);
@@ -83,9 +89,52 @@ export default function App() {
     setSelectedRecipient(null);
   };
 
-  const handleAddPost = (post) => {
-    setPosts((prev) => [post, ...prev]);
-  };
+  const handleAddPost = async ({ text, imageUrl }) => {
+  try {
+    const token = localStorage.getItem('token');
+
+    const res = await fetch('http://localhost:5000/api/posts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ text, imageUrl })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to create post');
+    }
+
+    setPosts((prev) => [data, ...prev]);
+  } catch (error) {
+    console.error('Error creating post:', error);
+  }
+};
+
+  const fetchPosts = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await fetch('http://localhost:5000/api/posts', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch posts');
+    }
+
+    const data = await res.json();
+    setPosts(data);
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+  }
+};
+
+
 
   const handleDeletePost = (postId) => {
     setPosts((prev) => prev.filter((p) => p.id !== postId));
