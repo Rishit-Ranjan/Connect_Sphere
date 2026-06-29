@@ -4,6 +4,16 @@
  */
 import React, { useState } from 'react';
 import { Heart, MessageCircle, Image as ImageIcon, Paperclip, Send, Trash2, Search, FileText, X } from 'lucide-react';
+
+// Define IMAGE_PRESETS here to resolve the ReferenceError
+const IMAGE_PRESETS = [
+  { name: 'Nature', url: 'https://via.placeholder.com/150/A0A0A0/FFFFFF?text=Nature' },
+  { name: 'Cityscape', url: 'https://via.placeholder.com/150/B0B0B0/FFFFFF?text=City' },
+  { name: 'Abstract', url: 'https://via.placeholder.com/150/C0C0C0/FFFFFF?text=Abstract' },
+  { name: 'Mountain', url: 'https://via.placeholder.com/150/D0D0D0/FFFFFF?text=Mountain' },
+  { name: 'Ocean', url: 'https://via.placeholder.com/150/E0E0E0/FFFFFF?text=Ocean' },
+];
+
 export default function FeedView({ currentUser, posts, onAddPost, onDeletePost, onLikePost, onAddComment }) {
     const [searchText, setSearchText] = useState('');
     const [newPostText, setNewPostText] = useState('');
@@ -36,7 +46,6 @@ export default function FeedView({ currentUser, posts, onAddPost, onDeletePost, 
         onAddPost(newPost);
         setNewPostText('');
         setSelectedImage(null);
-        setShowImagePicker(false);
         setAttachedFileName(null);
         setShowFileAttach(false);
         setTempFileName('');
@@ -57,6 +66,20 @@ export default function FeedView({ currentUser, posts, onAddPost, onDeletePost, 
         // Ensure comments expand on submitting
         setExpandedComments((prev) => ({ ...prev, [postId]: true }));
     };
+
+    const handleImageUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setSelectedImage(reader.result); // Store as Data URL for preview
+            };
+            reader.readAsDataURL(file);
+        }
+        // Reset file input value to allow re-uploading the same file
+        event.target.value = '';
+    };
+
     const filteredPosts = posts.filter((post) => {
         const searchLower = searchText.toLowerCase();
         return (post.text.toLowerCase().includes(searchLower) ||
@@ -109,22 +132,6 @@ export default function FeedView({ currentUser, posts, onAddPost, onDeletePost, 
             </div>
           </div>
 
-          {/* Inline toggles/popups */}
-          {showImagePicker && (<div className="mt-4 border-t border-slate-100 pt-3">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Select a theme photography preset</p>
-              <div className="flex gap-2 overflow-x-auto pb-1.5">
-                {IMAGE_PRESETS.map((p) => (<button key={p.name} type="button" onClick={() => {
-                    setSelectedImage(p.url);
-                    setShowImagePicker(false);
-                }} className="relative rounded-lg overflow-hidden border border-slate-200 w-24 h-16 shrink-0 group hover:border-slate-500 transition-all cursor-pointer">
-                    <img src={p.url} alt={p.name} className="w-full h-full object-cover"/>
-                    <div className="absolute inset-0 bg-black/40 flex items-end p-1">
-                      <span className="text-[8px] font-bold text-white truncate w-full">{p.name}</span>
-                    </div>
-                  </button>))}
-              </div>
-            </div>)}
-
           {showFileAttach && (<div className="mt-4 border-t border-slate-100 pt-3 flex gap-2">
               <input type="text" placeholder="filename.pdf or syllabus.zip" value={tempFileName} onChange={(e) => setTempFileName(e.target.value)} className="flex-1 text-xs px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"/>
               <button type="button" onClick={handleAttachFile} className="bg-indigo-600 text-white text-xs px-4 py-2 rounded-xl hover:bg-indigo-700 font-semibold cursor-pointer">
@@ -135,16 +142,16 @@ export default function FeedView({ currentUser, posts, onAddPost, onDeletePost, 
           {/* Action Row */}
           <div className="flex items-center justify-between border-t border-slate-100 mt-4 pt-3">
             <div className="flex items-center gap-1">
-              <button type="button" onClick={() => {
-            setShowImagePicker(!showImagePicker);
-            setShowFileAttach(false);
-        }} className={`p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${selectedImage ? 'text-indigo-600 bg-indigo-50' : ''}`}>
+              {/* Hidden file input */}
+              <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} style={{ display: 'none' }} />
+              <button type="button" onClick={() => { fileInputRef.current?.click(); setShowFileAttach(false); }} className={`p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${selectedImage ? 'text-indigo-600 bg-indigo-50' : ''}`}>
                 <ImageIcon size={14}/>
-                <span>Photo Preset</span>
+                <span>Upload Image</span>
               </button>
               <button type="button" onClick={() => {
+            // Toggle file attachment, ensure image picker is closed
             setShowFileAttach(!showFileAttach);
-            setShowImagePicker(false);
+            // setShowImagePicker(false); // No longer needed
         }} className={`p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${attachedFileName ? 'text-indigo-600 bg-indigo-50' : ''}`}>
                 <Paperclip size={14}/>
                 <span>Attach File</span>

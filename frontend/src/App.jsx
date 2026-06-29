@@ -47,10 +47,6 @@ export default function App() {
     saveState('users', users);
   }, [users]);
 
-  /*useEffect(() => {
-    saveState('posts', posts);
-  }, [posts]);*/
-
   useEffect(() => {
   if (currentUser) {
     fetchPosts();
