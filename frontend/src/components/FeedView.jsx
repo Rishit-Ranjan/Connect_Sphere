@@ -3,9 +3,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useRef, useState } from 'react';
-import { Heart, MessageCircle, Image as ImageIcon, Paperclip, Send, Trash2, Search, FileText, X } from 'lucide-react';
+import {
+  Heart,
+  MessageCircle,
+  Image as ImageIcon,
+  Paperclip,
+  Send,
+  Trash2,
+  Search,
+  FileText,
+  X,
+  Pencil
+} from 'lucide-react';
 
-export default function FeedView({ currentUser, posts, onAddPost, onDeletePost, onLikePost, onAddComment }) {
+export default function FeedView({
+  currentUser,
+  posts,
+  onAddPost,
+  onDeletePost,
+  onEditPost,
+  onLikePost,
+  onAddComment
+}) {
   const fileInputRef = useRef(null);
 
   const [searchText, setSearchText] = useState('');
@@ -16,6 +35,8 @@ export default function FeedView({ currentUser, posts, onAddPost, onDeletePost, 
   const [tempFileName, setTempFileName] = useState('');
   const [commentInputs, setCommentInputs] = useState({});
   const [expandedComments, setExpandedComments] = useState({});
+  const [editingPostId, setEditingPostId] = useState(null);
+  const [editPostText, setEditPostText] = useState('');
 
   const handleCreatePost = (e) => {
     e.preventDefault();
@@ -69,6 +90,26 @@ export default function FeedView({ currentUser, posts, onAddPost, onDeletePost, 
       reader.readAsDataURL(file);
     }
     event.target.value = '';
+  };
+
+  const canManagePost = (post) =>
+    currentUser?.role === 'admin' || currentUser?.id === post.author?.id;
+
+  const handleStartEdit = (post) => {
+    setEditingPostId(post.id);
+    setEditPostText(post.text);
+  };
+
+  const handleSaveEdit = (postId) => {
+    if (!editPostText.trim()) return;
+    onEditPost(postId, editPostText.trim());
+    setEditingPostId(null);
+    setEditPostText('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPostId(null);
+    setEditPostText('');
   };
 
   const filteredPosts = posts.filter((post) => {
@@ -246,18 +287,57 @@ export default function FeedView({ currentUser, posts, onAddPost, onDeletePost, 
                     </div>
                   </div>
 
-                  {currentUser.role === 'admin' && (
-                    <button
-                      onClick={() => onDeletePost(post.id)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50/50 transition-colors cursor-pointer"
-                      title="Remove post"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                  {canManagePost(post) && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleStartEdit(post)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
+                        title="Edit post"
+                      >
+                        <Pencil size={13} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onDeletePost(post.id)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50/50 transition-colors cursor-pointer"
+                        title="Remove post"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   )}
                 </div>
 
-                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{post.text}</p>
+                {editingPostId === post.id ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={editPostText}
+                      onChange={(e) => setEditPostText(e.target.value)}
+                      rows={3}
+                      className="w-full text-xs text-slate-700 resize-none border border-slate-200 rounded-2xl px-3 py-2 focus:outline-none focus:border-indigo-500"
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSaveEdit(post.id)}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded-xl cursor-pointer"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold px-3 py-1.5 rounded-xl cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{post.text}</p>
+                )}
 
                 {post.imageUrl && (
                   <div className="rounded-2xl overflow-hidden border border-slate-100 max-h-[350px]">

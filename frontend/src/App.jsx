@@ -48,10 +48,10 @@ export default function App() {
   }, [users]);
 
   useEffect(() => {
-  if (currentUser) {
-    fetchPosts();
-  }
-}, [currentUser]);
+    if (currentUser) {
+      fetchPosts();
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     saveState('notices', notices);
@@ -86,54 +86,65 @@ export default function App() {
   };
 
   const handleAddPost = async ({ text, imageUrl }) => {
-  try {
-    const token = localStorage.getItem('token');
+    try {
+      const token = localStorage.getItem('token');
 
-    const res = await fetch('http://localhost:5000/api/posts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ text, imageUrl })
-    });
+      const res = await fetch('http://localhost:5000/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ text, imageUrl })
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data.message || 'Failed to create post');
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to create post');
+      }
+
+      setPosts((prev) => [data, ...prev]);
+    } catch (error) {
+      console.error('Error creating post:', error);
     }
-
-    setPosts((prev) => [data, ...prev]);
-  } catch (error) {
-    console.error('Error creating post:', error);
-  }
-};
+  };
 
   const fetchPosts = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const res = await fetch('http://localhost:5000/api/posts', {
-      headers: {
-        Authorization: `Bearer ${token}`
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/posts', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch posts');
       }
-    });
 
-    if (!res.ok) {
-      throw new Error('Failed to fetch posts');
+      const data = await res.json();
+      setPosts(data);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
     }
-
-    const data = await res.json();
-    setPosts(data);
-  } catch (error) {
-    console.error('Error fetching posts:', error);
-  }
-};
-
-
+  };
 
   const handleDeletePost = (postId) => {
     setPosts((prev) => prev.filter((p) => p.id !== postId));
+  };
+
+  const handleEditPost = (postId, updatedText) => {
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              text: updatedText
+            }
+          : post
+      )
+    );
   };
 
   const handleLikePost = (postId) => {
@@ -327,6 +338,7 @@ export default function App() {
             posts={posts}
             onAddPost={handleAddPost}
             onDeletePost={handleDeletePost}
+            onEditPost={handleEditPost}
             onLikePost={handleLikePost}
             onAddComment={handleAddComment}
           />
