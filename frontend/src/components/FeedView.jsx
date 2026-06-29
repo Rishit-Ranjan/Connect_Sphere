@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Heart, MessageCircle, Image as ImageIcon, Paperclip, Send, Trash2, Search, FileText, X } from 'lucide-react';
 
 // Define IMAGE_PRESETS here to resolve the ReferenceError
@@ -19,6 +19,8 @@ export default function FeedView({ currentUser, posts, onAddPost, onDeletePost, 
     const [newPostText, setNewPostText] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
     const [showImagePicker, setShowImagePicker] = useState(false);
+    // Ref for the hidden file input
+    const fileInputRef = useRef(null);
     // Custom uploaded file simulation state
     const [attachedFileName, setAttachedFileName] = useState(null);
     const [showFileAttach, setShowFileAttach] = useState(false);
