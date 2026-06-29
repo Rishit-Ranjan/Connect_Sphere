@@ -4,13 +4,26 @@
  */
 import React from 'react';
 import { UserPlus, XCircle, Bell, ArrowRight, MessageSquare } from 'lucide-react';
+
 export default function RightSidebar({ currentUser, users, onConnect, onFollow, urgentNotices, onStartDirectMessage }) {
+  // Helper function to compare two user objects based on various unique identifiers
+  const isSameUser = (userA, userB) => {
+    if (!userA || !userB) return false;
+
+    return (
+      userA.id === userB.id ||
+      userA._id === userB._id || // In case one uses _id and other id
+      userA.handle?.toLowerCase() === userB.handle?.toLowerCase() ||
+      userA.email?.toLowerCase() === userB.email?.toLowerCase()
+    );
+  };
+
     // Find candidates for the "Who to Connect With" section (excluding current user and already connected ones)
     const connectCandidates = users
-        .filter((u) => u.id !== currentUser.id && !u.connected)
+        .filter((u) => !isSameUser(u, currentUser) && !u.connected)
         .slice(0, 3);
     // Online active users list
-    const onlineUsers = users.filter((u) => u.id !== currentUser.id);
+    const onlineUsers = users.filter((u) => !isSameUser(u, currentUser));
     return (<aside className="w-80 bg-slate-50 border-l border-slate-200 p-6 space-y-6 overflow-y-auto h-full sticky top-0 font-sans z-10 shrink-0">
       
       {/* 1. Curated Campus Notices Carousel/Banner */}

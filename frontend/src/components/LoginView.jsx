@@ -37,6 +37,316 @@ export default function LoginView() {
       setIsSubmitting(true);
       await login(signInQuery.trim(), signInPassword.trim());
     } catch (error) {
+      console.error('Login error:', error); // Log the full error object
+      setSignInError(error.message || 'Login failed.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateAccount = async (e) => {
+    e.preventDefault();
+    setCreateError('');
+
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      setCreateError('Please fill in all required fields.');
+      return;
+    }
+
+    const newUser = {
+      name: name.trim(),
+      handle: handle.trim().toLowerCase() || name.replace(/\s+/g, '').toLowerCase(),
+      email: email.trim().toLowerCase(),
+      password: password.trim(),
+      department: department.trim(),
+      bio: bio.trim() || `Hi! I'm ${name.trim()}, a new participant in ConnectSphere.`
+    };
+
+    try {
+      setIsSubmitting(true);
+      await register(newUser);
+    } catch (error) {
+      console.error('Registration error:', error); // Log the full error object
+      setCreateError(error.message || 'Registration failed.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative overflow-hidden font-sans">
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40">
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-slate-200/50 filter blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-50/70 filter blur-[100px]" />
+        <div className="absolute top-[40%] right-[15%] w-[300px] h-[300px] rounded-full bg-slate-200/40 filter blur-[80px]" />
+      </div>
+
+      <div className="w-full max-w-4xl grid md:grid-cols-5 bg-white border border-slate-200 rounded-3xl shadow-xl overflow-hidden relative z-10">
+        <div className="md:col-span-2 bg-slate-900 text-slate-100 p-8 flex flex-col justify-between relative">
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+          <div>
+            <div className="flex items-center gap-2 mb-8">
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-indigo-600 font-display font-extrabold text-lg shadow-sm">
+                C
+              </div>
+              <span className="font-display font-bold tracking-tight text-xl text-white">ConnectSphere</span>
+            </div>
+
+            <h1 className="font-display font-semibold text-3xl tracking-tight leading-tight mb-4 text-white">
+              Where your campus comes together.
+            </h1>
+            <p className="text-slate-400 text-sm leading-relaxed mb-6">
+              Connect with peers, view academic schedules, coordinate placements, download course material, and message directly in a highly cohesive local network.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-md bg-slate-800 flex items-center justify-center text-xs">📢</div>
+              <div>
+                <h4 className="text-xs font-semibold text-slate-200">Instant Broadcasts</h4>
+                <p className="text-slate-400 text-[11px]">Seamless lecture schedule and placement updates</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-md bg-slate-800 flex items-center justify-center text-xs">💬</div>
+              <div>
+                <h4 className="text-xs font-semibold text-slate-200">Live Messenger</h4>
+                <p className="text-slate-400 text-[11px]">Real-time chat rooms and direct communication</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-md bg-slate-800 flex items-center justify-center text-xs">📁</div>
+              <div>
+                <h4 className="text-xs font-semibold text-slate-200">Resource Library</h4>
+                <p className="text-slate-400 text-[11px]">Download class lectures and exam syllabus papers</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-slate-800 mt-6 flex items-center justify-between text-slate-500 text-[10px] font-mono">
+            <span>© 2026 ConnectSphere</span>
+          </div>
+        </div>
+
+        <div className="md:col-span-3 p-8 flex flex-col justify-between bg-white">
+          <div>
+            <div className="flex border-b border-slate-200 mb-8">
+              <button
+                onClick={() => {
+                  setSignInError('');
+                  setActiveTab('signin');
+                }}
+                className={`pb-3 text-sm font-semibold tracking-tight relative transition-all mr-6 flex items-center gap-2 cursor-pointer ${
+                  activeTab === 'signin'
+                    ? 'text-indigo-600 border-b-2 border-indigo-600'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <Sparkles size={16} />
+                Sign In
+              </button>
+
+              <button
+                onClick={() => {
+                  setCreateError('');
+                  setActiveTab('create');
+                }}
+                className={`pb-3 text-sm font-semibold tracking-tight relative transition-all flex items-center gap-2 cursor-pointer ${
+                  activeTab === 'create'
+                    ? 'text-indigo-600 border-b-2 border-indigo-600'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <UserPlus size={16} />
+                Create Account
+              </button>
+            </div>
+
+            {activeTab === 'signin' ? (
+              <form onSubmit={handleSignIn} className="space-y-4 py-2 animate-fadeIn">
+                <div className="mb-4">
+                  <h3 className="font-display font-bold text-lg text-slate-900 mb-1">
+                    Sign in with your campus card
+                  </h3>
+                  <p className="text-slate-500 text-xs">
+                    Enter your digital student handle or registered email to sign back into your session.
+                  </p>
+                </div>
+
+                {signInError && (
+                  <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs px-3.5 py-2.5 rounded-xl font-medium">
+                    ⚠️ {signInError}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Campus Handle or Email *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. janedoe or jane@connectsphere.edu"
+                    value={signInQuery}
+                    onChange={(e) => {
+                      setSignInQuery(e.target.value);
+                      if (signInError) setSignInError('');
+                    }}
+                    className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Enter your password"
+                    value={signInPassword}
+                    onChange={(e) => {
+                      setSignInPassword(e.target.value);
+                      if (signInError) setSignInError('');
+                    }}
+                    className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
+                >
+                  <ArrowRight size={14} />
+                  {isSubmitting ? 'Signing In...' : 'Sign In & Sync'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleCreateAccount} className="space-y-4">
+                <div className="mb-4">
+                  <h3 className="font-display font-bold text-lg text-slate-900 mb-1">
+                    Build your campus card
+                  </h3>
+                  <p className="text-slate-500 text-xs">
+                    Create your account and personalize your digital presence.
+                  </p>
+                </div>
+
+                {createError && (
+                  <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs px-3.5 py-2.5 rounded-xl font-medium">
+                    ⚠️ {createError}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Jane Doe"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Username *(Handle)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="janedoe"
+                      value={handle}
+                      onChange={(e) => setHandle(e.target.value)}
+                      className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="jane@connectsphere.edu"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Department / Branch
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Literature, Freshman"
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Password *
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Choose a strong password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Campus Bio
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Coffee addict, studying algorithms..."
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
+                >
+                  {isSubmitting ? 'Creating Account...' : 'Register & Sign In'}
+                </button>
+              </form>
+            )}
+          </div>
+
+          <div className="pt-6 border-t border-slate-100 mt-6 flex items-center justify-between text-[11px] font-medium text-slate-500" />
+        </div>
+      </div>
+    </div>
+  );
+}
+    } catch (error) {
       setSignInError(error.message || 'Login failed.');
     } finally {
       setIsSubmitting(false);
