@@ -1,4 +1,4 @@
-// noticeRoutes.js
+
 const express = require('express');
 const { getNotices, createNotice, deleteNotice } = require('../controllers/noticeController');
 const { protect } = require('../middlewares/authMiddleware');

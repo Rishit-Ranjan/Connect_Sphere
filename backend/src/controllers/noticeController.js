@@ -1,4 +1,4 @@
-// noticeController.js
+
 const Notice = require('../models/Notice');
 
 const getNotices = async (req, res, next) => {
