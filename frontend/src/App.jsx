@@ -3,17 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState, useEffect } from 'react';
-import {
-  INITIAL_USERS,
-  INITIAL_POSTS,
-  INITIAL_NOTICES,
-  INITIAL_RESOURCES,
-  INITIAL_ROOMS,
-  INITIAL_ROOM_MESSAGES,
-  INITIAL_DIRECT_MESSAGES,
-  getSavedState,
-  saveState
-} from './mockData';
 
 import Sidebar from './components/Sidebar';
 import RightSidebar from './components/RightSidebar';
@@ -130,9 +119,28 @@ export default function App() {
     }
   };
 
-  const handleDeletePost = (postId) => {
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
-  };
+  const handleDeletePost = async (postId) => {
+  try {
+    const token = localStorage.getItem('token');
+
+    const res = await fetch(`http://localhost:5000/api/posts/${postId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to delete post');
+    }
+
+    setPosts((prev) => prev.filter((post) => post.id !== postId));
+  } catch (error) {
+    console.error('Error deleting post:', error);
+  }
+};
 
   const handleEditPost = (postId, updatedText) => {
     setPosts((prev) =>
@@ -147,46 +155,71 @@ export default function App() {
     );
   };
 
-  const handleLikePost = (postId) => {
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id === postId) {
-          const liked = !post.likedByMe;
-          return {
-            ...post,
-            likedByMe: liked,
-            likesCount: liked
-              ? post.likesCount + 1
-              : Math.max(0, post.likesCount - 1)
-          };
+  const handleLikePost = async (postId) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`http://localhost:5000/api/posts/${postId}/like`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-        return post;
-      })
-    );
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to update like');
+      }
+
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                likesCount: data.likesCount,
+                likedByMe: data.likedByMe
+              }
+            : post
+        )
+      );
+    } catch (error) {
+      console.error('Error liking post:', error);
+    }
   };
 
-  const handleAddComment = (postId, commentText) => {
-    if (!currentUser) return;
+  const handleAddComment = async (postId, commentText) => {
+    try {
+      const token = localStorage.getItem('token');
 
-    const newComment = {
-      id: `c-${Date.now()}`,
-      postId,
-      author: currentUser,
-      text: commentText,
-      createdAt: new Date().toISOString()
-    };
+      const res = await fetch(`http://localhost:5000/api/posts/${postId}/comment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ text: commentText })
+      });
 
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            comments: [...post.comments, newComment]
-          };
-        }
-        return post;
-      })
-    );
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to add comment');
+      }
+
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                comments: [...post.comments, data]
+              }
+            : post
+        )
+      );
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
   };
 
   const handleAddNotice = (notice) => {
