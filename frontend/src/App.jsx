@@ -499,11 +499,13 @@ export default function App() {
         body: JSON.stringify({ name, description })
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to create room');
+        // Handle non-JSON error responses gracefully
+        const errorText = await res.text();
+        throw new Error(`Failed to create room. Server responded with: ${errorText}`);
       }
+
+      const data = await res.json();
 
       setRooms((prev) => [...prev, data]);
       setSelectedRoomId(data.id);
