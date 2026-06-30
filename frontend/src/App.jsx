@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState, useEffect } from 'react';
-
+import Chatbot from './components/Chatbot';
 import Sidebar from './components/Sidebar';
 import RightSidebar from './components/RightSidebar';
 import FeedView from './components/FeedView';
@@ -19,48 +19,19 @@ import { useAuth } from './context/AuthContext';
 export default function App() {
   const { currentUser, setCurrentUser, logout, loading } = useAuth();
 
-  const [users, setUsers] = useState(() => getSavedState('users', INITIAL_USERS));
-  const [posts, setPosts] = useState([]);
-  const [notices, setNotices] = useState(() => getSavedState('notices', INITIAL_NOTICES));
-  const [resources, setResources] = useState(() => getSavedState('resources', INITIAL_RESOURCES));
-  const [rooms, setRooms] = useState(() => getSavedState('rooms', INITIAL_ROOMS));
-  const [roomMessages, setRoomMessages] = useState(() => getSavedState('room_messages', INITIAL_ROOM_MESSAGES));
-  const [directMessages, setDirectMessages] = useState(() => getSavedState('direct_messages', INITIAL_DIRECT_MESSAGES));
+  const [users, setUsers] = useState([]);
+const [posts, setPosts] = useState([]);
+const [notices, setNotices] = useState([]);
+const [resources, setResources] = useState([]);
+const [rooms, setRooms] = useState([]);
+const [roomMessages, setRoomMessages] = useState([]);
+const [directMessages, setDirectMessages] = useState([]);
 
   const [activeTab, setActiveTab] = useState('feed');
   const [selectedRecipient, setSelectedRecipient] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [noticeCount, setNoticeCount] = useState(0);
 
-  useEffect(() => {
-    saveState('users', users);
-  }, [users]);
-
-  useEffect(() => {
-    if (currentUser) {
-      fetchPosts();
-    }
-  }, [currentUser]);
-
-  useEffect(() => {
-    saveState('notices', notices);
-  }, [notices]);
-
-  useEffect(() => {
-    saveState('resources', resources);
-  }, [resources]);
-
-  useEffect(() => {
-    saveState('rooms', rooms);
-  }, [rooms]);
-
-  useEffect(() => {
-    saveState('room_messages', roomMessages);
-  }, [roomMessages]);
-
-  useEffect(() => {
-    saveState('direct_messages', directMessages);
-  }, [directMessages]);
 
   useEffect(() => {
     if (activeTab === 'messages') setUnreadCount(0);
@@ -354,106 +325,109 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
-      <Sidebar
-        currentUser={currentUser}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onLogout={handleLogout}
-        unreadCount={unreadCount}
-        noticeCount={noticeCount}
-      />
+    <>
+      <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+        <Sidebar
+          currentUser={currentUser}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onLogout={handleLogout}
+          unreadCount={unreadCount}
+          noticeCount={noticeCount}
+        />
 
-      <main className="flex-1 overflow-y-auto bg-slate-50">
-        {activeTab === 'feed' && (
-          <FeedView
-            currentUser={currentUser}
-            posts={posts}
-            onAddPost={handleAddPost}
-            onDeletePost={handleDeletePost}
-            onEditPost={handleEditPost}
-            onLikePost={handleLikePost}
-            onAddComment={handleAddComment}
-          />
+        <main className="flex-1 overflow-y-auto bg-slate-50">
+          {activeTab === 'feed' && (
+            <FeedView
+              currentUser={currentUser}
+              posts={posts}
+              onAddPost={handleAddPost}
+              onDeletePost={handleDeletePost}
+              onEditPost={handleEditPost}
+              onLikePost={handleLikePost}
+              onAddComment={handleAddComment}
+            />
+          )}
+
+          {activeTab === 'notices' && (
+            <NoticesView
+              currentUser={currentUser}
+              notices={notices}
+              onAddNotice={handleAddNotice}
+              onDeleteNotice={handleDeleteNotice}
+            />
+          )}
+
+          {activeTab === 'resources' && (
+            <ResourcesView
+              currentUser={currentUser}
+              resources={resources}
+              onAddResource={handleAddResource}
+              onDeleteResource={handleDeleteResource}
+              onIncrementDownloads={handleIncrementDownloads}
+            />
+          )}
+
+          {activeTab === 'rooms' && (
+            <RoomsView
+              currentUser={currentUser}
+              rooms={rooms}
+              roomMessages={roomMessages}
+              onAddRoomMessage={handleAddRoomMessage}
+              users={users}
+            />
+          )}
+
+          {activeTab === 'messages' && (
+            <MessagesView
+              currentUser={currentUser}
+              users={users}
+              directMessages={directMessages}
+              onSendDirectMessage={handleSendDirectMessage}
+              selectedRecipient={selectedRecipient}
+              setSelectedRecipient={setSelectedRecipient}
+            />
+          )}
+
+          {activeTab === 'admin' && isAdmin && (
+            <AdminDashboard
+              currentUser={currentUser}
+              users={users}
+              posts={posts}
+              notices={notices}
+              resources={resources}
+              onRemoveUser={handleRemoveUser}
+              onUpdateUserRole={handleUpdateUserRole}
+              onDeletePost={handleDeletePost}
+            />
+          )}
+
+          {activeTab === 'profile' && (
+            <ProfileView
+              currentUser={currentUser}
+              users={users}
+              posts={posts}
+              resources={resources}
+              onUpdateProfile={handleUpdateProfile}
+              onNavigateTab={setActiveTab}
+            />
+          )}
+        </main>
+
+        {activeTab !== 'messages' && activeTab !== 'rooms' && (
+          <div className="w-85">
+            <RightSidebar
+              currentUser={currentUser}
+              users={users}
+              onConnect={handleConnectWithUser}
+              onFollow={handleFollowUser}
+              urgentNotices={urgentNotices}
+              onStartDirectMessage={handleStartDirectMessage}
+            />
+          </div>
         )}
-
-        {activeTab === 'notices' && (
-          <NoticesView
-            currentUser={currentUser}
-            notices={notices}
-            onAddNotice={handleAddNotice}
-            onDeleteNotice={handleDeleteNotice}
-          />
-        )}
-
-        {activeTab === 'resources' && (
-          <ResourcesView
-            currentUser={currentUser}
-            resources={resources}
-            onAddResource={handleAddResource}
-            onDeleteResource={handleDeleteResource}
-            onIncrementDownloads={handleIncrementDownloads}
-          />
-        )}
-
-        {activeTab === 'rooms' && (
-          <RoomsView
-            currentUser={currentUser}
-            rooms={rooms}
-            roomMessages={roomMessages}
-            onAddRoomMessage={handleAddRoomMessage}
-            users={users}
-          />
-        )}
-
-        {activeTab === 'messages' && (
-          <MessagesView
-            currentUser={currentUser}
-            users={users}
-            directMessages={directMessages}
-            onSendDirectMessage={handleSendDirectMessage}
-            selectedRecipient={selectedRecipient}
-            setSelectedRecipient={setSelectedRecipient}
-          />
-        )}
-
-        {activeTab === 'admin' && isAdmin && (
-          <AdminDashboard
-            currentUser={currentUser}
-            users={users}
-            posts={posts}
-            notices={notices}
-            resources={resources}
-            onRemoveUser={handleRemoveUser}
-            onUpdateUserRole={handleUpdateUserRole}
-            onDeletePost={handleDeletePost}
-          />
-        )}
-
-        {activeTab === 'profile' && (
-          <ProfileView
-            currentUser={currentUser}
-            users={users}
-            posts={posts}
-            resources={resources}
-            onUpdateProfile={handleUpdateProfile}
-            onNavigateTab={setActiveTab}
-          />
-        )}
-      </main>
-
-      {activeTab !== 'messages' && activeTab !== 'rooms' && (
-        <div className="w-80">
-          <RightSidebar
-            currentUser={currentUser}
-            users={users}
-            onConnect={handleConnectWithUser}
-            onFollow={handleFollowUser}
-            urgentNotices={urgentNotices}
-            onStartDirectMessage={handleStartDirectMessage}
-          />
-        </div>
-      )}
-    </div>
+      </div>
+      <Chatbot />
+    </>
   );
 }
