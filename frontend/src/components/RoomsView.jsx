@@ -3,18 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Users, Hash, Sparkles } from 'lucide-react';
+import { Send, Users, Hash, Sparkles, Plus } from 'lucide-react';
 
 export default function RoomsView({
   currentUser,
   rooms,
   roomMessages,
   onAddRoomMessage,
+  onCreateRoom,
   users,
   selectedRoomId,
   setSelectedRoomId
 }) {
   const [typedMessage, setTypedMessage] = useState('');
+  const [showCreateRoom, setShowCreateRoom] = useState(false);
+  const [roomName, setRoomName] = useState('');
+  const [roomDescription, setRoomDescription] = useState('');
   const chatBottomRef = useRef(null);
 
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
@@ -30,6 +34,26 @@ export default function RoomsView({
     }
   }, [rooms, selectedRoomId, setSelectedRoomId]);
 
+  const resetCreateRoomForm = () => {
+    setRoomName('');
+    setRoomDescription('');
+    setShowCreateRoom(false);
+  };
+
+  const handleCreateRoomSubmit = async (e) => {
+    e.preventDefault();
+    if (!roomName.trim()) return;
+
+    await onCreateRoom({
+      name: roomName.trim(),
+      description: roomDescription.trim()
+    });
+
+    setRoomName('');
+    setRoomDescription('');
+    setShowCreateRoom(false);
+  };
+
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!typedMessage.trim() || !selectedRoomId) return;
@@ -38,9 +62,54 @@ export default function RoomsView({
     setTypedMessage('');
   };
 
+  if (rooms.length === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-white border border-slate-200 rounded-3xl m-3 shadow-sm">
+        <div className="w-full max-w-md px-6 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-50 flex items-center justify-center">
+            <Hash size={28} className="text-indigo-600" />
+          </div>
+
+          <h2 className="text-xl font-display font-bold text-slate-900">
+            No campus rooms yet
+          </h2>
+          <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+            Create the first room for academics, placements, events, projects, or peer discussions.
+          </p>
+
+          <form onSubmit={handleCreateRoomSubmit} className="mt-6 space-y-3 text-left">
+            <input
+              type="text"
+              placeholder="Room name"
+              value={roomName}
+              onChange={(e) => setRoomName(e.target.value)}
+              className="w-full text-sm px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            />
+
+            <textarea
+              placeholder="Room description"
+              value={roomDescription}
+              onChange={(e) => setRoomDescription(e.target.value)}
+              rows={4}
+              className="w-full text-sm px-4 py-3 rounded-xl border border-slate-200 bg-white resize-none focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            />
+
+            <button
+              type="submit"
+              disabled={!roomName.trim()}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all"
+            >
+              Create first room
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex h-[calc(100vh-2px)] overflow-hidden font-sans bg-white border border-slate-200 rounded-3xl m-3 shadow-sm">
-      <div className="w-64 border-r border-slate-200 bg-slate-50/50 flex flex-col justify-between shrink-0">
+      <div className="w-72 border-r border-slate-200 bg-slate-50/50 flex flex-col justify-between shrink-0">
         <div>
           <div className="p-4.5 border-b border-slate-200">
             <h3 className="font-display font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
@@ -52,7 +121,54 @@ export default function RoomsView({
             </p>
           </div>
 
-          <div className="p-2 space-y-1 overflow-y-auto max-h-[calc(100vh-140px)]">
+          <div className="p-2 border-b border-slate-200 bg-white">
+            {!showCreateRoom ? (
+              <button
+                onClick={() => setShowCreateRoom(true)}
+                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2.5 rounded-xl transition-all"
+              >
+                <Plus size={14} />
+                Create Room
+              </button>
+            ) : (
+              <form onSubmit={handleCreateRoomSubmit} className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Room name"
+                  value={roomName}
+                  onChange={(e) => setRoomName(e.target.value)}
+                  className="w-full text-xs px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500"
+                />
+
+                <textarea
+                  placeholder="Room description"
+                  value={roomDescription}
+                  onChange={(e) => setRoomDescription(e.target.value)}
+                  rows={3}
+                  className="w-full text-xs px-3 py-2.5 rounded-xl border border-slate-200 resize-none focus:outline-none focus:border-indigo-500"
+                />
+
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={!roomName.trim()}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold px-3 py-2 rounded-xl"
+                  >
+                    Create
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetCreateRoomForm}
+                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
+          <div className="p-2 space-y-1 overflow-y-auto max-h-[calc(100vh-220px)]">
             {rooms.map((room) => {
               const isSelected = room.id === selectedRoomId;
 
@@ -96,101 +212,109 @@ export default function RoomsView({
 
       <div className="flex-1 flex flex-col justify-between h-full bg-white relative">
         {selectedRoom ? (
-          <div className="p-4.5 border-b border-slate-200 flex items-center justify-between bg-white z-10 shadow-sm">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <Hash size={16} className="text-slate-850" />
-                <h2 className="font-display font-extrabold text-slate-900 text-sm truncate">
-                  {selectedRoom.name}
-                </h2>
+          <>
+            <div className="p-4.5 border-b border-slate-200 flex items-center justify-between bg-white z-10 shadow-sm">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <Hash size={16} className="text-slate-850" />
+                  <h2 className="font-display font-extrabold text-slate-900 text-sm truncate">
+                    {selectedRoom.name}
+                  </h2>
+                </div>
+                <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                  {selectedRoom.description}
+                </p>
               </div>
-              <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                {selectedRoom.description}
+
+              <div className="text-[9px] font-mono bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded text-indigo-700 font-bold shrink-0">
+                Active Channel
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/20">
+              {currentMessages.length > 0 ? (
+                currentMessages.map((msg) => {
+                  const isMe = msg.sender.id === currentUser.id;
+
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex gap-3 max-w-[85%] ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+                    >
+                      <img
+                        src={msg.sender.avatarUrl}
+                        alt={msg.sender.name}
+                        className="w-8 h-8 rounded-full object-cover border border-slate-100 shrink-0"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1 text-[10px]">
+                          <span className="font-extrabold text-slate-900">{msg.sender.name}</span>
+                          {msg.sender.role === 'admin' && (
+                            <span className="text-[8px] font-mono font-bold bg-amber-50 border border-amber-200 text-amber-700 px-1 rounded">
+                              Admin
+                            </span>
+                          )}
+                          <span className="text-slate-400 font-mono text-[9px]">
+                            {new Date(msg.createdAt).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+
+                        <div
+                          className={`text-xs p-3 rounded-2xl leading-relaxed whitespace-pre-wrap ${
+                            isMe
+                              ? 'bg-indigo-600 text-white rounded-tr-none'
+                              : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none shadow-sm'
+                          }`}
+                        >
+                          {msg.text}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-24 text-slate-400 text-xs font-semibold">
+                  <Hash size={24} className="mx-auto text-slate-300 mb-2" />
+                  Nothing has been posted in this room yet. Send the first greeting!
+                </div>
+              )}
+              <div ref={chatBottomRef} />
+            </div>
+
+            <div className="p-4 bg-white border-t border-slate-150">
+              <form onSubmit={handleSendMessage} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder={`Send a message to #${selectedRoom?.name || 'room'}...`}
+                  value={typedMessage}
+                  onChange={(e) => setTypedMessage(e.target.value)}
+                  className="flex-1 text-xs px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                />
+                <button
+                  type="submit"
+                  disabled={!typedMessage.trim()}
+                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-45 text-white px-4 rounded-xl flex items-center justify-center cursor-pointer transition-all"
+                >
+                  <Send size={13} />
+                </button>
+              </form>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center px-6">
+            <div className="text-center text-slate-400">
+              <Hash size={28} className="mx-auto text-slate-300 mb-3" />
+              <p className="text-sm font-bold">No room selected.</p>
+              <p className="text-xs mt-1">
+                Select a room from the left panel or create a new one.
               </p>
             </div>
-
-            <div className="text-[9px] font-mono bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded text-indigo-700 font-bold shrink-0">
-              Active Channel
-            </div>
-          </div>
-        ) : (
-          <div className="p-4.5 border-b border-slate-200">
-            <p className="text-xs text-slate-400 font-bold">No room selected.</p>
           </div>
         )}
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/20">
-          {currentMessages.length > 0 ? (
-            currentMessages.map((msg) => {
-              const isMe = msg.sender.id === currentUser.id;
-
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex gap-3 max-w-[85%] ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
-                >
-                  <img
-                    src={msg.sender.avatarUrl}
-                    alt={msg.sender.name}
-                    className="w-8 h-8 rounded-full object-cover border border-slate-100 shrink-0"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div>
-                    <div className="flex items-center gap-1.5 mb-1 text-[10px]">
-                      <span className="font-extrabold text-slate-900">{msg.sender.name}</span>
-                      {msg.sender.role === 'admin' && (
-                        <span className="text-[8px] font-mono font-bold bg-amber-50 border border-amber-200 text-amber-700 px-1 rounded">
-                          Admin
-                        </span>
-                      )}
-                      <span className="text-slate-400 font-mono text-[9px]">
-                        {new Date(msg.createdAt).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
-                    </div>
-
-                    <div
-                      className={`text-xs p-3 rounded-2xl leading-relaxed whitespace-pre-wrap ${
-                        isMe
-                          ? 'bg-indigo-600 text-white rounded-tr-none'
-                          : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none shadow-sm'
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center py-24 text-slate-400 text-xs font-semibold">
-              <Hash size={24} className="mx-auto text-slate-300 mb-2" />
-              Nothing has been posted in this room yet. Send the first greeting!
-            </div>
-          )}
-          <div ref={chatBottomRef} />
-        </div>
-
-        <div className="p-4 bg-white border-t border-slate-150">
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <input
-              type="text"
-              placeholder={`Send a message to #${selectedRoom?.name || 'room'}...`}
-              value={typedMessage}
-              onChange={(e) => setTypedMessage(e.target.value)}
-              className="flex-1 text-xs px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            />
-            <button
-              type="submit"
-              disabled={!typedMessage.trim()}
-              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-45 text-white px-4 rounded-xl flex items-center justify-center cursor-pointer transition-all"
-            >
-              <Send size={13} />
-            </button>
-          </form>
-        </div>
       </div>
     </div>
   );

@@ -29,6 +29,7 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState('feed');
   const [selectedRecipient, setSelectedRecipient] = useState(null);
+  const [selectedRoomId, setSelectedRoomId] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
   const [noticeCount, setNoticeCount] = useState(0);
 
@@ -37,6 +38,7 @@ export default function App() {
   const handleLogout = () => {
     logout();
     setSelectedRecipient(null);
+    setSelectedRoomId('');
   };
 
   const fetchUsers = async () => {
@@ -195,15 +197,21 @@ export default function App() {
   }, [currentUser]);
 
   useEffect(() => {
+    if (rooms.length > 0 && !selectedRoomId) {
+      setSelectedRoomId(rooms[0].id);
+    }
+  }, [rooms, selectedRoomId]);
+
+  useEffect(() => {
     if (activeTab === 'messages') setUnreadCount(0);
     if (activeTab === 'notices') setNoticeCount(0);
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'rooms' && rooms.length > 0) {
-      fetchRoomMessages(rooms[0].id);
+    if (activeTab === 'rooms' && selectedRoomId) {
+      fetchRoomMessages(selectedRoomId);
     }
-  }, [activeTab, rooms]);
+  }, [activeTab, selectedRoomId]);
 
   const handleAddPost = async ({ text, imageUrl }) => {
     try {
@@ -478,6 +486,33 @@ export default function App() {
     }
   };
 
+  const handleCreateRoom = async ({ name, description }) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch('http://localhost:5000/api/rooms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ name, description })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to create room');
+      }
+
+      setRooms((prev) => [...prev, data]);
+      setSelectedRoomId(data.id);
+      setActiveTab('rooms');
+    } catch (error) {
+      console.error('Error creating room:', error);
+    }
+  };
+
   const handleAddRoomMessage = async (roomId, messageText) => {
     try {
       const token = localStorage.getItem('token');
@@ -700,7 +735,10 @@ export default function App() {
               rooms={rooms}
               roomMessages={roomMessages}
               onAddRoomMessage={handleAddRoomMessage}
+              onCreateRoom={handleCreateRoom}
               users={users}
+              selectedRoomId={selectedRoomId}
+              setSelectedRoomId={setSelectedRoomId}
             />
           )}
 
