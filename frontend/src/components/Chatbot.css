@@ -67,6 +67,32 @@
   padding: 10px;
   overflow-y: auto;
 }
+.chat-message {
+  margin-bottom: 10px;
+  display: flex;
+}
+
+.chat-message p {
+  padding: 8px 12px;
+  border-radius: 18px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.chat-message.bot {
+  justify-content: flex-start;
+}
+.chat-message.bot p {
+  background-color: #f1f0f0;
+}
+
+.chat-message.user {
+  justify-content: flex-end;
+}
+.chat-message.user p {
+  background-color: #007bff;
+  color: white;
+}
 
 .chatbot-footer {
   padding: 10px;
