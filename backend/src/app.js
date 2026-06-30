@@ -11,6 +11,7 @@ const noticeRoutes = require('./routes/noticeRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const errorMiddleware = require('./middlewares/errorMiddleware');
+const directMessageRoutes = require('./routes/directMessageRoutes');
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/notices', noticeRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/direct-messages', directMessageRoutes);
 
 app.use(errorMiddleware);
 
