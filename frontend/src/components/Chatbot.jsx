@@ -19,7 +19,7 @@ const Chatbot = () => {
     const lowerCaseInput = userInput.toLowerCase().trim();
 
     if (lowerCaseInput.includes('hi')|| lowerCaseInput.includes('hello')|| lowerCaseInput.includes('hy')) {
-      return 'Hello How are you? I am ConnectSphere\'s AI assistant. You can ask me about creating posts, notices, direct messages, or what ConnectSphere is.';
+      return 'Hello How are you? I am CORA ConnectSphere Resource Assistant. You can ask me about creating posts, notices, direct messages, or what ConnectSphere is.';
     }
     
     if (lowerCaseInput.includes('what is connectsphere')) {
@@ -79,7 +79,7 @@ const Chatbot = () => {
     <div className="chatbot-container">
       <div className={`chatbot-window ${isOpen ? 'open' : ''}`}>
         <div className="chatbot-header">
-          <h3>Chat with us!</h3>
+          <h3>CORA (ConnectSphere Resource Assistant) Chat with us!</h3>
           <button onClick={toggleChat} className="close-btn">
             &times;
           </button>
