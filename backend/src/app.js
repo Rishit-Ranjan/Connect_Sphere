@@ -7,11 +7,10 @@ const morgan = require('morgan');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const postRoutes = require('./routes/postRoutes');
-const errorMiddleware = require('./middlewares/errorMiddleware');
-
 const noticeRoutes = require('./routes/noticeRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
-
+const roomRoutes = require('./routes/roomRoutes');
+const errorMiddleware = require('./middlewares/errorMiddleware');
 
 dotenv.config();
 
@@ -34,6 +33,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/notices', noticeRoutes);
 app.use('/api/resources', resourceRoutes);
+app.use('/api/rooms', roomRoutes);
 
 app.use(errorMiddleware);
 

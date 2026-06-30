@@ -19,6 +19,30 @@ const getRooms = async (req, res, next) => {
   }
 };
 
+const createRoom = async (req, res, next) => {
+  try {
+    const { name, description } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Room name is required.' });
+    }
+
+    const room = await Room.create({
+      name: name.trim(),
+      description: description?.trim() || ''
+    });
+
+    res.status(201).json({
+      id: room._id,
+      name: room.name,
+      description: room.description,
+      createdAt: room.createdAt
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getRoomMessages = async (req, res, next) => {
   try {
     const { roomId } = req.params;
@@ -79,6 +103,7 @@ const createRoomMessage = async (req, res, next) => {
 
 module.exports = {
   getRooms,
+  createRoom,
   getRoomMessages,
   createRoomMessage
 };
