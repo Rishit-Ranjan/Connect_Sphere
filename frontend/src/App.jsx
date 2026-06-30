@@ -20,18 +20,23 @@ export default function App() {
   const { currentUser, setCurrentUser, logout, loading } = useAuth();
 
   const [users, setUsers] = useState([]);
-const [posts, setPosts] = useState([]);
-const [notices, setNotices] = useState([]);
-const [resources, setResources] = useState([]);
-const [rooms, setRooms] = useState([]);
-const [roomMessages, setRoomMessages] = useState([]);
-const [directMessages, setDirectMessages] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [notices, setNotices] = useState([]);
+  const [resources, setResources] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [roomMessages, setRoomMessages] = useState([]);
+  const [directMessages, setDirectMessages] = useState([]);
 
   const [activeTab, setActiveTab] = useState('feed');
   const [selectedRecipient, setSelectedRecipient] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [noticeCount, setNoticeCount] = useState(0);
 
+  useEffect(() => {
+  if (currentUser) {
+    fetchPosts();
+  }
+  }, [currentUser]);
 
   useEffect(() => {
     if (activeTab === 'messages') setUnreadCount(0);

@@ -39,29 +39,22 @@ export default function FeedView({
   const [editPostText, setEditPostText] = useState('');
 
   const handleCreatePost = (e) => {
-    e.preventDefault();
-    if (!newPostText.trim() && !selectedImage && !attachedFileName) return;
+  e.preventDefault();
 
-    const newPost = {
-      id: `post-${Date.now()}`,
-      author: currentUser,
-      text: newPostText,
-      imageUrl: selectedImage || undefined,
-      fileUrl: attachedFileName ? '#' : undefined,
-      fileName: attachedFileName || undefined,
-      createdAt: new Date().toISOString(),
-      likesCount: 0,
-      likedByMe: false,
-      comments: []
-    };
+  if (!newPostText.trim() && !selectedImage) return;
 
-    onAddPost(newPost);
-    setNewPostText('');
-    setSelectedImage(null);
-    setAttachedFileName(null);
-    setShowFileAttach(false);
-    setTempFileName('');
-  };
+  onAddPost({
+    text: newPostText,
+    imageUrl: selectedImage || ''
+  });
+
+  setNewPostText('');
+  setSelectedImage(null);
+  setShowImagePicker(false);
+  setAttachedFileName(null);
+  setShowFileAttach(false);
+  setTempFileName('');
+};
 
   const handleAttachFile = (e) => {
     e.preventDefault();
