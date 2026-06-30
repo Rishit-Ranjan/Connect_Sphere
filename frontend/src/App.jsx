@@ -50,6 +50,29 @@ export default function App() {
     setSelectedRecipient(null);
   };
 
+    const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/users', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (!res.ok) throw new Error('Failed to fetch users');
+      const data = await res.json();
+      setUsers(data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchPosts();
+      fetchUsers(); // Fetch users on login
+    }
+  }, [currentUser]);
+
   const handleAddPost = async ({ text, imageUrl }) => {
     try {
       const token = localStorage.getItem('token');
@@ -273,20 +296,48 @@ export default function App() {
     setActiveTab('messages');
   };
 
-  const handleRemoveUser = (userId) => {
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
-    if (currentUser?.id === userId) {
-      handleLogout();
+    const handleRemoveUser = async (userId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/users/${userId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!res.ok) throw new Error('Failed to delete user');
+
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      if (currentUser?.id === userId) {
+        handleLogout();
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
     }
   };
 
-  const handleUpdateUserRole = (userId, newRole) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
-    );
+  const handleUpdateUserRole = async (userId, newRole) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/users/${userId}/role`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ role: newRole })
+      });
 
-    if (currentUser?.id === userId) {
-      setCurrentUser((prev) => (prev ? { ...prev, role: newRole } : null));
+      if (!res.ok) throw new Error('Failed to update role');
+
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+      );
+
+      if (currentUser?.id === userId) {
+        setCurrentUser((prev) => (prev ? { ...prev, role: newRole } : null));
+      }
+    } catch (error) {
+      console.error('Error updating user role:', error);
     }
   };
 
