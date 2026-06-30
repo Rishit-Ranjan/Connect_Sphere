@@ -140,8 +140,8 @@ export default function FeedView({
         <form onSubmit={handleCreatePost}>
           <div className="flex gap-3 items-start">
             <img
-              src={currentUser.avatarUrl}
-              alt={currentUser.name}
+              src={currentUser.avatarUrl || null}
+              alt={currentUser.name || 'User Avatar'}
               referrerPolicy="no-referrer"
               className="w-10 h-10 rounded-full object-cover border border-slate-100 shrink-0"
             />
@@ -260,8 +260,8 @@ export default function FeedView({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <img
-                      src={post.author.avatarUrl}
-                      alt={post.author.name}
+                      src={post.author.avatarUrl || null}
+                      alt={post.author.name || 'User Avatar'}
                       referrerPolicy="no-referrer"
                       className="w-9 h-9 rounded-full object-cover border border-slate-100"
                     />
@@ -335,7 +335,7 @@ export default function FeedView({
                 {post.imageUrl && (
                   <div className="rounded-2xl overflow-hidden border border-slate-100 max-h-[350px]">
                     <img
-                      src={post.imageUrl}
+                      src={post.imageUrl || null}
                       alt="Post attachment"
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
@@ -388,8 +388,8 @@ export default function FeedView({
                         {post.comments.map((comment) => (
                           <div key={comment.id} className="flex gap-2.5 items-start">
                             <img
-                              src={comment.author.avatarUrl}
-                              alt={comment.author.name}
+                              src={comment.author.avatarUrl || null}
+                              alt={comment.author.name || 'User Avatar'}
                               className="w-7 h-7 rounded-full object-cover border border-slate-100 shrink-0"
                             />
                             <div className="bg-white border border-slate-200/80 rounded-2xl p-3 flex-1 shadow-sm">
@@ -410,8 +410,8 @@ export default function FeedView({
 
                     <div className="flex gap-2 items-center">
                       <img
-                        src={currentUser.avatarUrl}
-                        alt={currentUser.name}
+                        src={currentUser.avatarUrl || null}
+                        alt={currentUser.name || 'User Avatar'}
                         className="w-7 h-7 rounded-full object-cover border border-slate-100 shrink-0"
                       />
                       <input

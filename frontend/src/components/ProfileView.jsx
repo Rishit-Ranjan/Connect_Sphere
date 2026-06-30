@@ -91,8 +91,8 @@ export default function ProfileView({
           <div className="flex items-center gap-4.5">
             <div className="relative">
               <img
-                src={currentUser.avatarUrl}
-                alt={currentUser.name}
+                src={currentUser.avatarUrl || null}
+                alt={currentUser.name || 'User Avatar'}
                 className={`w-20 h-20 rounded-full object-cover border-4 bg-white ${isAdmin ? "border-amber-400" : "border-indigo-500"}`}
                 referrerPolicy="no-referrer"
                 id="profile-avatar-display"

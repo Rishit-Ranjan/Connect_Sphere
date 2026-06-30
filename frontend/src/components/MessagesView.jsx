@@ -70,7 +70,7 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-950 hover:bg-slate-100/50'}`}>
                 <div className="relative shrink-0">
-                  <img src={contact.avatarUrl} alt={contact.name} className="w-10 h-10 rounded-full object-cover border border-slate-100" referrerPolicy="no-referrer"/>
+                  <img src={contact.avatarUrl || null} alt={contact.name || 'User Avatar'} className="w-10 h-10 rounded-full object-cover border border-slate-100" referrerPolicy="no-referrer"/>
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"/>
                 </div>
 
@@ -95,7 +95,7 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
             {/* Active Contact Header */}
             <div className="p-4.5 border-b border-slate-200 flex items-center justify-between bg-white z-10 shadow-sm">
               <div className="flex items-center gap-3 min-w-0">
-                <img src={selectedRecipient.avatarUrl} alt={selectedRecipient.name} className="w-10 h-10 rounded-full object-cover border border-slate-100 shrink-0" referrerPolicy="no-referrer"/>
+                <img src={selectedRecipient.avatarUrl || null} alt={selectedRecipient.name || 'User Avatar'} className="w-10 h-10 rounded-full object-cover border border-slate-100 shrink-0" referrerPolicy="no-referrer"/>
                 <div className="min-w-0">
                   <h2 className="font-display font-extrabold text-slate-900 text-sm truncate leading-none">
                     {selectedRecipient.name}
@@ -120,7 +120,7 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
               
               {/* Little visual introductory message */}
               <div className="text-center py-6 border-b border-slate-100 max-w-md mx-auto">
-                <img src={selectedRecipient.avatarUrl} alt={selectedRecipient.name} className="w-12 h-12 rounded-full object-cover mx-auto border border-slate-200 shadow-sm mb-2" referrerPolicy="no-referrer"/>
+                <img src={selectedRecipient.avatarUrl || null} alt={selectedRecipient.name || 'User Avatar'} className="w-12 h-12 rounded-full object-cover mx-auto border border-slate-200 shadow-sm mb-2" referrerPolicy="no-referrer"/>
                 <h3 className="text-xs font-extrabold text-slate-900">This is the start of your chat history</h3>
                 <p className="text-[10px] text-slate-400 leading-normal mt-1.5">
                   {selectedRecipient.bio || `ConnectSphere Peer. Send messages to check placements, discuss homework, or clear syllabus requirements.`}
@@ -130,7 +130,7 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
               {activeChatMessages.map((msg) => {
                 const isMe = msg.senderId === currentUser.id;
                 return (<div key={msg.id} className={`flex gap-2.5 max-w-[75%] ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
-                    <img src={isMe ? currentUser.avatarUrl : selectedRecipient.avatarUrl} alt="Avatar" className="w-7 h-7 rounded-full object-cover border border-slate-100 shrink-0" referrerPolicy="no-referrer"/>
+                    <img src={(isMe ? currentUser.avatarUrl : selectedRecipient.avatarUrl) || null} alt="Avatar" className="w-7 h-7 rounded-full object-cover border border-slate-100 shrink-0" referrerPolicy="no-referrer"/>
                     <div>
                       <div className={`text-xs p-3 rounded-2xl leading-relaxed whitespace-pre-wrap ${isMe
                         ? 'bg-indigo-600 text-slate-100 rounded-tr-none'

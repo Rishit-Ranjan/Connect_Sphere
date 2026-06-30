@@ -62,7 +62,7 @@ export default function RightSidebar({ currentUser, users, onConnect, onFollow, 
         {connectCandidates.length > 0 ? (<div className="space-y-3">
             {connectCandidates.map((user) => (<div key={user.id} className="flex items-center justify-between gap-2 p-2 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <img src={user.avatarUrl} alt={user.name} referrerPolicy="no-referrer" className="w-9 h-9 rounded-full object-cover border border-slate-100"/>
+                  <img src={user.avatarUrl || null} alt={user.name || 'User Avatar'} referrerPolicy="no-referrer" className="w-9 h-9 rounded-full object-cover border border-slate-100"/>
                   <div className="min-w-0">
                     <h4 className="text-xs font-bold text-slate-900 truncate leading-snug">{user.name}</h4>
                     <p className="text-[9px] text-slate-500 truncate mt-0.5">{user.department || 'Student'}</p>
@@ -103,7 +103,7 @@ export default function RightSidebar({ currentUser, users, onConnect, onFollow, 
           {onlineUsers.map((user) => (<div key={user.id} className="flex items-center justify-between group cursor-pointer p-1.5 rounded-xl hover:bg-slate-50 transition-colors" onClick={() => onStartDirectMessage(user)}>
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="relative">
-                  <img src={user.avatarUrl} alt={user.name} referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover border border-slate-100"/>
+                  <img src={user.avatarUrl || null} alt={user.name || 'User Avatar'} referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover border border-slate-100"/>
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"/>
                 </div>
                 <div className="min-w-0">
