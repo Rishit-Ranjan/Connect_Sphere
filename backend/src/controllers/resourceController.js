@@ -1,20 +1,23 @@
+// resourceController.js
 const Resource = require('../models/Resource');
 
 const getResources = async (req, res, next) => {
   try {
     const resources = await Resource.find()
-      .populate('uploadedBy', 'name handle avatarUrl role')
+      .populate('uploadedBy', 'name')
       .sort({ createdAt: -1 });
 
     const normalized = resources.map((resource) => ({
       id: resource._id,
       title: resource.title,
       description: resource.description,
-      fileUrl: resource.fileUrl,
-      fileName: resource.fileName,
+      category: resource.category,
+      fileType: resource.fileType,
+      fileSize: resource.fileSize,
+      url: resource.url,
       downloadCount: resource.downloadCount,
-      createdAt: resource.createdAt,
-      uploadedBy: resource.uploadedBy
+      uploadedBy: resource.uploadedBy?.name || 'Unknown',
+      createdAt: resource.createdAt
     }));
 
     res.json(normalized);
@@ -25,7 +28,7 @@ const getResources = async (req, res, next) => {
 
 const createResource = async (req, res, next) => {
   try {
-    const { title, description, fileUrl, fileName } = req.body;
+    const { title, description, category, fileType, fileSize, url } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: 'Title is required.' });
@@ -34,23 +37,26 @@ const createResource = async (req, res, next) => {
     const resource = await Resource.create({
       title: title.trim(),
       description: description || '',
-      fileUrl: fileUrl || '',
-      fileName: fileName || '',
+      category: category || '',
+      fileType: fileType || '',
+      fileSize: fileSize || '',
+      url: url || '#',
       uploadedBy: req.user._id
     });
 
-    const populated = await Resource.findById(resource._id)
-      .populate('uploadedBy', 'name handle avatarUrl role');
+    const populated = await Resource.findById(resource._id).populate('uploadedBy', 'name');
 
     res.status(201).json({
       id: populated._id,
       title: populated.title,
       description: populated.description,
-      fileUrl: populated.fileUrl,
-      fileName: populated.fileName,
+      category: populated.category,
+      fileType: populated.fileType,
+      fileSize: populated.fileSize,
+      url: populated.url,
       downloadCount: populated.downloadCount,
-      createdAt: populated.createdAt,
-      uploadedBy: populated.uploadedBy
+      uploadedBy: populated.uploadedBy?.name || 'Unknown',
+      createdAt: populated.createdAt
     });
   } catch (error) {
     next(error);

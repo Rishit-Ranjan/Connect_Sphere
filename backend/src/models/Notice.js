@@ -1,3 +1,4 @@
+// Notice.js
 const mongoose = require('mongoose');
 
 const noticeSchema = new mongoose.Schema(
@@ -7,9 +8,14 @@ const noticeSchema = new mongoose.Schema(
       required: true,
       trim: true
     },
-    message: {
+    content: {
       type: String,
       required: true,
+      trim: true
+    },
+    category: {
+      type: String,
+      default: 'General',
       trim: true
     },
     isUrgent: {

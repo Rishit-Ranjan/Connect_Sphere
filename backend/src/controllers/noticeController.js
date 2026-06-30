@@ -1,18 +1,20 @@
+// noticeController.js
 const Notice = require('../models/Notice');
 
 const getNotices = async (req, res, next) => {
   try {
     const notices = await Notice.find()
-      .populate('author', 'name handle avatarUrl role')
+      .populate('author', 'name role')
       .sort({ createdAt: -1 });
 
     const normalized = notices.map((notice) => ({
       id: notice._id,
       title: notice.title,
-      message: notice.message,
-      isUrgent: notice.isUrgent,
+      content: notice.content,
+      category: notice.category,
       createdAt: notice.createdAt,
-      author: notice.author
+      authorName: `${notice.author.name} (${notice.author.role === 'admin' ? 'Admin' : 'Faculty'})`,
+      isUrgent: notice.isUrgent
     }));
 
     res.json(normalized);
@@ -27,29 +29,30 @@ const createNotice = async (req, res, next) => {
       return res.status(403).json({ message: 'Not authorized.' });
     }
 
-    const { title, message, isUrgent } = req.body;
+    const { title, content, category, isUrgent } = req.body;
 
-    if (!title || !message) {
-      return res.status(400).json({ message: 'Title and message are required.' });
+    if (!title || !content) {
+      return res.status(400).json({ message: 'Title and content are required.' });
     }
 
     const notice = await Notice.create({
       title: title.trim(),
-      message: message.trim(),
+      content: content.trim(),
+      category: category || 'General',
       isUrgent: !!isUrgent,
       author: req.user._id
     });
 
-    const populated = await Notice.findById(notice._id)
-      .populate('author', 'name handle avatarUrl role');
+    const populated = await Notice.findById(notice._id).populate('author', 'name role');
 
     res.status(201).json({
       id: populated._id,
       title: populated.title,
-      message: populated.message,
-      isUrgent: populated.isUrgent,
+      content: populated.content,
+      category: populated.category,
       createdAt: populated.createdAt,
-      author: populated.author
+      authorName: `${populated.author.name} (${populated.author.role === 'admin' ? 'Admin' : 'Faculty'})`,
+      isUrgent: populated.isUrgent
     });
   } catch (error) {
     next(error);

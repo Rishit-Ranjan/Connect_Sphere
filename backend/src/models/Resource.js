@@ -1,3 +1,4 @@
+// Resource.js
 const mongoose = require('mongoose');
 
 const resourceSchema = new mongoose.Schema(
@@ -12,13 +13,24 @@ const resourceSchema = new mongoose.Schema(
       default: '',
       trim: true
     },
-    fileUrl: {
+    category: {
       type: String,
-      default: ''
+      default: '',
+      trim: true
     },
-    fileName: {
+    fileType: {
       type: String,
-      default: ''
+      default: '',
+      trim: true
+    },
+    fileSize: {
+      type: String,
+      default: '',
+      trim: true
+    },
+    url: {
+      type: String,
+      default: '#'
     },
     downloadCount: {
       type: Number,
