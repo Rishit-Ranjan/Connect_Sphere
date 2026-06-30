@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Home, Bell, BookOpen, MessageSquare, Shield, Users, LogOut, Sparkles, UserCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import logo from '../assets/ConnectSphere.png';
 export default function Sidebar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount, noticeCount }) {
     const [isCollapsed, setIsCollapsed] = useState(() => {
         const saved = localStorage.getItem('sidebar_collapsed');
@@ -30,13 +31,12 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, onLogout
       <div className="p-4 flex flex-col gap-6">
         <div className={`flex items-center w-full ${isCollapsed ? 'justify-center' : 'justify-between'} px-1 mt-2`}>
           {/* Logo Icon and Text */}
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-extrabold shrink-0 shadow-sm shadow-indigo-100">
-              C
-            </div>
+          <div className={`flex overflow-hidden ${isCollapsed ? 'justify-center' : 'flex-col items-center gap-2 w-full'}`}>
+            <img src={logo} alt="ConnectSphere Logo" className="w-30 h-17 shrink-0" />
             {!isCollapsed && (<motion.div initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} transition={{ duration: 0.15 }} className="whitespace-nowrap">
-                <span className="font-display font-black text-slate-800 tracking-tight block text-sm leading-none">ConnectSphere</span>
-                <span className="text-[9px] font-mono font-medium text-slate-400 mt-0.5 block tracking-wider uppercase">Local Network</span>
+                <span className="font-display font-black text-slate-800 tracking-tight block text-base leading-none">
+                  ConnectSphere
+                </span>
               </motion.div>)}
           </div>
 
