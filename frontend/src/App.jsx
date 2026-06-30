@@ -32,17 +32,6 @@ export default function App() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [noticeCount, setNoticeCount] = useState(0);
 
-  useEffect(() => {
-  if (currentUser) {
-    fetchPosts();
-  }
-  }, [currentUser]);
-
-  useEffect(() => {
-    if (activeTab === 'messages') setUnreadCount(0);
-    if (activeTab === 'notices') setNoticeCount(0);
-  }, [activeTab]);
-
   const isAdmin = currentUser?.role === 'admin';
 
   const handleLogout = () => {
@@ -50,7 +39,7 @@ export default function App() {
     setSelectedRecipient(null);
   };
 
-    const fetchUsers = async () => {
+  const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch('http://localhost:5000/api/users', {
@@ -58,7 +47,11 @@ export default function App() {
           Authorization: `Bearer ${token}`
         }
       });
-      if (!res.ok) throw new Error('Failed to fetch users');
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
       const data = await res.json();
       setUsers(data);
     } catch (error) {
@@ -66,12 +59,79 @@ export default function App() {
     }
   };
 
+  const fetchPosts = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/posts', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch posts');
+      }
+
+      const data = await res.json();
+      setPosts(data);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    }
+  };
+
+  const fetchNotices = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/notices', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch notices');
+      }
+
+      const data = await res.json();
+      setNotices(data);
+    } catch (error) {
+      console.error('Error fetching notices:', error);
+    }
+  };
+
+  const fetchResources = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/resources', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch resources');
+      }
+
+      const data = await res.json();
+      setResources(data);
+    } catch (error) {
+      console.error('Error fetching resources:', error);
+    }
+  };
+
   useEffect(() => {
     if (currentUser) {
       fetchPosts();
-      fetchUsers(); // Fetch users on login
+      fetchUsers();
+      fetchNotices();
+      fetchResources();
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    if (activeTab === 'messages') setUnreadCount(0);
+    if (activeTab === 'notices') setNoticeCount(0);
+  }, [activeTab]);
 
   const handleAddPost = async ({ text, imageUrl }) => {
     try {
@@ -98,48 +158,28 @@ export default function App() {
     }
   };
 
-  const fetchPosts = async () => {
+  const handleDeletePost = async (postId) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/posts', {
+
+      const res = await fetch(`http://localhost:5000/api/posts/${postId}`, {
+        method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error('Failed to fetch posts');
+        throw new Error(data.message || 'Failed to delete post');
       }
 
-      const data = await res.json();
-      setPosts(data);
+      setPosts((prev) => prev.filter((post) => post.id !== postId));
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      console.error('Error deleting post:', error);
     }
   };
-
-  const handleDeletePost = async (postId) => {
-  try {
-    const token = localStorage.getItem('token');
-
-    const res = await fetch(`http://localhost:5000/api/posts/${postId}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || 'Failed to delete post');
-    }
-
-    setPosts((prev) => prev.filter((post) => post.id !== postId));
-  } catch (error) {
-    console.error('Error deleting post:', error);
-  }
-};
 
   const handleEditPost = (postId, updatedText) => {
     setPosts((prev) =>
@@ -221,31 +261,149 @@ export default function App() {
     }
   };
 
-  const handleAddNotice = (notice) => {
-    setNotices((prev) => [notice, ...prev]);
-    setNoticeCount((prev) => prev + 1);
+  const handleAddNotice = async (notice) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const payload = {
+        title: notice.title,
+        content: notice.content,
+        category: notice.category || 'General',
+        isUrgent: !!notice.isUrgent
+      };
+
+      const res = await fetch('http://localhost:5000/api/notices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to create notice');
+      }
+
+      setNotices((prev) => [data, ...prev]);
+      setNoticeCount((prev) => prev + 1);
+    } catch (error) {
+      console.error('Error creating notice:', error);
+    }
   };
 
-  const handleDeleteNotice = (noticeId) => {
-    setNotices((prev) => prev.filter((n) => n.id !== noticeId));
+  const handleDeleteNotice = async (noticeId) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`http://localhost:5000/api/notices/${noticeId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to delete notice');
+      }
+
+      setNotices((prev) => prev.filter((notice) => notice.id !== noticeId));
+    } catch (error) {
+      console.error('Error deleting notice:', error);
+    }
   };
 
-  const handleAddResource = (res) => {
-    setResources((prev) => [res, ...prev]);
+  const handleAddResource = async (resource) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const payload = {
+        title: resource.title,
+        description: resource.description,
+        category: resource.category || '',
+        fileType: resource.fileType || '',
+        fileSize: resource.fileSize || '',
+        url: resource.url || '#'
+      };
+
+      const res = await fetch('http://localhost:5000/api/resources', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to add resource');
+      }
+
+      setResources((prev) => [data, ...prev]);
+    } catch (error) {
+      console.error('Error creating resource:', error);
+    }
   };
 
-  const handleDeleteResource = (resourceId) => {
-    setResources((prev) => prev.filter((r) => r.id !== resourceId));
+  const handleDeleteResource = async (resourceId) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`http://localhost:5000/api/resources/${resourceId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to delete resource');
+      }
+
+      setResources((prev) => prev.filter((resource) => resource.id !== resourceId));
+    } catch (error) {
+      console.error('Error deleting resource:', error);
+    }
   };
 
-  const handleIncrementDownloads = (resourceId) => {
-    setResources((prev) =>
-      prev.map((res) =>
-        res.id === resourceId
-          ? { ...res, downloadCount: res.downloadCount + 1 }
-          : res
-      )
-    );
+  const handleIncrementDownloads = async (resourceId) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(
+        `http://localhost:5000/api/resources/${resourceId}/download`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to update download count');
+      }
+
+      setResources((prev) =>
+        prev.map((resource) =>
+          resource.id === resourceId
+            ? { ...resource, downloadCount: data.downloadCount }
+            : resource
+        )
+      );
+    } catch (error) {
+      console.error('Error updating downloads:', error);
+    }
   };
 
   const handleAddRoomMessage = (roomId, messageText, sender) => {
@@ -296,17 +454,24 @@ export default function App() {
     setActiveTab('messages');
   };
 
-    const handleRemoveUser = async (userId) => {
+  const handleRemoveUser = async (userId) => {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`http://localhost:5000/api/users/${userId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
-      
-      if (!res.ok) throw new Error('Failed to delete user');
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to delete user');
+      }
 
       setUsers((prev) => prev.filter((u) => u.id !== userId));
+
       if (currentUser?.id === userId) {
         handleLogout();
       }
@@ -327,14 +492,18 @@ export default function App() {
         body: JSON.stringify({ role: newRole })
       });
 
-      if (!res.ok) throw new Error('Failed to update role');
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to update role');
+      }
 
       setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+        prev.map((u) => (u.id === userId ? { ...u, role: data.role } : u))
       );
 
       if (currentUser?.id === userId) {
-        setCurrentUser((prev) => (prev ? { ...prev, role: newRole } : null));
+        setCurrentUser((prev) => (prev ? { ...prev, role: data.role } : null));
       }
     } catch (error) {
       console.error('Error updating user role:', error);
@@ -349,7 +518,9 @@ export default function App() {
 
   const handleFollowUser = (userId) => {
     setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, following: !u.following } : u))
+      prev.map((u) =>
+        u.id === userId ? { ...u, following: !u.following } : u
+      )
     );
 
     if (currentUser && currentUser.id === userId) {
