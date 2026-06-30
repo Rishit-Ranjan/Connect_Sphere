@@ -18,7 +18,7 @@ const Chatbot = () => {
   const getBotResponse = (userInput) => {
     const lowerCaseInput = userInput.toLowerCase().trim();
 
-    if (lowerCaseInput.includes('hi')|| lowerCaseInput.includes('hello')) {
+    if (lowerCaseInput.includes('hi')|| lowerCaseInput.includes('hello')|| lowerCaseInput.includes('hy')) {
       return 'Hello How are you? I am ConnectSphere\'s AI assistant. You can ask me about creating posts, notices, direct messages, or what ConnectSphere is.';
     }
     
