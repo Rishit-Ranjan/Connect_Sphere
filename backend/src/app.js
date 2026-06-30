@@ -9,6 +9,10 @@ const userRoutes = require('./routes/userRoutes');
 const postRoutes = require('./routes/postRoutes');
 const errorMiddleware = require('./middlewares/errorMiddleware');
 
+const noticeRoutes = require('./routes/noticeRoutes');
+const resourceRoutes = require('./routes/resourceRoutes');
+
+
 dotenv.config();
 
 const app = express();
@@ -28,6 +32,8 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/notices', noticeRoutes);
+app.use('/api/resources', resourceRoutes);
 
 app.use(errorMiddleware);
 
