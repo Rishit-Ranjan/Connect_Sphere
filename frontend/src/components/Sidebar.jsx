@@ -32,7 +32,7 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, onLogout
         <div className={`flex items-center w-full ${isCollapsed ? 'justify-center' : 'justify-between'} px-1 mt-2`}>
           {/* Logo Icon and Text */}
           <div className={`flex overflow-hidden ${isCollapsed ? 'justify-center' : 'flex-col items-center gap-2 w-full'}`}>
-            <img src={logo} alt="ConnectSphere Logo" className="w-30 h-17 shrink-0" />
+            <img src={logo} alt="ConnectSphere Logo" className="w-40 h-22 shrink-0" />
             {!isCollapsed && (<motion.div initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} transition={{ duration: 0.15 }} className="whitespace-nowrap">
                 <span className="font-display font-black text-slate-800 tracking-tight block text-base leading-none">
                   ConnectSphere
