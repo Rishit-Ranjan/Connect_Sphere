@@ -119,12 +119,78 @@ export default function App() {
     }
   };
 
+  const fetchRooms = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/rooms', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch rooms');
+      }
+
+      const data = await res.json();
+      setRooms(data);
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+    }
+  };
+
+  const fetchDirectMessages = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/direct-messages', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch direct messages');
+      }
+
+      const data = await res.json();
+      setDirectMessages(data);
+    } catch (error) {
+      console.error('Error fetching direct messages:', error);
+    }
+  };
+
+  const fetchRoomMessages = async (roomId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/rooms/${roomId}/messages`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch room messages');
+      }
+
+      const data = await res.json();
+
+      setRoomMessages((prev) => {
+        const otherRoomMessages = prev.filter((msg) => msg.roomId !== roomId);
+        return [...otherRoomMessages, ...data];
+      });
+    } catch (error) {
+      console.error('Error fetching room messages:', error);
+    }
+  };
+
   useEffect(() => {
     if (currentUser) {
       fetchPosts();
       fetchUsers();
       fetchNotices();
       fetchResources();
+      fetchRooms();
+      fetchDirectMessages();
     }
   }, [currentUser]);
 
@@ -132,6 +198,12 @@ export default function App() {
     if (activeTab === 'messages') setUnreadCount(0);
     if (activeTab === 'notices') setNoticeCount(0);
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'rooms' && rooms.length > 0) {
+      fetchRoomMessages(rooms[0].id);
+    }
+  }, [activeTab, rooms]);
 
   const handleAddPost = async ({ text, imageUrl }) => {
     try {
@@ -406,29 +478,56 @@ export default function App() {
     }
   };
 
-  const handleAddRoomMessage = (roomId, messageText, sender) => {
-    const newMsg = {
-      id: `rm-${Date.now()}`,
-      roomId,
-      sender,
-      text: messageText,
-      createdAt: new Date().toISOString()
-    };
-    setRoomMessages((prev) => [...prev, newMsg]);
+  const handleAddRoomMessage = async (roomId, messageText) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`http://localhost:5000/api/rooms/${roomId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ text: messageText })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to send room message');
+      }
+
+      setRoomMessages((prev) => [...prev, data]);
+    } catch (error) {
+      console.error('Error sending room message:', error);
+    }
   };
 
-  const handleSendDirectMessage = (receiverId, text) => {
+  const handleSendDirectMessage = async (receiverId, text) => {
     if (!currentUser) return;
 
-    const newDM = {
-      id: `dm-${Date.now()}`,
-      senderId: currentUser.id,
-      receiverId,
-      text,
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const token = localStorage.getItem('token');
 
-    setDirectMessages((prev) => [...prev, newDM]);
+      const res = await fetch('http://localhost:5000/api/direct-messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ receiverId, text })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to send direct message');
+      }
+
+      setDirectMessages((prev) => [...prev, data]);
+    } catch (error) {
+      console.error('Error sending direct message:', error);
+    }
   };
 
   const handleReceiveDirectMessage = (senderId, text) => {
