@@ -79,7 +79,7 @@ const Chatbot = () => {
     <div className="chatbot-container">
       <div className={`chatbot-window ${isOpen ? 'open' : ''}`}>
         <div className="chatbot-header">
-          <h3>CORA (ConnectSphere Resource Assistant) Chat with us!</h3>
+          <h3>CORA (ConnectSphere Resource Assistant)</h3>
           <button onClick={toggleChat} className="close-btn">
             &times;
           </button>
