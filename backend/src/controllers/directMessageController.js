@@ -1,11 +1,11 @@
 // controllers/directMessageController.js
-import { find, create } from '../models/DirectMessage';
+import DirectMessage from '../models/DirectMessage.js';
 
 const getDirectMessages = async (req, res, next) => {
   try {
     const userId = req.user._id;
 
-    const messages = await find({
+    const messages = await DirectMessage.find({
       $or: [{ senderId: userId }, { receiverId: userId }]
     }).sort({ createdAt: 1 });
 
@@ -35,7 +35,7 @@ const createDirectMessage = async (req, res, next) => {
       return res.status(400).json({ message: 'Message text is required.' });
     }
 
-    const message = await create({
+    const message = await DirectMessage.create({
       senderId: req.user._id,
       receiverId,
       text: text.trim()

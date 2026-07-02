@@ -1,9 +1,9 @@
 
-import { find, create, findById, findByIdAndDelete } from '../models/Notice';
+import Notice from '../models/Notice.js';
 
 const getNotices = async (req, res, next) => {
   try {
-    const notices = await find()
+    const notices = await Notice.find()
       .populate('author', 'name role')
       .sort({ createdAt: -1 });
 
@@ -35,7 +35,7 @@ const createNotice = async (req, res, next) => {
       return res.status(400).json({ message: 'Title and content are required.' });
     }
 
-    const notice = await create({
+    const notice = await Notice.create({
       title: title.trim(),
       content: content.trim(),
       category: category || 'General',
@@ -43,7 +43,7 @@ const createNotice = async (req, res, next) => {
       author: req.user._id
     });
 
-    const populated = await findById(notice._id).populate('author', 'name role');
+    const populated = await Notice.findById(notice._id).populate('author', 'name role');
 
     res.status(201).json({
       id: populated._id,
@@ -66,7 +66,7 @@ const deleteNotice = async (req, res, next) => {
     }
 
     const { noticeId } = req.params;
-    const notice = await findByIdAndDelete(noticeId);
+    const notice = await Notice.findByIdAndDelete(noticeId);
 
     if (!notice) {
       return res.status(404).json({ message: 'Notice not found.' });

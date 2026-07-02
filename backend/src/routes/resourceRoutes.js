@@ -1,13 +1,13 @@
 // resourceRoutes.js
 import { Router } from 'express';
-import { getResources, createResource, deleteResource, incrementDownloads } from '../controllers/resourceController';
-import { protect } from '../middlewares/authMiddleware';
+import resourceController from '../controllers/resourceController.js';
+import { protect } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
-router.get('/', protect, getResources);
-router.post('/', protect, createResource);
-router.delete('/:resourceId', protect, deleteResource);
-router.patch('/:resourceId/download', protect, incrementDownloads);
+router.get('/', protect, resourceController.getResources);
+router.post('/', protect, resourceController.createResource);
+router.delete('/:resourceId', protect, resourceController.deleteResource);
+router.patch('/:resourceId/download', protect, resourceController.incrementDownloads);
 
 export default router;

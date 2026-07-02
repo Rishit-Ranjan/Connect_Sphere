@@ -1,11 +1,11 @@
 // routes/directMessageRoutes.js
 import { Router } from 'express';
-import { getDirectMessages, createDirectMessage } from '../controllers/directMessageController';
-import { protect } from '../middlewares/authMiddleware';
+import directMessageController from '../controllers/directMessageController.js';
+import { protect } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
-router.get('/', protect, getDirectMessages);
-router.post('/', protect, createDirectMessage);
+router.get('/', protect, directMessageController.getDirectMessages);
+router.post('/', protect, directMessageController.createDirectMessage);
 
 export default router;

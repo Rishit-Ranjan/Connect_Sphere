@@ -1,12 +1,12 @@
 
 import { Router } from 'express';
-import { getNotices, createNotice, deleteNotice } from '../controllers/noticeController';
-import { protect } from '../middlewares/authMiddleware';
+import noticeController from '../controllers/noticeController.js';
+import { protect } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
-router.get('/', protect, getNotices);
-router.post('/', protect, createNotice);
-router.delete('/:noticeId', protect, deleteNotice);
+router.get('/', protect, noticeController.getNotices);
+router.post('/', protect, noticeController.createNotice);
+router.delete('/:noticeId', protect, noticeController.deleteNotice);
 
 export default router;

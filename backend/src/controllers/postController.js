@@ -1,8 +1,8 @@
-import { find, create, findById, findByIdAndDelete } from '../models/Post';
+import Post from '../models/Post.js';
 
 const getPosts = async (req, res, next) => {
   try {
-    const posts = await find()
+    const posts = await Post.find()
       .populate('author', 'name handle email role department bio avatarUrl')
       .populate('comments.user', 'name handle avatarUrl')
       .sort({ createdAt: -1 });
@@ -39,13 +39,13 @@ const createPost = async (req, res, next) => {
       return res.status(400).json({ message: 'Post text is required.' });
     }
 
-    const post = await create({
+    const post = await Post.create({
       author: req.user._id,
       text: text.trim(),
       imageUrl: imageUrl || ''
     });
 
-    const populatedPost = await findById(post._id)
+    const populatedPost = await Post.findById(post._id)
       .populate('author', 'name handle email role department bio avatarUrl')
       .populate('comments.user', 'name handle avatarUrl');
 
@@ -69,7 +69,7 @@ const toggleLikePost = async (req, res, next) => {
     const { postId } = req.params;
     const userId = req.user._id;
 
-    const post = await findById(postId);
+    const post = await Post.findById(postId);
 
     if (!post) {
       return res.status(404).json({ message: 'Post not found.' });
@@ -109,7 +109,7 @@ const addCommentToPost = async (req, res, next) => {
       return res.status(400).json({ message: 'Comment text is required.' });
     }
 
-    const post = await findById(postId);
+    const post = await Post.findById(postId);
 
     if (!post) {
       return res.status(404).json({ message: 'Post not found.' });
@@ -124,7 +124,7 @@ const addCommentToPost = async (req, res, next) => {
     await post.save();
 
     // Re-fetch to populate the comment author's details (avatar, name, etc.)
-    const updatedPost = await findById(postId)
+    const updatedPost = await Post.findById(postId)
       .populate('comments.user', 'name handle avatarUrl');
     
     // Grab the specific comment that was just added
@@ -146,7 +146,7 @@ const deletePost = async (req, res, next) => {
   try {
     const { postId } = req.params;
 
-    const post = await findById(postId);
+    const post = await Post.findById(postId);
 
     if (!post) {
       return res.status(404).json({ message: 'Post not found.' });
@@ -161,7 +161,7 @@ const deletePost = async (req, res, next) => {
       return res.status(403).json({ message: 'Not authorized to delete this post.' });
     }
 
-    await findByIdAndDelete(postId);
+    await Post.findByIdAndDelete(postId);
 
     res.json({ message: 'Post deleted successfully.', postId });
   } catch (error) {

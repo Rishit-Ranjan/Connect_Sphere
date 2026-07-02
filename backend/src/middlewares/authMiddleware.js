@@ -1,5 +1,6 @@
-import { verify } from 'jsonwebtoken';
-import User from '../models/User';
+import pkg from 'jsonwebtoken';
+const { verify } = pkg;
+import User from '../models/User.js';
 
 const protect = async (req, res, next) => {
   try {
@@ -24,4 +25,5 @@ const protect = async (req, res, next) => {
   }
 };
 
+export { protect };
 export default { protect };

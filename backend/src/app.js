@@ -4,14 +4,14 @@ import { config } from 'dotenv';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 
-import authRoutes from './routes/authRoutes';
-import userRoutes from './routes/userRoutes';
-import postRoutes from './routes/postRoutes';
-import noticeRoutes from './routes/noticeRoutes';
-import resourceRoutes from './routes/resourceRoutes';
-import roomRoutes from './routes/roomRoutes';
-import errorMiddleware from './middlewares/errorMiddleware';
-import directMessageRoutes from './routes/directMessageRoutes';
+import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import postRoutes from './routes/postRoutes.js';
+import noticeRoutes from './routes/noticeRoutes.js';
+import resourceRoutes from './routes/resourceRoutes.js';
+import roomRoutes from './routes/roomRoutes.js';
+import errorMiddleware from './middlewares/errorMiddleware.js';
+import directMessageRoutes from './routes/directMessageRoutes.js';
 
 config();
 
@@ -38,5 +38,9 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/direct-messages', directMessageRoutes);
 
 app.use(errorMiddleware);
+
+export const listen = (port, callback) => {
+  return app.listen(port, callback);
+};
 
 export default app;

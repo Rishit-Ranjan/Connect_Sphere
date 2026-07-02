@@ -1,6 +1,6 @@
 // controllers/roomController.js
-const Room = require('../models/Room').default;
-const RoomMessage = require('../models/RoomMessage').default;
+import Room from '../models/Room.js';
+import RoomMessage from '../models/RoomMessage.js';
 
 const getRooms = async (req, res, next) => {
   try {
@@ -101,7 +101,7 @@ const createRoomMessage = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export default {
   getRooms,
   createRoom,
   getRoomMessages,

@@ -1,6 +1,7 @@
-import { hash, compare } from 'bcryptjs';
-import { findOne, create } from '../models/User';
-import generateToken from '../utils/generateToken';
+import pkg from 'bcryptjs';
+const { hash, compare } = pkg;
+import User from '../models/User.js';
+import generateToken from '../utils/generateToken.js';
 
 const registerUser = async (req, res, next) => {
   try {
@@ -10,19 +11,19 @@ const registerUser = async (req, res, next) => {
       return res.status(400).json({ message: 'Name, handle, email, and password are required.' });
     }
 
-    const existingEmail = await findOne({ email: email.toLowerCase() });
+    const existingEmail = await User.findOne({ email: email.toLowerCase() });
     if (existingEmail) {
       return res.status(400).json({ message: 'Email already exists.' });
     }
 
-    const existingHandle = await findOne({ handle: handle.toLowerCase() });
+    const existingHandle = await User.findOne({ handle: handle.toLowerCase() });
     if (existingHandle) {
       return res.status(400).json({ message: 'Handle already exists.' });
     }
 
     const hashedPassword = await hash(password, 10);
 
-    const user = await create({
+    const user = await User.create({
       name,
       handle: handle.toLowerCase(),
       email: email.toLowerCase(),
@@ -64,7 +65,7 @@ const loginUser = async (req, res, next) => {
     const rawQuery = query.trim().toLowerCase();
     const cleanQuery = rawQuery.replace(/^@/, '');
 
-    const user = await findOne({
+    const user = await User.findOne({
       $or: [
         { handle: cleanQuery },
         { email: rawQuery }

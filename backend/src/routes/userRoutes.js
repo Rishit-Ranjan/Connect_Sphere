@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import { getMe, getUsers, updateUserRole, deleteUser } from '../controllers/userController';
-import { protect } from '../middlewares/authMiddleware';
+import userController from '../controllers/userController.js';
+import { protect } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
-router.get('/me', protect, getMe);
-router.get('/', protect, getUsers);
-router.patch('/:userId/role', protect, updateUserRole);
-router.delete('/:userId', protect, deleteUser);
+router.get('/me', protect, userController.getMe);
+router.get('/', protect, userController.getUsers);
+router.patch('/:userId/role', protect, userController.updateUserRole);
+router.delete('/:userId', protect, userController.deleteUser);
 
 export default router;
