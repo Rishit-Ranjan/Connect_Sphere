@@ -1,9 +1,9 @@
 
-const Notice = require('../models/Notice');
+import { find, create, findById, findByIdAndDelete } from '../models/Notice';
 
 const getNotices = async (req, res, next) => {
   try {
-    const notices = await Notice.find()
+    const notices = await find()
       .populate('author', 'name role')
       .sort({ createdAt: -1 });
 
@@ -35,7 +35,7 @@ const createNotice = async (req, res, next) => {
       return res.status(400).json({ message: 'Title and content are required.' });
     }
 
-    const notice = await Notice.create({
+    const notice = await create({
       title: title.trim(),
       content: content.trim(),
       category: category || 'General',
@@ -43,7 +43,7 @@ const createNotice = async (req, res, next) => {
       author: req.user._id
     });
 
-    const populated = await Notice.findById(notice._id).populate('author', 'name role');
+    const populated = await findById(notice._id).populate('author', 'name role');
 
     res.status(201).json({
       id: populated._id,
@@ -66,7 +66,7 @@ const deleteNotice = async (req, res, next) => {
     }
 
     const { noticeId } = req.params;
-    const notice = await Notice.findByIdAndDelete(noticeId);
+    const notice = await findByIdAndDelete(noticeId);
 
     if (!notice) {
       return res.status(404).json({ message: 'Notice not found.' });
@@ -78,4 +78,4 @@ const deleteNotice = async (req, res, next) => {
   }
 };
 
-module.exports = { getNotices, createNotice, deleteNotice };
+export default { getNotices, createNotice, deleteNotice };

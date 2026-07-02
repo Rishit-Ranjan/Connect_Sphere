@@ -1,19 +1,19 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const cookieParser = require('cookie-parser');
-const morgan = require('morgan');
+import express, { json } from 'express';
+import cors from 'cors';
+import { config } from 'dotenv';
+import cookieParser from 'cookie-parser';
+import morgan from 'morgan';
 
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const postRoutes = require('./routes/postRoutes');
-const noticeRoutes = require('./routes/noticeRoutes');
-const resourceRoutes = require('./routes/resourceRoutes');
-const roomRoutes = require('./routes/roomRoutes');
-const errorMiddleware = require('./middlewares/errorMiddleware');
-const directMessageRoutes = require('./routes/directMessageRoutes');
+import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
+import postRoutes from './routes/postRoutes';
+import noticeRoutes from './routes/noticeRoutes';
+import resourceRoutes from './routes/resourceRoutes';
+import roomRoutes from './routes/roomRoutes';
+import errorMiddleware from './middlewares/errorMiddleware';
+import directMessageRoutes from './routes/directMessageRoutes';
 
-dotenv.config();
+config();
 
 const app = express();
 
@@ -21,7 +21,7 @@ app.use(cors({
   origin: process.env.CLIENT_URL,
   credentials: true
 }));
-app.use(express.json());
+app.use(json());
 app.use(cookieParser());
 app.use(morgan('dev'));
 
@@ -39,4 +39,4 @@ app.use('/api/direct-messages', directMessageRoutes);
 
 app.use(errorMiddleware);
 
-module.exports = app;
+export default app;

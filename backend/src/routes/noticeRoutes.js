@@ -1,12 +1,12 @@
 
-const express = require('express');
-const { getNotices, createNotice, deleteNotice } = require('../controllers/noticeController');
-const { protect } = require('../middlewares/authMiddleware');
+import { Router } from 'express';
+import { getNotices, createNotice, deleteNotice } from '../controllers/noticeController';
+import { protect } from '../middlewares/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
 router.get('/', protect, getNotices);
 router.post('/', protect, createNotice);
 router.delete('/:noticeId', protect, deleteNotice);
 
-module.exports = router;
+export default router;

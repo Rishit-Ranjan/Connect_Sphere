@@ -1,7 +1,7 @@
 
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const noticeSchema = new mongoose.Schema(
+const noticeSchema = new Schema(
   {
     title: {
       type: String,
@@ -23,7 +23,7 @@ const noticeSchema = new mongoose.Schema(
       default: false
     },
     author: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true
     }
@@ -31,4 +31,4 @@ const noticeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Notice', noticeSchema);
+export default model('Notice', noticeSchema);

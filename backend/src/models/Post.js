@@ -1,9 +1,9 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const commentSchema = new mongoose.Schema(
+const commentSchema = new Schema(
   {
     user: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true
     },
@@ -16,10 +16,10 @@ const commentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const postSchema = new mongoose.Schema(
+const postSchema = new Schema(
   {
     author: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true
     },
@@ -35,7 +35,7 @@ const postSchema = new mongoose.Schema(
     },
     likes: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User'
       }
     ],
@@ -44,4 +44,4 @@ const postSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Post', postSchema);
+export default model('Post', postSchema);

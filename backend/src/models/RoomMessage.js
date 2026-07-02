@@ -1,15 +1,15 @@
 // models/RoomMessage.js
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const roomMessageSchema = new mongoose.Schema(
+const roomMessageSchema = new Schema(
   {
     roomId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'Room',
       required: true
     },
     sender: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true
     },
@@ -22,4 +22,4 @@ const roomMessageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('RoomMessage', roomMessageSchema);
+export default model('RoomMessage', roomMessageSchema);

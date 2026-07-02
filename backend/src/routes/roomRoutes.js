@@ -1,18 +1,13 @@
 // routes/roomRoutes.js
-const express = require('express');
-const {
-  getRooms,
-  createRoom,
-  getRoomMessages,
-  createRoomMessage
-} = require('../controllers/roomController');
-const { protect } = require('../middlewares/authMiddleware');
+import { Router } from 'express';
+import { getRooms, createRoom, getRoomMessages, createRoomMessage } from '../controllers/roomController';
+import { protect } from '../middlewares/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
 router.post('/', protect, createRoom);
 router.get('/', protect, getRooms);
 router.get('/:roomId/messages', protect, getRoomMessages);
 router.post('/:roomId/messages', protect, createRoomMessage);
 
-module.exports = router;
+export default router;

@@ -1,15 +1,15 @@
 // models/DirectMessage.js
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const directMessageSchema = new mongoose.Schema(
+const directMessageSchema = new Schema(
   {
     senderId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true
     },
     receiverId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true
     },
@@ -22,4 +22,4 @@ const directMessageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('DirectMessage', directMessageSchema);
+export default model('DirectMessage', directMessageSchema);

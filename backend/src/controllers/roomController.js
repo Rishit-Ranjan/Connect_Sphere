@@ -1,6 +1,6 @@
 // controllers/roomController.js
-const Room = require('../models/Room');
-const RoomMessage = require('../models/RoomMessage');
+const Room = require('../models/Room').default;
+const RoomMessage = require('../models/RoomMessage').default;
 
 const getRooms = async (req, res, next) => {
   try {

@@ -1,7 +1,7 @@
 // Resource.js
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const resourceSchema = new mongoose.Schema(
+const resourceSchema = new Schema(
   {
     title: {
       type: String,
@@ -37,7 +37,7 @@ const resourceSchema = new mongoose.Schema(
       default: 0
     },
     uploadedBy: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true
     }
@@ -45,4 +45,4 @@ const resourceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Resource', resourceSchema);
+export default model('Resource', resourceSchema);

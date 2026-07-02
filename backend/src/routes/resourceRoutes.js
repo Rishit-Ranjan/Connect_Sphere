@@ -1,18 +1,13 @@
 // resourceRoutes.js
-const express = require('express');
-const {
-  getResources,
-  createResource,
-  deleteResource,
-  incrementDownloads
-} = require('../controllers/resourceController');
-const { protect } = require('../middlewares/authMiddleware');
+import { Router } from 'express';
+import { getResources, createResource, deleteResource, incrementDownloads } from '../controllers/resourceController';
+import { protect } from '../middlewares/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
 router.get('/', protect, getResources);
 router.post('/', protect, createResource);
 router.delete('/:resourceId', protect, deleteResource);
 router.patch('/:resourceId/download', protect, incrementDownloads);
 
-module.exports = router;
+export default router;

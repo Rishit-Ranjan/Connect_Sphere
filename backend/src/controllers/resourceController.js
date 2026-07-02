@@ -1,9 +1,9 @@
 // resourceController.js
-const Resource = require('../models/Resource');
+import { find, create, findById, findByIdAndDelete } from '../models/Resource';
 
 const getResources = async (req, res, next) => {
   try {
-    const resources = await Resource.find()
+    const resources = await find()
       .populate('uploadedBy', 'name')
       .sort({ createdAt: -1 });
 
@@ -34,7 +34,7 @@ const createResource = async (req, res, next) => {
       return res.status(400).json({ message: 'Title is required.' });
     }
 
-    const resource = await Resource.create({
+    const resource = await create({
       title: title.trim(),
       description: description || '',
       category: category || '',
@@ -44,7 +44,7 @@ const createResource = async (req, res, next) => {
       uploadedBy: req.user._id
     });
 
-    const populated = await Resource.findById(resource._id).populate('uploadedBy', 'name');
+    const populated = await findById(resource._id).populate('uploadedBy', 'name');
 
     res.status(201).json({
       id: populated._id,
@@ -67,7 +67,7 @@ const deleteResource = async (req, res, next) => {
   try {
     const { resourceId } = req.params;
 
-    const resource = await Resource.findById(resourceId);
+    const resource = await findById(resourceId);
 
     if (!resource) {
       return res.status(404).json({ message: 'Resource not found.' });
@@ -80,7 +80,7 @@ const deleteResource = async (req, res, next) => {
       return res.status(403).json({ message: 'Not authorized.' });
     }
 
-    await Resource.findByIdAndDelete(resourceId);
+    await findByIdAndDelete(resourceId);
 
     res.json({ message: 'Resource deleted successfully.', id: resourceId });
   } catch (error) {
@@ -91,7 +91,7 @@ const deleteResource = async (req, res, next) => {
 const incrementDownloads = async (req, res, next) => {
   try {
     const { resourceId } = req.params;
-    const resource = await Resource.findById(resourceId);
+    const resource = await findById(resourceId);
 
     if (!resource) {
       return res.status(404).json({ message: 'Resource not found.' });
@@ -109,7 +109,7 @@ const incrementDownloads = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export default {
   getResources,
   createResource,
   deleteResource,
