@@ -5,8 +5,9 @@
 import React, { useState } from 'react';
 import { MessageSquare, Shield, Sparkles, LogOut, Search, X, Users } from 'lucide-react';
 import logo from '../assets/ConnectSphere.png';
+import NotificationsDropdown from './NotificationsDropdown';
 
-export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount }) {
+export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount, notifications, unreadNotificationsCount, onMarkAllRead }) {
   const [searchQuery, setSearchQuery] = useState('');
   const isRoomsActive = activeTab === 'rooms';
   const isMessagesActive = activeTab === 'messages';
@@ -59,8 +60,14 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
         </div>
       </div>
 
-      {/* Right: campus rooms + messages + profile section */}
+      {/* Right: campus rooms + notifications + messages + profile section */}
       <div className="flex items-center gap-2 sm:gap-3">
+        <NotificationsDropdown
+          notifications={notifications}
+          unreadNotificationsCount={unreadNotificationsCount}
+          onMarkAllRead={onMarkAllRead}
+        />
+
         <button
           onClick={() => setActiveTab('rooms')}
           className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${

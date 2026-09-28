@@ -676,6 +676,54 @@ export default function App() {
 
   const urgentNotices = notices.filter((n) => n.isUrgent);
 
+  // Notifications feed derived from existing app data (notices, likes, comments).
+  // Read/unread tracked locally by id so "Mark all read" works without backend changes.
+  const [readNotificationIds, setReadNotificationIds] = useState([]);
+
+  const notifications = [
+    ...notices.slice(0, 5).map((notice) => ({
+      id: `notice-${notice.id}`,
+      type: 'notice',
+      actor: notice.authorName || 'Campus Admin',
+      text: `published: ${notice.title}`,
+      time: notice.createdAt ? new Date(notice.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently',
+      createdAt: notice.createdAt ? new Date(notice.createdAt).getTime() : 0,
+    })),
+    ...posts.flatMap((post) => {
+      const items = [];
+      if (post.liked) {
+        items.push({
+          id: `like-${post.id}`,
+          type: 'like',
+          actor: post.author?.name || 'Someone',
+          text: `liked a post: ${(post.text || '').slice(0, 60)}${(post.text || '').length > 60 ? '...' : ''}`,
+          time: post.createdAt ? new Date(post.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently',
+          createdAt: post.createdAt ? new Date(post.createdAt).getTime() : 0,
+        });
+      }
+      (post.comments || []).slice(-2).forEach((comment) => {
+        items.push({
+          id: `comment-${comment.id}`,
+          type: 'comment',
+          actor: comment.author?.name || 'Someone',
+          text: `commented: ${(comment.text || '').slice(0, 60)}${(comment.text || '').length > 60 ? '...' : ''}`,
+          time: comment.createdAt ? new Date(comment.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently',
+          createdAt: comment.createdAt ? new Date(comment.createdAt).getTime() : 0,
+        });
+      });
+      return items;
+    }),
+  ]
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, 20)
+    .map((n) => ({ ...n, unread: !readNotificationIds.includes(n.id) }));
+
+  const unreadNotificationsCount = notifications.filter((n) => n.unread).length;
+
+  const handleMarkAllNotificationsRead = () => {
+    setReadNotificationIds(notifications.map((n) => n.id));
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -697,6 +745,9 @@ export default function App() {
           setActiveTab={setActiveTab}
           onLogout={handleLogout}
           unreadCount={unreadCount}
+          notifications={notifications}
+          unreadNotificationsCount={unreadNotificationsCount}
+          onMarkAllRead={handleMarkAllNotificationsRead}
         />
 
         <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -797,6 +848,10 @@ export default function App() {
                 onFollow={handleFollowUser}
                 urgentNotices={urgentNotices}
                 onStartDirectMessage={handleStartDirectMessage}
+                notifications={notifications}
+                unreadNotificationsCount={unreadNotificationsCount}
+                onMarkAllRead={handleMarkAllNotificationsRead}
+                onNavigateTab={setActiveTab}
               />
             </div>
           )}
