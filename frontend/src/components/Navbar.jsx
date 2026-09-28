@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState } from 'react';
-import { MessageSquare, Shield, Sparkles, LogOut, Search, X, Users } from 'lucide-react';
+import { Home, MessageSquare, Shield, Sparkles, LogOut, Search, X, Users } from 'lucide-react';
 import logo from '../assets/ConnectSphere.png';
 import NotificationsDropdown from './NotificationsDropdown';
 
 export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount, notifications, unreadNotificationsCount, onMarkAllRead }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const isHomeActive = activeTab === 'feed';
   const isRoomsActive = activeTab === 'rooms';
   const isMessagesActive = activeTab === 'messages';
   const isProfileActive = activeTab === 'profile';
@@ -60,8 +61,22 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
         </div>
       </div>
 
-      {/* Right: campus rooms + notifications + messages + profile section */}
+      {/* Right: home + campus rooms + notifications + messages + profile section */}
       <div className="flex items-center gap-2 sm:gap-3">
+        <button
+          onClick={() => setActiveTab('feed')}
+          className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+            isHomeActive
+              ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
+          }`}
+          title="Home"
+          id="navbar-home-btn"
+        >
+          <Home size={16} className={isHomeActive ? 'text-indigo-700' : 'text-slate-400'} />
+          <span className="hidden sm:inline">Home</span>
+        </button>
+
         <NotificationsDropdown
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
