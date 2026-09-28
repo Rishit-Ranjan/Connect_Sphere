@@ -4,9 +4,8 @@
  */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Home, Bell, BookOpen, MessageSquare, Shield, Users, LogOut, Sparkles, UserCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import logo from '../assets/ConnectSphere.png';
-export default function Sidebar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount, noticeCount }) {
+import { Home, Bell, BookOpen, Shield, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+export default function Sidebar({ currentUser, activeTab, setActiveTab, noticeCount }) {
     const [isCollapsed, setIsCollapsed] = useState(() => {
         const saved = localStorage.getItem('sidebar_collapsed');
         return saved === 'true';
@@ -19,27 +18,15 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, onLogout
         { id: 'notices', label: 'Notices & Schedules', icon: Bell, badge: noticeCount },
         { id: 'resources', label: 'Resource Library', icon: BookOpen, badge: 0 },
         { id: 'rooms', label: 'Campus Rooms', icon: Users, badge: 0 },
-        { id: 'messages', label: 'Direct Messages', icon: MessageSquare, badge: unreadCount },
-        { id: 'profile', label: 'My Profile', icon: UserCircle, badge: 0 },
     ];
     // Admin exclusive dashboard
     if (currentUser.role === 'admin') {
         menuItems.push({ id: 'admin', label: 'Admin Terminal', icon: Shield, badge: 0 });
     }
-    return (<motion.aside animate={{ width: isCollapsed ? 80 : 256 }} transition={{ type: 'spring', stiffness: 350, damping: 32 }} className="bg-white border-r border-slate-200 flex flex-col justify-between h-full sticky top-0 font-sans z-35 shrink-0 select-none overflow-hidden" id="sidebar-container">
-      {/* Branding and Top Nav */}
+    return (<motion.aside animate={{ width: isCollapsed ? 80 : 256 }} transition={{ type: 'spring', stiffness: 350, damping: 32 }} className="bg-white border-r border-slate-200 flex flex-col justify-between h-full font-sans z-30 shrink-0 select-none overflow-hidden" id="sidebar-container">
+      {/* Top Nav */}
       <div className="p-4 flex flex-col gap-6">
-        <div className={`flex items-center w-full ${isCollapsed ? 'justify-center' : 'justify-between'} px-1 mt-2`}>
-          {/* Logo Icon and Text */}
-          <div className={`flex overflow-hidden ${isCollapsed ? 'justify-center' : 'flex-col items-center gap-2 w-full'}`}>
-            <img src={logo} alt="ConnectSphere Logo" className={`shrink-0 object-contain rounded-full ${isCollapsed ? 'w-14 h-14' : 'w-24 h-24'}`} />
-            {!isCollapsed && (<motion.div initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} transition={{ duration: 0.15 }} className="whitespace-nowrap">
-                <span className="font-display font-black text-slate-800 tracking-tight block text-base leading-none">
-                  ConnectSphere
-                </span>
-              </motion.div>)}
-          </div>
-
+        <div className={`flex items-center w-full ${isCollapsed ? 'justify-center' : 'justify-end'} px-1 mt-2`}>
           {/* Toggle button inside sidebar when expanded */}
           {!isCollapsed && (<button onClick={() => setIsCollapsed(true)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer" title="Collapse Sidebar" id="btn-collapse-sidebar">
               <ChevronLeft size={14}/>
@@ -76,51 +63,8 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, onLogout
         </nav>
       </div>
 
-      {/* User Information Profile Card & Actions at bottom */}
+      {/* Footer */}
       <div className={`p-4 border-t border-slate-100 bg-slate-50/50 ${isCollapsed ? 'flex flex-col items-center gap-3' : ''}`}>
-        {isCollapsed ? (<div className="flex flex-col items-center gap-3 py-2">
-            <button onClick={() => setActiveTab('profile')} className="relative group cursor-pointer focus:outline-none" title={currentUser.name ? `${currentUser.name} (View Profile)` : 'View Profile'} id="sidebar-collapsed-profile-btn">
-              <img src={currentUser.avatarUrl || null} alt={currentUser.name || 'User Avatar'} referrerPolicy="no-referrer" className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-slate-200 group-hover:ring-indigo-500 group-hover:scale-105 transition-all"/>
-              {currentUser.role === 'admin' ? (<span className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-950 p-0.5 rounded-full border border-white shadow-sm">
-                  <Shield size={8} className="fill-current"/>
-                </span>) : (<span className="absolute -bottom-1 -right-1 bg-indigo-600 text-white p-0.5 rounded-full border border-white shadow-sm">
-                  <Sparkles size={8}/>
-                </span>)}
-            </button>
-
-            <button onClick={onLogout} className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer flex items-center justify-center border border-slate-100" title="Logout" id="sidebar-collapsed-logout-btn">
-              <LogOut size={13}/>
-            </button>
-          </div>) : (<div onClick={() => setActiveTab('profile')} className="bg-white border border-slate-200 p-4 rounded-2xl mb-3 shadow-sm cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/10 transition-all group" id="sidebar-expanded-profile-card">
-            <div className="flex items-center gap-2.5 mb-2.5">
-              <img src={currentUser.avatarUrl || null} alt={currentUser.name || 'User Avatar'} referrerPolicy="no-referrer" className="w-10 h-10 rounded-full object-cover border border-slate-100 group-hover:scale-105 transition-transform"/>
-              <div className="min-w-0 flex-1">
-                <h4 className="text-xs font-bold text-slate-900 truncate tracking-tight group-hover:text-indigo-600 transition-colors">
-                  {currentUser.name}
-                </h4>
-                <p className="text-[10px] text-slate-500 truncate">@{currentUser.handle}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 mt-2.5">
-              {currentUser.role === 'admin' ? (<div className="flex items-center gap-1 text-[9px] font-mono bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200 font-bold">
-                  <Shield size={10}/>
-                  ADMIN PANEL
-                </div>) : (<div className="flex items-center gap-1 text-[9px] font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100 font-medium">
-                  <Sparkles size={10} className="text-indigo-500 animate-pulse"/>
-                  STUDENT
-                </div>)}
-
-              <button onClick={(e) => {
-                e.stopPropagation();
-                onLogout();
-            }} className="text-[9px] font-mono font-bold text-slate-500 hover:text-rose-600 transition-colors flex items-center gap-1 cursor-pointer" title="Logout" id="sidebar-expanded-logout-btn">
-                <LogOut size={11}/>
-                Logout
-              </button>
-            </div>
-          </div>)}
-
         {/* Little helpful branding notes */}
         {!isCollapsed && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[9px] text-center text-slate-400 font-mono tracking-tight px-2">
             <span>Active Session | UTC 2026</span>

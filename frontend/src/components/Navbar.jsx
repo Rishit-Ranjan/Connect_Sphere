@@ -1,0 +1,104 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+import React from 'react';
+import { MessageSquare, Shield, Sparkles, LogOut } from 'lucide-react';
+import logo from '../assets/ConnectSphere.png';
+
+export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount }) {
+  const isMessagesActive = activeTab === 'messages';
+  const isProfileActive = activeTab === 'profile';
+
+  return (
+    <header
+      id="navbar"
+      className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 sticky top-0 z-40 font-sans select-none"
+    >
+      {/* Left: project icon + name */}
+      <button
+        onClick={() => setActiveTab('feed')}
+        className="flex items-center gap-2.5 cursor-pointer focus:outline-none group"
+        title="ConnectSphere Home"
+        id="navbar-brand-btn"
+      >
+        <img
+          src={logo}
+          alt="ConnectSphere Logo"
+          className="w-9 h-9 rounded-full object-contain shrink-0 group-hover:scale-105 transition-transform"
+        />
+        <span className="font-display font-black text-slate-800 tracking-tight text-base leading-none group-hover:text-indigo-700 transition-colors">
+          ConnectSphere
+        </span>
+      </button>
+
+      {/* Right: messages + profile section */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        <button
+          onClick={() => setActiveTab('messages')}
+          className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+            isMessagesActive
+              ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
+          }`}
+          title="Direct Messages"
+          id="navbar-messages-btn"
+        >
+          <MessageSquare size={16} className={isMessagesActive ? 'text-indigo-700' : 'text-slate-400'} />
+          <span className="hidden sm:inline">Messages</span>
+          {unreadCount > 0 && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white leading-none">
+              {unreadCount}
+            </span>
+          )}
+        </button>
+
+        <div className="w-px h-8 bg-slate-200 hidden sm:block" />
+
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`flex items-center gap-2.5 pl-1.5 pr-2 sm:pr-3 py-1.5 rounded-xl transition-all cursor-pointer border group ${
+            isProfileActive
+              ? 'bg-indigo-50/60 border-indigo-200'
+              : 'border-transparent hover:bg-slate-50 hover:border-slate-200'
+          }`}
+          title={currentUser.name ? `${currentUser.name} (View Profile)` : 'View Profile'}
+          id="navbar-profile-btn"
+        >
+          <span className="relative shrink-0">
+            <img
+              src={currentUser.avatarUrl || null}
+              alt={currentUser.name || 'User Avatar'}
+              referrerPolicy="no-referrer"
+              className="w-9 h-9 rounded-full object-cover border border-slate-200 group-hover:scale-105 transition-transform"
+            />
+            {currentUser.role === 'admin' ? (
+              <span className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-950 p-0.5 rounded-full border border-white shadow-sm">
+                <Shield size={8} className="fill-current" />
+              </span>
+            ) : (
+              <span className="absolute -bottom-1 -right-1 bg-indigo-600 text-white p-0.5 rounded-full border border-white shadow-sm">
+                <Sparkles size={8} />
+              </span>
+            )}
+          </span>
+          <span className="text-left min-w-0 hidden sm:block">
+            <span className="block text-xs font-bold text-slate-900 truncate tracking-tight leading-none">
+              {currentUser.name}
+            </span>
+            <span className="block text-[10px] text-slate-500 truncate mt-0.5">@{currentUser.handle}</span>
+          </span>
+        </button>
+
+        <button
+          onClick={onLogout}
+          className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer border border-transparent hover:border-rose-100"
+          title="Logout"
+          id="navbar-logout-btn"
+        >
+          <LogOut size={15} />
+        </button>
+      </div>
+    </header>
+  );
+}
