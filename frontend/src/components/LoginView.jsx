@@ -3,8 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState } from 'react';
-import { ArrowRight, UserPlus, Sparkles } from 'lucide-react';
+import { ArrowRight, UserPlus, Sparkles, FlaskConical } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+// TEMPORARY hardcoded test credentials for testing purposes only.
+// TODO: Remove before production.
+export const TEMP_TEST_EMAIL = 'test@connectsphere.edu';
+export const TEMP_TEST_PASSWORD = 'Test@1234';
 
 export default function LoginView() {
   const { login, register } = useAuth();
@@ -18,8 +23,8 @@ export default function LoginView() {
   const [bio, setBio] = useState('');
   const [password, setPassword] = useState('');
 
-  const [signInQuery, setSignInQuery] = useState('');
-  const [signInPassword, setSignInPassword] = useState('');
+  const [signInQuery, setSignInQuery] = useState(TEMP_TEST_EMAIL);
+  const [signInPassword, setSignInPassword] = useState(TEMP_TEST_PASSWORD);
   const [signInError, setSignInError] = useState('');
   const [createError, setCreateError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -223,6 +228,21 @@ export default function LoginView() {
                 >
                   <ArrowRight size={14} />
                   {isSubmitting ? 'Signing In...' : 'Sign In & Sync'}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setSignInError('');
+                    setSignInQuery(TEMP_TEST_EMAIL);
+                    setSignInPassword(TEMP_TEST_PASSWORD);
+                  }}
+                  className="w-full bg-amber-50 hover:bg-amber-100 disabled:bg-slate-100 text-amber-800 text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all border border-amber-200 cursor-pointer"
+                  title="Fill temporary testing credentials"
+                >
+                  <FlaskConical size={14} />
+                  Use temporary test login ({TEMP_TEST_EMAIL} / {TEMP_TEST_PASSWORD})
                 </button>
               </form>
             ) : (
