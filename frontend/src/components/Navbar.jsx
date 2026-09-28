@@ -2,11 +2,12 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import React from 'react';
-import { MessageSquare, Shield, Sparkles, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { MessageSquare, Shield, Sparkles, LogOut, Search, X } from 'lucide-react';
 import logo from '../assets/ConnectSphere.png';
 
 export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount }) {
+  const [searchQuery, setSearchQuery] = useState('');
   const isMessagesActive = activeTab === 'messages';
   const isProfileActive = activeTab === 'profile';
 
@@ -31,6 +32,31 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
           ConnectSphere
         </span>
       </button>
+
+      {/* Middle: search bar */}
+      <div className="hidden md:flex flex-1 max-w-md mx-4">
+        <div className="relative w-full">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search posts, people, rooms..."
+            className="w-full text-xs pl-9 pr-8 py-2 bg-slate-100 border border-transparent rounded-xl focus:outline-none focus:bg-white focus:border-indigo-300 placeholder-slate-400 transition-all"
+            id="navbar-search-input"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-all cursor-pointer"
+              title="Clear search"
+              id="navbar-search-clear-btn"
+            >
+              <X size={13} />
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Right: messages + profile section */}
       <div className="flex items-center gap-2 sm:gap-3">
