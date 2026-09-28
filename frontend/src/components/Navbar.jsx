@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState } from 'react';
-import { MessageSquare, Shield, Sparkles, LogOut, Search, X } from 'lucide-react';
+import { MessageSquare, Shield, Sparkles, LogOut, Search, X, Users } from 'lucide-react';
 import logo from '../assets/ConnectSphere.png';
 
 export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const isRoomsActive = activeTab === 'rooms';
   const isMessagesActive = activeTab === 'messages';
   const isProfileActive = activeTab === 'profile';
 
@@ -58,8 +59,22 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
         </div>
       </div>
 
-      {/* Right: messages + profile section */}
+      {/* Right: campus rooms + messages + profile section */}
       <div className="flex items-center gap-2 sm:gap-3">
+        <button
+          onClick={() => setActiveTab('rooms')}
+          className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+            isRoomsActive
+              ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
+          }`}
+          title="Campus Rooms"
+          id="navbar-rooms-btn"
+        >
+          <Users size={16} className={isRoomsActive ? 'text-indigo-700' : 'text-slate-400'} />
+          <span className="hidden sm:inline">Campus Rooms</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('messages')}
           className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${

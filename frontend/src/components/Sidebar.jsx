@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Home, Bell, BookOpen, Shield, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Home, Bell, BookOpen, Shield, ChevronLeft, ChevronRight } from 'lucide-react';
 export default function Sidebar({ currentUser, activeTab, setActiveTab, noticeCount }) {
     const [isCollapsed, setIsCollapsed] = useState(() => {
         const saved = localStorage.getItem('sidebar_collapsed');
@@ -17,7 +17,6 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, noticeCo
         { id: 'feed', label: 'Home', icon: Home, badge: 0 },
         { id: 'notices', label: 'Notices & Schedules', icon: Bell, badge: noticeCount },
         { id: 'resources', label: 'Resource Library', icon: BookOpen, badge: 0 },
-        { id: 'rooms', label: 'Campus Rooms', icon: Users, badge: 0 },
     ];
     // Admin exclusive dashboard
     if (currentUser.role === 'admin') {
