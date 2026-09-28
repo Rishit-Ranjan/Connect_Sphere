@@ -26,13 +26,12 @@ export default function FeedView({
   onAddComment
 }) {
   const fileInputRef = useRef(null);
+  const attachmentInputRef = useRef(null);
 
   const [searchText, setSearchText] = useState('');
   const [newPostText, setNewPostText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
-  const [attachedFileName, setAttachedFileName] = useState(null);
-  const [showFileAttach, setShowFileAttach] = useState(false);
-  const [tempFileName, setTempFileName] = useState('');
+  const [attachedFile, setAttachedFile] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
   const [expandedComments, setExpandedComments] = useState({});
   const [editingPostId, setEditingPostId] = useState(null);
@@ -41,7 +40,7 @@ export default function FeedView({
   const handleCreatePost = (e) => {
   e.preventDefault();
 
-  if (!newPostText.trim() && !selectedImage) return;
+  if (!newPostText.trim() && !selectedImage && !attachedFile) return;
 
   onAddPost({
     text: newPostText,
@@ -51,17 +50,15 @@ export default function FeedView({
   setNewPostText('');
   setSelectedImage(null);
   setShowImagePicker(false);
-  setAttachedFileName(null);
-  setShowFileAttach(false);
-  setTempFileName('');
+  setAttachedFile(null);
 };
 
-  const handleAttachFile = (e) => {
-    e.preventDefault();
-    if (tempFileName.trim()) {
-      setAttachedFileName(tempFileName.trim());
-      setShowFileAttach(false);
+  const handleAttachmentSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setAttachedFile(file);
     }
+    event.target.value = '';
   };
 
   const handlePostComment = (postId) => {
@@ -167,16 +164,18 @@ export default function FeedView({
                 </div>
               )}
 
-              {attachedFileName && (
+              {attachedFile && (
                 <div className="flex items-center justify-between mt-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs">
                   <div className="flex items-center gap-2 text-slate-700 font-medium">
                     <FileText size={14} className="text-slate-400" />
-                    <span className="truncate max-w-[180px]">{attachedFileName}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">(Simulation File)</span>
+                    <span className="truncate max-w-[180px]">{attachedFile.name}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      ({(attachedFile.size / 1024).toFixed(1)} KB)
+                    </span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setAttachedFileName(null)}
+                    onClick={() => setAttachedFile(null)}
                     className="text-slate-400 hover:text-slate-600 cursor-pointer"
                   >
                     <X size={13} />
@@ -185,25 +184,6 @@ export default function FeedView({
               )}
             </div>
           </div>
-
-          {showFileAttach && (
-            <div className="mt-4 border-t border-slate-100 pt-3 flex gap-2">
-              <input
-                type="text"
-                placeholder="filename.pdf or syllabus.zip"
-                value={tempFileName}
-                onChange={(e) => setTempFileName(e.target.value)}
-                className="flex-1 text-xs px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
-              />
-              <button
-                type="button"
-                onClick={handleAttachFile}
-                className="bg-indigo-600 text-white text-xs px-4 py-2 rounded-xl hover:bg-indigo-700 font-semibold cursor-pointer"
-              >
-                Attach
-              </button>
-            </div>
-          )}
 
           <div className="flex items-center justify-between border-t border-slate-100 mt-4 pt-3">
             <div className="flex items-center gap-1">
@@ -214,12 +194,17 @@ export default function FeedView({
                 onChange={handleImageUpload}
                 className="hidden"
               />
+              <input
+                type="file"
+                ref={attachmentInputRef}
+                onChange={handleAttachmentSelect}
+                className="hidden"
+              />
 
               <button
                 type="button"
                 onClick={() => {
                   fileInputRef.current?.click();
-                  setShowFileAttach(false);
                 }}
                 className={`p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${selectedImage ? 'text-indigo-600 bg-indigo-50' : ''}`}
               >
@@ -229,8 +214,8 @@ export default function FeedView({
 
               <button
                 type="button"
-                onClick={() => setShowFileAttach(!showFileAttach)}
-                className={`p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${attachedFileName ? 'text-indigo-600 bg-indigo-50' : ''}`}
+                onClick={() => attachmentInputRef.current?.click()}
+                className={`p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${attachedFile ? 'text-indigo-600 bg-indigo-50' : ''}`}
               >
                 <Paperclip size={14} />
                 <span>Attach File</span>
@@ -239,7 +224,7 @@ export default function FeedView({
 
             <button
               type="submit"
-              disabled={!newPostText.trim() && !selectedImage && !attachedFileName}
+              disabled={!newPostText.trim() && !selectedImage && !attachedFile}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-45 disabled:pointer-events-none text-white font-semibold text-xs py-2 px-5 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
               <span>Broadcast</span>
