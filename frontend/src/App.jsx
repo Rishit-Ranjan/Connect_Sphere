@@ -31,6 +31,14 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('feed');
   const [selectedRecipient, setSelectedRecipient] = useState(null);
   const [selectedRoomId, setSelectedRoomId] = useState('');
+  // Private rooms the user has unlocked with a password (persisted per browser).
+  const [unlockedRoomIds, setUnlockedRoomIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('unlocked_rooms') || '[]');
+    } catch {
+      return [];
+    }
+  });
   const [unreadCount, setUnreadCount] = useState(0);
   const [noticeCount, setNoticeCount] = useState(0);
 
@@ -487,7 +495,7 @@ export default function App() {
     }
   };
 
-  const handleCreateRoom = async ({ name, description }) => {
+  const handleCreateRoom = async ({ name, description, visibility, password }) => {
     try {
       const token = localStorage.getItem('token');
 
@@ -497,22 +505,98 @@ export default function App() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ name, description })
+        body: JSON.stringify({ name, description, visibility, password })
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        // Handle non-JSON error responses gracefully
-        const errorText = await res.text();
-        throw new Error(`Failed to create room. Server responded with: ${errorText}`);
+        return { ok: false, message: data.message || 'Failed to create room.' };
       }
 
-      const data = await res.json();
-
       setRooms((prev) => [...prev, data]);
+      // A room you just created is unlocked for you automatically.
+      if (data.isPrivate || data.visibility === 'private') {
+        setUnlockedRoomIds((prev) => {
+          const next = [...new Set([...prev, data.id])];
+          localStorage.setItem('unlocked_rooms', JSON.stringify(next));
+          return next;
+        });
+      }
       setSelectedRoomId(data.id);
       setActiveTab('rooms');
+      return { ok: true, room: data };
     } catch (error) {
       console.error('Error creating room:', error);
+      return { ok: false, message: 'Failed to create room.' };
+    }
+  };
+
+  const handleVerifyRoomPassword = async (roomId, password) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`http://localhost:5000/api/rooms/${roomId}/verify-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ password })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        return { ok: false, message: data.message || 'Incorrect room password.' };
+      }
+
+      setUnlockedRoomIds((prev) => {
+        const next = [...new Set([...prev, roomId])];
+        localStorage.setItem('unlocked_rooms', JSON.stringify(next));
+        return next;
+      });
+      return { ok: true };
+    } catch (error) {
+      console.error('Error verifying room password:', error);
+      return { ok: false, message: 'Failed to verify password.' };
+    }
+  };
+
+  const handleDeleteRoom = async (roomId) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`http://localhost:5000/api/rooms/${roomId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (res.status === 404 && !data.message) {
+          return {
+            ok: false,
+            message: 'Delete endpoint not found. Restart the backend server to load the new room routes.'
+          };
+        }
+        return { ok: false, message: data.message || 'Failed to delete room.' };
+      }
+      setRoomMessages((prev) => prev.filter((msg) => msg.roomId !== roomId));
+      setUnlockedRoomIds((prev) => {
+        const next = prev.filter((id) => id !== roomId);
+        localStorage.setItem('unlocked_rooms', JSON.stringify(next));
+        return next;
+      });
+      setSelectedRoomId((prev) => (prev === roomId ? '' : prev));
+
+      return { ok: true };
+    } catch (error) {
+      console.error('Error deleting room:', error);
+      return { ok: false, message: 'Failed to delete room.' };
     }
   };
 
@@ -797,6 +881,9 @@ export default function App() {
               roomMessages={roomMessages}
               onAddRoomMessage={handleAddRoomMessage}
               onCreateRoom={handleCreateRoom}
+              onVerifyRoomPassword={handleVerifyRoomPassword}
+              onDeleteRoom={handleDeleteRoom}
+              unlockedRoomIds={unlockedRoomIds}
               users={users}
               selectedRoomId={selectedRoomId}
               setSelectedRoomId={setSelectedRoomId}
