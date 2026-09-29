@@ -114,12 +114,12 @@ export default function FeedView({
 
   return (
     <div className="flex-1 p-6 space-y-6 max-w-2xl mx-auto font-sans">
-      <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+      <div className="pb-4 border-b border-slate-200">
         <div>
           <h1 className="font-display font-extrabold text-slate-900 text-2xl tracking-tight">Home</h1>
           <p className="text-slate-500 text-xs">Share projects, thoughts, announcements, and campus updates.</p>
         </div>
-        <div className="relative w-48 sm:w-64">
+        <div className="relative mt-3">
           <span className="absolute inset-y-0 left-3 flex items-center text-slate-400">
             <Search size={14} />
           </span>
