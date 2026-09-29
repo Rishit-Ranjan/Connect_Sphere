@@ -25,7 +25,7 @@ export default function RightSidebar({ currentUser, users, onConnect, onFollow, 
         .slice(0, 3);
     // Online active users list
     const onlineUsers = users.filter((u) => !isSameUser(u, currentUser));
-    return (<aside className="w-80 bg-slate-50 border-l border-slate-200 p-6 space-y-6 overflow-y-auto h-full sticky top-0 font-sans z-10 shrink-0">
+    return (<aside className="w-96 bg-slate-50 border-l border-slate-200 p-6 space-y-6 overflow-y-auto h-full sticky top-0 font-sans z-10 shrink-0">
       
       {/* 1. Notifications Card */}
       <NotificationsCard

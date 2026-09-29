@@ -840,7 +840,7 @@ export default function App() {
           </main>
 
           {activeTab !== 'messages' && activeTab !== 'rooms' && (
-            <div className="w-80 bg-slate-50 border-l border-slate-200 flex-shrink-0">
+            <div className="w-96 bg-slate-50 border-l border-slate-200 flex-shrink-0">
               <RightSidebar
                 currentUser={currentUser}
                 users={users}
