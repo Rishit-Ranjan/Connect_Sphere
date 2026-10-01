@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState } from 'react';
-import { ArrowRight, UserPlus, Sparkles, FlaskConical } from 'lucide-react';
+import { ArrowRight, UserPlus, Sparkles, FlaskConical, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 // TEMPORARY hardcoded test credentials for testing purposes only.
@@ -11,8 +11,14 @@ import { useAuth } from '../context/AuthContext';
 export const TEMP_TEST_EMAIL = 'test@connectsphere.edu';
 export const TEMP_TEST_PASSWORD = 'Test@1234';
 
+// TEMPORARY hardcoded admin credentials for testing purposes only.
+// Matches the admin account created by backend/src/seed.js.
+// TODO: Remove before production.
+export const TEMP_ADMIN_EMAIL = 'admin@connectsphere.ac.in';
+export const TEMP_ADMIN_PASSWORD = 'password123';
+
 export default function LoginView() {
-  const { login, register } = useAuth();
+  const { login, register, logout } = useAuth();
 
   const [activeTab, setActiveTab] = useState('signin');
 
@@ -27,6 +33,10 @@ export default function LoginView() {
   const [signInPassword, setSignInPassword] = useState(TEMP_TEST_PASSWORD);
   const [signInError, setSignInError] = useState('');
   const [createError, setCreateError] = useState('');
+  const [adminQuery, setAdminQuery] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminError, setAdminError] = useState('');
+  const [showForgotHelp, setShowForgotHelp] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSignIn = async (e) => {
@@ -73,6 +83,36 @@ export default function LoginView() {
     } catch (error) {
       console.error('Registration error:', error);
       setCreateError(error.message || 'Registration failed.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAdminSignIn = async (e) => {
+    e.preventDefault();
+    setAdminError('');
+
+    if (!adminQuery.trim() || !adminPassword.trim()) {
+      setAdminError('Please enter both admin handle/email and password.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const user = await login(adminQuery.trim(), adminPassword.trim());
+
+      // The admin portal only accepts accounts flagged as admin.
+      if (!user || user.role !== 'admin') {
+        logout();
+        setAdminError('This account does not have administrator access.');
+        return;
+      }
+
+      setAdminQuery('');
+      setAdminPassword('');
+    } catch (error) {
+      console.error('Admin login error:', error);
+      setAdminError(error.message || 'Admin login failed.');
     } finally {
       setIsSubmitting(false);
     }
@@ -152,6 +192,21 @@ export default function LoginView() {
               >
                 <Sparkles size={16} />
                 Sign In
+              </button>
+
+              <button
+                onClick={() => {
+                  setAdminError('');
+                  setActiveTab('admin');
+                }}
+                className={`pb-3 text-sm font-semibold tracking-tight relative transition-all mr-6 flex items-center gap-2 cursor-pointer ${
+                  activeTab === 'admin'
+                    ? 'text-amber-600 border-b-2 border-amber-500'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <ShieldCheck size={16} />
+                Admin
               </button>
 
               <button
@@ -244,8 +299,40 @@ export default function LoginView() {
                   <FlaskConical size={14} />
                   Use temporary test login ({TEMP_TEST_EMAIL} / {TEMP_TEST_PASSWORD})
                 </button>
+
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotHelp((prev) => !prev)}
+                    className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+
+                {showForgotHelp && (
+                  <div className="bg-indigo-50 border border-indigo-100 text-indigo-900 text-[11px] px-3.5 py-2.5 rounded-xl leading-relaxed">
+                    Password resets are handled by your campus administrator. Email{' '}
+                    <span className="font-semibold">admin@connectsphere.ac.in</span> from your
+                    registered campus address, or ask your department office to reset it for you.
+                  </div>
+                )}
+
+                <div className="pt-4 mt-2 border-t border-slate-100 text-center text-[11px] text-slate-500">
+                  Don&apos;t have a account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreateError('');
+                      setActiveTab('create');
+                    }}
+                    className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                  >
+                    create here
+                  </button>
+                </div>
               </form>
-            ) : (
+            ) : activeTab === 'create' ? (
               <form onSubmit={handleCreateAccount} className="space-y-4">
                 <div className="mb-4">
                   <h3 className="font-display font-bold text-lg text-slate-900 mb-1">
@@ -355,6 +442,101 @@ export default function LoginView() {
                   className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
                 >
                   {isSubmitting ? 'Creating Account...' : 'Register & Sign In'}
+                </button>
+
+                <div className="pt-4 mt-2 border-t border-slate-100 text-center text-[11px] text-slate-500">
+                  Already have a account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSignInError('');
+                      setActiveTab('signin');
+                    }}
+                    className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                  >
+                    sign in here
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleAdminSignIn} className="space-y-4 py-2 animate-fadeIn">
+                <div className="mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+                      <ShieldCheck size={16} className="text-amber-600" />
+                    </span>
+                    <h3 className="font-display font-bold text-lg text-slate-900">
+                      Administrator portal
+                    </h3>
+                  </div>
+                  <p className="text-slate-500 text-xs mt-2">
+                    Restricted access. Sign in with an admin-flagged account to manage users, notices,
+                    resources, campus rooms, and moderation tools.
+                  </p>
+                </div>
+
+                {adminError && (
+                  <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs px-3.5 py-2.5 rounded-xl font-medium">
+                    ⚠️ {adminError}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Admin Email or Handle *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. admin@connectsphere.ac.in"
+                    value={adminQuery}
+                    onChange={(e) => {
+                      setAdminQuery(e.target.value);
+                      if (adminError) setAdminError('');
+                    }}
+                    className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Admin Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Enter administrator password"
+                    value={adminPassword}
+                    onChange={(e) => {
+                      setAdminPassword(e.target.value);
+                      if (adminError) setAdminError('');
+                    }}
+                    className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full mt-6 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
+                >
+                  <ShieldCheck size={14} />
+                  {isSubmitting ? 'Verifying Admin...' : 'Enter Admin Portal'}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setAdminError('');
+                    setAdminQuery(TEMP_ADMIN_EMAIL);
+                    setAdminPassword(TEMP_ADMIN_PASSWORD);
+                  }}
+                  className="w-full bg-amber-50 hover:bg-amber-100 disabled:bg-slate-100 text-amber-800 text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all border border-amber-200 cursor-pointer"
+                  title="Fill temporary admin credentials"
+                >
+                  <FlaskConical size={14} />
+                  Use temporary admin login ({TEMP_ADMIN_EMAIL} / {TEMP_ADMIN_PASSWORD})
                 </button>
               </form>
             )}
