@@ -3,15 +3,32 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
+:root {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
 @layer base {
   body {
-    @apply font-sans bg-slate-50 text-slate-900 antialiased selection:bg-slate-200 selection:text-slate-900;
+    font-family: var(--font-sans);
+    background-color: #f8fafc;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body::selection {
+    background-color: #e2e8f0;
+    color: #0f172a;
   }
 
   /* Dark shell — these target html.dark which always exists at runtime. */
