@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState } from 'react';
-import { Home, MessageSquare, Shield, Sparkles, LogOut, Search, X, Users } from 'lucide-react';
+import { Home, MessageSquare, Shield, Sparkles, LogOut, Search, X, Users, Sun, Moon } from 'lucide-react';
 import logo from '../assets/ConnectSphere.png';
 import NotificationsDropdown from './NotificationsDropdown';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount, notifications, unreadNotificationsCount, onMarkAllRead }) {
+  const { isDark, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const isHomeActive = activeTab === 'feed';
   const isRoomsActive = activeTab === 'rooms';
@@ -114,6 +116,21 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
               {unreadCount}
             </span>
           )}
+        </button>
+
+        <button
+          onClick={toggleTheme}
+          className="relative flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent"
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          id="navbar-theme-toggle"
+        >
+          {isDark ? (
+            <Sun size={16} className="text-amber-500" />
+          ) : (
+            <Moon size={16} className="text-slate-400" />
+          )}
+          <span className="hidden sm:inline">{isDark ? 'Dark' : 'Light'}</span>
         </button>
 
         <div className="w-px h-8 bg-slate-200 hidden sm:block" />
