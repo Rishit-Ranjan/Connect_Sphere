@@ -127,7 +127,7 @@ export default function LoginView() {
       </div>
 
       <div className="w-full max-w-4xl grid md:grid-cols-5 bg-white border border-slate-200 rounded-3xl shadow-xl overflow-hidden relative z-10">
-        <div className="md:col-span-2 bg-slate-900 text-slate-100 p-8 flex flex-col justify-between relative">
+        <div className="hidden md:flex md:col-span-2 bg-slate-900 text-slate-100 p-6 lg:p-8 flex-col justify-between relative">
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
           <div>
             <div className="flex items-center gap-2 mb-8">
@@ -176,15 +176,15 @@ export default function LoginView() {
           </div>
         </div>
 
-        <div className="md:col-span-3 p-8 flex flex-col justify-between bg-white">
+        <div className="md:col-span-3 p-5 sm:p-8 flex flex-col justify-between bg-white">
           <div>
-            <div className="flex border-b border-slate-200 mb-8">
+            <div className="flex items-center border-b border-slate-200 mb-6 sm:mb-8 overflow-x-auto">
               <button
                 onClick={() => {
                   setSignInError('');
                   setActiveTab('signin');
                 }}
-                className={`pb-3 text-sm font-semibold tracking-tight relative transition-all mr-6 flex items-center gap-2 cursor-pointer ${
+                className={`pb-3 text-xs sm:text-sm font-semibold tracking-tight relative transition-all mr-4 sm:mr-6 flex items-center gap-2 whitespace-nowrap cursor-pointer ${
                   activeTab === 'signin'
                     ? 'text-indigo-600 border-b-2 border-indigo-600'
                     : 'text-slate-400 hover:text-slate-600'
@@ -199,7 +199,7 @@ export default function LoginView() {
                   setAdminError('');
                   setActiveTab('admin');
                 }}
-                className={`pb-3 text-sm font-semibold tracking-tight relative transition-all mr-6 flex items-center gap-2 cursor-pointer ${
+                className={`pb-3 text-xs sm:text-sm font-semibold tracking-tight relative transition-all mr-4 sm:mr-6 flex items-center gap-2 whitespace-nowrap cursor-pointer ${
                   activeTab === 'admin'
                     ? 'text-amber-600 border-b-2 border-amber-500'
                     : 'text-slate-400 hover:text-slate-600'
@@ -214,7 +214,7 @@ export default function LoginView() {
                   setCreateError('');
                   setActiveTab('create');
                 }}
-                className={`pb-3 text-sm font-semibold tracking-tight relative transition-all flex items-center gap-2 cursor-pointer ${
+                className={`pb-3 text-xs sm:text-sm font-semibold tracking-tight relative transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
                   activeTab === 'create'
                     ? 'text-indigo-600 border-b-2 border-indigo-600'
                     : 'text-slate-400 hover:text-slate-600'

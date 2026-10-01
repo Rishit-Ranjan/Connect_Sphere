@@ -14,7 +14,7 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, noticeCo
     if (currentUser.role === 'admin') {
         cards.push({ id: 'admin', label: 'Admin Terminal', description: 'Manage users, posts & notices', icon: Shield, badge: 0 });
     }
-    return (<aside className="w-96 bg-slate-50 h-full font-sans z-30 shrink-0 select-none overflow-y-auto p-4 space-y-4" id="sidebar-container">
+    return (<aside className="w-full lg:w-72 xl:w-80 2xl:w-96 bg-slate-50 lg:h-full font-sans z-30 shrink-0 select-none overflow-y-auto p-4 space-y-4" id="sidebar-container">
       {/* Navigation Cards */}
       {cards.map((item) => {
             const IconComponent = item.icon;

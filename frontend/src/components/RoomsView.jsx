@@ -143,7 +143,7 @@ export default function RoomsView({
 
   if (rooms.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-white border border-slate-200 rounded-3xl m-3 shadow-sm">
+      <div className="flex-1 flex items-center justify-center bg-white border border-slate-200 rounded-3xl m-2 sm:m-3 shadow-sm">
         <div className="w-full max-w-md px-6 text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-50 flex items-center justify-center">
             <Hash size={28} className="text-indigo-600" />
@@ -232,8 +232,8 @@ export default function RoomsView({
   }
 
   return (
-    <div className="flex-1 flex h-[calc(100vh-2px)] overflow-hidden font-sans bg-slate-50 gap-3 p-3">
-      <div className="w-72 bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col justify-between shrink-0 overflow-hidden">
+    <div className="flex-1 flex flex-col lg:flex-row h-[calc(100dvh-4rem-2px)] overflow-hidden font-sans bg-slate-50 gap-3 p-2 sm:p-3">
+      <div className="w-full lg:w-72 bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col justify-between shrink-0 overflow-hidden max-h-[38vh] lg:max-h-none">
         <div className="flex flex-col min-h-0 flex-1">
           <div className="p-5 pb-4">
             <h3 className="font-display font-bold text-slate-900 text-sm tracking-tight flex items-center gap-2">
@@ -440,7 +440,7 @@ export default function RoomsView({
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col h-full bg-white border border-slate-200 rounded-3xl shadow-sm relative overflow-hidden min-w-0">
+      <div className="flex-1 flex flex-col h-full min-h-0 bg-white border border-slate-200 rounded-3xl shadow-sm relative overflow-hidden min-w-0">
         {selectedRoom ? (
           <>
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-white z-10 shrink-0">

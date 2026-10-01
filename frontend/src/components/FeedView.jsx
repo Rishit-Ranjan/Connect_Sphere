@@ -113,7 +113,7 @@ export default function FeedView({
   });
 
   return (
-    <div className="flex-1 p-6 space-y-6 max-w-2xl mx-auto font-sans">
+    <div className="flex-1 p-4 sm:p-6 space-y-6 max-w-2xl mx-auto font-sans">
       <div className="pb-4 border-b border-slate-200">
         <div>
           <h1 className="font-display font-extrabold text-slate-900 text-2xl tracking-tight">Home</h1>

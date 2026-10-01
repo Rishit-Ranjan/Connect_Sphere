@@ -822,7 +822,7 @@ export default function App() {
 
   return (
     <>
-      <div className="flex flex-col h-screen bg-slate-50 overflow-hidden font-sans">
+      <div className="flex flex-col h-[100dvh] bg-slate-50 overflow-hidden font-sans">
         <Navbar
           currentUser={currentUser}
           activeTab={activeTab}
@@ -834,7 +834,7 @@ export default function App() {
           onMarkAllRead={handleMarkAllNotificationsRead}
         />
 
-        <div className="flex flex-1 min-h-0 overflow-hidden">
+        <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
           <Sidebar
             currentUser={currentUser}
             activeTab={activeTab}
@@ -842,7 +842,7 @@ export default function App() {
             noticeCount={noticeCount}
           />
 
-          <main className="flex-1 overflow-y-auto bg-slate-50">
+          <main className="flex-1 min-w-0 overflow-y-auto bg-slate-50">
             {activeTab === 'feed' && (
             <FeedView
               currentUser={currentUser}
@@ -927,7 +927,7 @@ export default function App() {
           </main>
 
           {activeTab !== 'messages' && activeTab !== 'rooms' && (
-            <div className="w-96 bg-slate-50 flex-shrink-0">
+            <div className="hidden xl:block w-80 2xl:w-96 bg-slate-50 shrink-0">
               <RightSidebar
                 currentUser={currentUser}
                 users={users}

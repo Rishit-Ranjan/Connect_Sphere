@@ -15,7 +15,7 @@ export default function AdminDashboard({ currentUser, users, posts, notices, res
             u.handle.toLowerCase().includes(searchUserQuery.toLowerCase()) ||
             (u.department && u.department.toLowerCase().includes(searchUserQuery.toLowerCase())));
     });
-    return (<div className="flex-1 p-6 space-y-6 max-w-5xl mx-auto font-sans">
+    return (<div className="flex-1 p-4 sm:p-6 space-y-6 max-w-5xl mx-auto font-sans">
       
       {/* Page Editorial Header */}
       <div className="pb-4 border-b border-slate-200">

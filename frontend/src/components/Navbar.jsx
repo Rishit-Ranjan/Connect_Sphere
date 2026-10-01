@@ -17,7 +17,7 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
   return (
     <header
       id="navbar"
-      className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 sticky top-0 z-40 font-sans select-none"
+      className="h-16 bg-white border-b border-slate-200 flex items-center justify-between gap-2 px-3 sm:px-6 flex-shrink-0 sticky top-0 z-40 font-sans select-none"
     >
       {/* Left: project icon + name */}
       <button
@@ -62,10 +62,10 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
       </div>
 
       {/* Right: home + campus rooms + notifications + messages + profile section */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3">
         <button
           onClick={() => setActiveTab('feed')}
-          className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+          className={`relative flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
             isHomeActive
               ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
@@ -85,7 +85,7 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
 
         <button
           onClick={() => setActiveTab('rooms')}
-          className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+          className={`relative flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
             isRoomsActive
               ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
@@ -99,7 +99,7 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
 
         <button
           onClick={() => setActiveTab('messages')}
-          className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+          className={`relative flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
             isMessagesActive
               ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'

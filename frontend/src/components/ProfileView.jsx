@@ -70,7 +70,7 @@ export default function ProfileView({
   const isAdmin = currentUser.role === "admin";
   return (
     <div
-      className="flex-1 p-6 space-y-6 max-w-4xl mx-auto font-sans relative"
+      className="flex-1 p-4 sm:p-6 space-y-6 max-w-4xl mx-auto font-sans relative"
       id="profile-container"
     >
       {/* 1. Styled Header Hero Banner */}

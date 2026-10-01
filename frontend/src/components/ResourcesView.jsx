@@ -66,7 +66,7 @@ export default function ResourcesView({ currentUser, resources, onAddResource, o
         const matchesCategory = selectedCategory === 'All' || res.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
-    return (<div className="flex-1 p-6 space-y-6 max-w-4xl mx-auto font-sans relative">
+    return (<div className="flex-1 p-4 sm:p-6 space-y-6 max-w-4xl mx-auto font-sans relative">
       
       {/* Simulation Download Progress Overlay */}
       {downloadingId && (<div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 animate-fadeIn">

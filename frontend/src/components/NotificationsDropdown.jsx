@@ -43,7 +43,7 @@ export default function NotificationsDropdown({ notifications, unreadNotificatio
     <div className="relative" ref={containerRef} id="navbar-notifications-container">
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+        className={`relative flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
           isOpen || unreadNotificationsCount > 0
             ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
             : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
