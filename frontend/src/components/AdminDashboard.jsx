@@ -15,6 +15,38 @@ export default function AdminDashboard({ currentUser, users, posts, notices, res
             u.handle.toLowerCase().includes(searchUserQuery.toLowerCase()) ||
             (u.department && u.department.toLowerCase().includes(searchUserQuery.toLowerCase())));
     });
+    // Live audit trail derived from real records (newest first) — no placeholder data.
+    const auditLogs = [
+        ...posts.map((post) => ({
+            id: `post-${post.id}`,
+            action: 'POST PUBLISHED',
+            details: `${(post.text || 'Shared a media post').slice(0, 70)}${(post.text || '').length > 70 ? '...' : ''}`,
+            user: post.author?.name || 'Unknown',
+            createdAt: post.createdAt ? new Date(post.createdAt).getTime() : 0
+        })),
+        ...notices.map((notice) => ({
+            id: `notice-${notice.id}`,
+            action: 'NOTICE BROADCAST',
+            details: notice.title || 'Campus announcement',
+            user: notice.authorName || 'Campus Admin',
+            createdAt: notice.createdAt ? new Date(notice.createdAt).getTime() : 0
+        })),
+        ...resources.map((resource) => ({
+            id: `resource-${resource.id}`,
+            action: 'RESOURCE UPLOADED',
+            details: resource.title || 'Study material',
+            user: resource.uploadedBy || 'Unknown',
+            createdAt: resource.createdAt ? new Date(resource.createdAt).getTime() : 0
+        }))
+    ]
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, 12)
+        .map((log) => ({
+            ...log,
+            time: log.createdAt
+                ? new Date(log.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                : '—'
+        }));
     return (<div className="flex-1 p-4 sm:p-6 space-y-6 max-w-5xl mx-auto font-sans">
       
       {/* Page Editorial Header */}
@@ -166,6 +198,10 @@ export default function AdminDashboard({ currentUser, users, posts, notices, res
           </div>
 
           <div className="space-y-4 max-h-[360px] overflow-y-auto pr-1">
+            {auditLogs.length === 0 && (<div className="text-center py-6 border border-dashed border-slate-200 rounded-xl">
+                <Activity size={18} className="mx-auto text-slate-300 mb-2"/>
+                <p className="text-[10px] text-slate-400 font-medium">No activity recorded yet.</p>
+              </div>)}
             {auditLogs.map((log) => (<div key={log.id} className="border-b border-slate-100 last:border-0 pb-3 last:pb-0 space-y-1">
                 <div className="flex justify-between text-[10px] font-mono">
                   <span className="font-bold text-slate-800">{log.action}</span>
