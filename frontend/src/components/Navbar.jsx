@@ -126,9 +126,9 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
           id="navbar-theme-toggle"
         >
           {isDark ? (
-            <Sun size={16} className="text-amber-500" />
+            <Moon size={16} className="text-amber-500" />
           ) : (
-            <Moon size={16} className="text-slate-400" />
+            <Sun size={16} className="text-slate-400" />
           )}
           <span className="hidden sm:inline">{isDark ? 'Dark' : 'Light'}</span>
         </button>
