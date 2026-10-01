@@ -150,3 +150,28 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(120, 113, 108, 0.4);
 }
+
+.dark .bg-white.rounded-3xl {
+  background-color: #1d2226;
+  border-color: #38434f;
+  border-radius: 8px;
+}
+
+
+.dark #navbar {
+  background-color: #1d2226;
+  border-color: #38434f;
+}
+
+.dark #navbar #navbar-search-input {
+  background-color: #38434f;
+  color: #f4f4f5;
+}
+
+.dark #navbar #navbar-search-input::placeholder {
+  color: #b0b8c1;
+}
+
+.dark #navbar .w-px.h-8.bg-slate-200 {
+  background-color: #38434f;
+}
