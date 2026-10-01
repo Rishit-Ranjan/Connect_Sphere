@@ -1,7 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+/*
+ * Tailwind v4 exposes the dark variant via this rule, but some CSS tooling
+ * still reports it as an unknown at-rule. We keep the dark-mode selector
+ * explicit here so the app still toggles dark styling reliably.
+ */
+html.dark,
+html.dark * {
+  color-scheme: dark;
+}
 
 :root {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
