@@ -43,7 +43,7 @@ export default function NotificationsDropdown({ notifications, unreadNotificatio
     <div className="relative" ref={containerRef} id="navbar-notifications-container">
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`relative flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+        className={`relative flex flex-col items-center justify-center gap-0.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
           isOpen || unreadNotificationsCount > 0
             ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
             : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
@@ -54,7 +54,7 @@ export default function NotificationsDropdown({ notifications, unreadNotificatio
         <Bell size={16} className={isOpen || unreadNotificationsCount > 0 ? 'text-indigo-700' : 'text-slate-400'} />
         <span className="hidden sm:inline">Notifications</span>
         {unreadNotificationsCount > 0 && (
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white leading-none">
+          <span className="absolute -top-1 -right-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white leading-none">
             {unreadNotificationsCount}
           </span>
         )}

@@ -67,7 +67,7 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
       <div className="flex items-center gap-1.5 sm:gap-3">
         <button
           onClick={() => setActiveTab('feed')}
-          className={`relative flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+          className={`relative flex flex-col items-center justify-center gap-0.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
             isHomeActive
               ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
@@ -87,7 +87,7 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
 
         <button
           onClick={() => setActiveTab('rooms')}
-          className={`relative flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+          className={`relative flex flex-col items-center justify-center gap-0.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
             isRoomsActive
               ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
@@ -101,7 +101,7 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
 
         <button
           onClick={() => setActiveTab('messages')}
-          className={`relative flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+          className={`relative flex flex-col items-center justify-center gap-0.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
             isMessagesActive
               ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
@@ -112,7 +112,7 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
           <MessageSquare size={16} className={isMessagesActive ? 'text-indigo-700' : 'text-slate-400'} />
           <span className="hidden sm:inline">Messages</span>
           {unreadCount > 0 && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white leading-none">
+            <span className="absolute -top-1 -right-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white leading-none">
               {unreadCount}
             </span>
           )}
@@ -120,7 +120,7 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
 
         <button
           onClick={toggleTheme}
-          className="relative flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent"
+          className="relative flex flex-col items-center justify-center gap-0.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent"
           title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           id="navbar-theme-toggle"
