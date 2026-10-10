@@ -7,6 +7,8 @@ const router = Router();
 
 router.post('/', protect, roomController.createRoom);
 router.get('/', protect, roomController.getRooms);
+router.post('/:roomId/verify-password', protect, roomController.verifyRoomPassword);
+router.delete('/:roomId', protect, roomController.deleteRoom);
 router.get('/:roomId/messages', protect, roomController.getRoomMessages);
 router.post('/:roomId/messages', protect, roomController.createRoomMessage);
 

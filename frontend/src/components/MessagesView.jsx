@@ -36,10 +36,10 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
     };
     const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchText.toLowerCase()) ||
         c.handle.toLowerCase().includes(searchText.toLowerCase()));
-    return (<div className="flex-1 flex h-[calc(100vh-2px)] overflow-hidden font-sans bg-white border border-slate-200 rounded-3xl m-3 shadow-sm">
+    return (<div className="flex-1 flex flex-col md:flex-row h-[calc(100dvh-4rem-2px)] overflow-hidden font-sans bg-white border border-slate-200 rounded-3xl m-2 sm:m-3 shadow-sm">
       
       {/* Messenger Contacts Sidebar */}
-      <div className="w-80 border-r border-slate-200 flex flex-col bg-slate-50/50 shrink-0">
+      <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200 flex flex-col bg-slate-50/50 shrink-0 max-h-[45vh] md:max-h-none">
         <div className="p-4 border-b border-slate-200 space-y-3 bg-white">
           <div className="flex items-center justify-between">
             <h3 className="font-display font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
@@ -90,10 +90,10 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
       </div>
 
       {/* Main Messenger Panel */}
-      <div className="flex-1 flex flex-col justify-between h-full bg-white relative">
+      <div className="flex-1 flex flex-col justify-between h-full min-h-0 bg-white relative">
         {selectedRecipient ? (<>
             {/* Active Contact Header */}
-            <div className="p-4.5 border-b border-slate-200 flex items-center justify-between bg-white z-10 shadow-sm">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-white z-10 shadow-sm">
               <div className="flex items-center gap-3 min-w-0">
                 <img src={selectedRecipient.avatarUrl || null} alt={selectedRecipient.name || 'User Avatar'} className="w-10 h-10 rounded-full object-cover border border-slate-100 shrink-0" referrerPolicy="no-referrer"/>
                 <div className="min-w-0">

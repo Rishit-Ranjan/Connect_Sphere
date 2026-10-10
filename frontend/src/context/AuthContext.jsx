@@ -49,6 +49,9 @@ export const AuthProvider = ({ children }) => {
 
     localStorage.setItem('token', data.token); // Save the real JWT token
     setCurrentUser(data.user);
+
+    // Returned so callers (e.g. the admin portal) can verify the account role.
+    return data.user;
   };
 
   const register = async (userData) => {

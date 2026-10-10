@@ -4,6 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import Chatbot from './components/Chatbot';
+import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import RightSidebar from './components/RightSidebar';
 import FeedView from './components/FeedView';
@@ -30,6 +31,14 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('feed');
   const [selectedRecipient, setSelectedRecipient] = useState(null);
   const [selectedRoomId, setSelectedRoomId] = useState('');
+  // Private rooms the user has unlocked with a password (persisted per browser).
+  const [unlockedRoomIds, setUnlockedRoomIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('unlocked_rooms') || '[]');
+    } catch {
+      return [];
+    }
+  });
   const [unreadCount, setUnreadCount] = useState(0);
   const [noticeCount, setNoticeCount] = useState(0);
 
@@ -486,7 +495,7 @@ export default function App() {
     }
   };
 
-  const handleCreateRoom = async ({ name, description }) => {
+  const handleCreateRoom = async ({ name, description, visibility, password }) => {
     try {
       const token = localStorage.getItem('token');
 
@@ -496,22 +505,98 @@ export default function App() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ name, description })
+        body: JSON.stringify({ name, description, visibility, password })
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        // Handle non-JSON error responses gracefully
-        const errorText = await res.text();
-        throw new Error(`Failed to create room. Server responded with: ${errorText}`);
+        return { ok: false, message: data.message || 'Failed to create room.' };
       }
 
-      const data = await res.json();
-
       setRooms((prev) => [...prev, data]);
+      // A room you just created is unlocked for you automatically.
+      if (data.isPrivate || data.visibility === 'private') {
+        setUnlockedRoomIds((prev) => {
+          const next = [...new Set([...prev, data.id])];
+          localStorage.setItem('unlocked_rooms', JSON.stringify(next));
+          return next;
+        });
+      }
       setSelectedRoomId(data.id);
       setActiveTab('rooms');
+      return { ok: true, room: data };
     } catch (error) {
       console.error('Error creating room:', error);
+      return { ok: false, message: 'Failed to create room.' };
+    }
+  };
+
+  const handleVerifyRoomPassword = async (roomId, password) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`http://localhost:5000/api/rooms/${roomId}/verify-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ password })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        return { ok: false, message: data.message || 'Incorrect room password.' };
+      }
+
+      setUnlockedRoomIds((prev) => {
+        const next = [...new Set([...prev, roomId])];
+        localStorage.setItem('unlocked_rooms', JSON.stringify(next));
+        return next;
+      });
+      return { ok: true };
+    } catch (error) {
+      console.error('Error verifying room password:', error);
+      return { ok: false, message: 'Failed to verify password.' };
+    }
+  };
+
+  const handleDeleteRoom = async (roomId) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`http://localhost:5000/api/rooms/${roomId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (res.status === 404 && !data.message) {
+          return {
+            ok: false,
+            message: 'Delete endpoint not found. Restart the backend server to load the new room routes.'
+          };
+        }
+        return { ok: false, message: data.message || 'Failed to delete room.' };
+      }
+      setRoomMessages((prev) => prev.filter((msg) => msg.roomId !== roomId));
+      setUnlockedRoomIds((prev) => {
+        const next = prev.filter((id) => id !== roomId);
+        localStorage.setItem('unlocked_rooms', JSON.stringify(next));
+        return next;
+      });
+      setSelectedRoomId((prev) => (prev === roomId ? '' : prev));
+
+      return { ok: true };
+    } catch (error) {
+      console.error('Error deleting room:', error);
+      return { ok: false, message: 'Failed to delete room.' };
     }
   };
 
@@ -675,6 +760,54 @@ export default function App() {
 
   const urgentNotices = notices.filter((n) => n.isUrgent);
 
+  // Notifications feed derived from existing app data (notices, likes, comments).
+  // Read/unread tracked locally by id so "Mark all read" works without backend changes.
+  const [readNotificationIds, setReadNotificationIds] = useState([]);
+
+  const notifications = [
+    ...notices.slice(0, 5).map((notice) => ({
+      id: `notice-${notice.id}`,
+      type: 'notice',
+      actor: notice.authorName || 'Campus Admin',
+      text: `published: ${notice.title}`,
+      time: notice.createdAt ? new Date(notice.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently',
+      createdAt: notice.createdAt ? new Date(notice.createdAt).getTime() : 0,
+    })),
+    ...posts.flatMap((post) => {
+      const items = [];
+      if (post.liked) {
+        items.push({
+          id: `like-${post.id}`,
+          type: 'like',
+          actor: post.author?.name || 'Someone',
+          text: `liked a post: ${(post.text || '').slice(0, 60)}${(post.text || '').length > 60 ? '...' : ''}`,
+          time: post.createdAt ? new Date(post.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently',
+          createdAt: post.createdAt ? new Date(post.createdAt).getTime() : 0,
+        });
+      }
+      (post.comments || []).slice(-2).forEach((comment) => {
+        items.push({
+          id: `comment-${comment.id}`,
+          type: 'comment',
+          actor: comment.author?.name || 'Someone',
+          text: `commented: ${(comment.text || '').slice(0, 60)}${(comment.text || '').length > 60 ? '...' : ''}`,
+          time: comment.createdAt ? new Date(comment.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently',
+          createdAt: comment.createdAt ? new Date(comment.createdAt).getTime() : 0,
+        });
+      });
+      return items;
+    }),
+  ]
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, 20)
+    .map((n) => ({ ...n, unread: !readNotificationIds.includes(n.id) }));
+
+  const unreadNotificationsCount = notifications.filter((n) => n.unread).length;
+
+  const handleMarkAllNotificationsRead = () => {
+    setReadNotificationIds(notifications.map((n) => n.id));
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -689,18 +822,28 @@ export default function App() {
 
   return (
     <>
-      <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
-        <Sidebar
+      <div className="flex flex-col h-[100dvh] bg-slate-50 overflow-hidden font-sans">
+        <Navbar
           currentUser={currentUser}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onLogout={handleLogout}
           unreadCount={unreadCount}
-          noticeCount={noticeCount}
+          notifications={notifications}
+          unreadNotificationsCount={unreadNotificationsCount}
+          onMarkAllRead={handleMarkAllNotificationsRead}
         />
 
-        <main className="flex-1 overflow-y-auto bg-slate-50">
-          {activeTab === 'feed' && (
+        <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
+          <Sidebar
+            currentUser={currentUser}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            noticeCount={noticeCount}
+          />
+
+          <main className="flex-1 min-w-0 overflow-y-auto bg-slate-50">
+            {activeTab === 'feed' && (
             <FeedView
               currentUser={currentUser}
               posts={posts}
@@ -738,6 +881,9 @@ export default function App() {
               roomMessages={roomMessages}
               onAddRoomMessage={handleAddRoomMessage}
               onCreateRoom={handleCreateRoom}
+              onVerifyRoomPassword={handleVerifyRoomPassword}
+              onDeleteRoom={handleDeleteRoom}
+              unlockedRoomIds={unlockedRoomIds}
               users={users}
               selectedRoomId={selectedRoomId}
               setSelectedRoomId={setSelectedRoomId}
@@ -778,20 +924,25 @@ export default function App() {
               onNavigateTab={setActiveTab}
             />
           )}
-        </main>
+          </main>
 
-        {activeTab !== 'messages' && activeTab !== 'rooms' && (
-          <div className="w-80 bg-slate-50 border-l border-slate-200 flex-shrink-0">
-            <RightSidebar
-              currentUser={currentUser}
-              users={users}
-              onConnect={handleConnectWithUser}
-              onFollow={handleFollowUser}
-              urgentNotices={urgentNotices}
-              onStartDirectMessage={handleStartDirectMessage}
-            />
-          </div>
-        )}
+          {activeTab !== 'messages' && activeTab !== 'rooms' && (
+            <div className="hidden xl:block w-80 2xl:w-96 bg-slate-50 shrink-0">
+              <RightSidebar
+                currentUser={currentUser}
+                users={users}
+                onConnect={handleConnectWithUser}
+                onFollow={handleFollowUser}
+                urgentNotices={urgentNotices}
+                onStartDirectMessage={handleStartDirectMessage}
+                notifications={notifications}
+                unreadNotificationsCount={unreadNotificationsCount}
+                onMarkAllRead={handleMarkAllNotificationsRead}
+                onNavigateTab={setActiveTab}
+              />
+            </div>
+          )}
+        </div>
       </div>
       <Chatbot />
     </>

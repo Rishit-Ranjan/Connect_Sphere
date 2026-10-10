@@ -37,7 +37,7 @@ export default function NoticesView({ currentUser, notices, onAddNotice, onDelet
             return true;
         return notice.category === selectedCategory;
     });
-    return (<div className="flex-1 p-6 space-y-6 max-w-4xl mx-auto font-sans">
+    return (<div className="flex-1 p-4 sm:p-6 space-y-6 max-w-4xl mx-auto font-sans">
       
       {/* View Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-200 gap-4">

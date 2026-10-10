@@ -4,8 +4,9 @@
  */
 import React from 'react';
 import { UserPlus, XCircle, Bell, ArrowRight, MessageSquare } from 'lucide-react';
+import NotificationsCard from './NotificationsCard';
 
-export default function RightSidebar({ currentUser, users, onConnect, onFollow, urgentNotices, onStartDirectMessage }) {
+export default function RightSidebar({ currentUser, users, onConnect, onFollow, urgentNotices, onStartDirectMessage, notifications, unreadNotificationsCount, onMarkAllRead, onNavigateTab }) {
   // Helper function to compare two user objects based on various unique identifiers
   const isSameUser = (userA, userB) => {
     if (!userA || !userB) return false;
@@ -24,9 +25,17 @@ export default function RightSidebar({ currentUser, users, onConnect, onFollow, 
         .slice(0, 3);
     // Online active users list
     const onlineUsers = users.filter((u) => !isSameUser(u, currentUser));
-    return (<aside className="w-80 bg-slate-50 border-l border-slate-200 p-6 space-y-6 overflow-y-auto h-full sticky top-0 font-sans z-10 shrink-0">
+    return (<aside className="w-full bg-slate-50 p-4 2xl:p-6 space-y-4 2xl:space-y-6 overflow-y-auto h-full font-sans z-10">
       
-      {/* 1. Curated Campus Notices Carousel/Banner */}
+      {/* 1. Notifications Card */}
+      <NotificationsCard
+        notifications={notifications}
+        unreadNotificationsCount={unreadNotificationsCount}
+        onMarkAllRead={onMarkAllRead}
+        onNavigateTab={onNavigateTab}
+      />
+
+      {/* 2. Curated Campus Notices Carousel/Banner */}
       {urgentNotices.length > 0 && (<div className="bg-amber-50 border border-amber-200 rounded-3xl p-6 shadow-sm relative overflow-hidden">
           {/* Subtle design element */}
           <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-amber-100 rounded-full opacity-50 blur-xl"/>
@@ -52,7 +61,7 @@ export default function RightSidebar({ currentUser, users, onConnect, onFollow, 
           </div>
         </div>)}
 
-      {/* 2. Who to Connect With */}
+      {/* 3. Who to Connect With */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-display font-bold text-slate-900 text-xs uppercase tracking-wider">Discover People</h3>
@@ -89,7 +98,7 @@ export default function RightSidebar({ currentUser, users, onConnect, onFollow, 
           </div>)}
       </div>
 
-      {/* 3. Live Active Members & Instant Messenger Link */}
+      {/* 4. Live Active Members & Instant Messenger Link */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-display font-bold text-slate-900 text-xs uppercase tracking-wider">Online Contacts</h3>
