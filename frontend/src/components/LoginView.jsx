@@ -127,7 +127,15 @@ export default function LoginView() {
       </div>
 
       <div className="w-full max-w-4xl grid md:grid-cols-5 bg-white border border-slate-200 rounded-3xl shadow-xl overflow-hidden relative z-10">
-        <div className="hidden md:flex md:col-span-2 bg-slate-900 text-slate-100 p-6 lg:p-8 flex-col justify-between relative">
+        <div
+          className="hidden md:flex md:col-span-2 text-slate-100 p-6 lg:p-8 flex-col justify-between relative overflow-hidden"
+          style={{
+            backgroundImage:
+              "linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.78)), url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
           <div>
             <div className="flex items-center gap-2 mb-8">
