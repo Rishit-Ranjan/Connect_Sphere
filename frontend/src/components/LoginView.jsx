@@ -19,12 +19,16 @@ export default function LoginView() {
   const [bio, setBio] = useState('');
   const [password, setPassword] = useState('');
 
-  const [regNo, setRegNo] = useState('');
+  const [regNo, setRegNo] = useState(
+    () => localStorage.getItem('connectsphere.registrationNumber') || ''
+  );
   const [signInPassword, setSignInPassword] = useState('');
   const [signInError, setSignInError] = useState('');
   const [createError, setCreateError] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState('');
-  const [empId, setEmpId] = useState('');
+  const [empId, setEmpId] = useState(
+    () => localStorage.getItem('connectsphere.employeeId') || ''
+  );
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
   const [showForgotHelp, setShowForgotHelp] = useState(false);
@@ -73,6 +77,7 @@ export default function LoginView() {
       setIsSubmitting(true);
       await register(newUser);
       setRegNo(newUser.registrationNumber);
+      localStorage.setItem('connectsphere.registrationNumber', newUser.registrationNumber);
       setSignInPassword('');
       setPassword('');
       setCreateError('');
@@ -106,7 +111,6 @@ export default function LoginView() {
         return;
       }
 
-      setEmpId('');
       setAdminPassword('');
     } catch (error) {
       console.error('Admin login error:', error);
@@ -250,6 +254,7 @@ export default function LoginView() {
                     value={regNo}
                     onChange={(e) => {
                       setRegNo(e.target.value);
+                      localStorage.setItem('connectsphere.registrationNumber', e.target.value);
                       setRegistrationSuccess('');
                       if (signInError) setSignInError('');
                     }}
@@ -503,6 +508,7 @@ export default function LoginView() {
                     value={empId}
                     onChange={(e) => {
                       setEmpId(e.target.value);
+                      localStorage.setItem('connectsphere.employeeId', e.target.value);
                       if (adminError) setAdminError('');
                     }}
                     className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 transition-colors"
