@@ -30,10 +30,12 @@ export default function LoginView() {
   const [password, setPassword] = useState('');
 
   const [signInQuery, setSignInQuery] = useState(TEMP_TEST_EMAIL);
+  const [regNo, setRegNo] = useState('');
   const [signInPassword, setSignInPassword] = useState(TEMP_TEST_PASSWORD);
   const [signInError, setSignInError] = useState('');
   const [createError, setCreateError] = useState('');
   const [adminQuery, setAdminQuery] = useState('');
+  const [empId, setEmpId] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
   const [showForgotHelp, setShowForgotHelp] = useState(false);
@@ -234,6 +236,23 @@ export default function LoginView() {
                     ⚠️ {signInError}
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Reg. No. *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 2023CS101"
+                    value={regNo}
+                    onChange={(e) => {
+                      setRegNo(e.target.value);
+                      if (signInError) setSignInError('');
+                    }}
+                    className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
 
                 <div className="space-y-2">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -485,6 +504,23 @@ export default function LoginView() {
                     ⚠️ {adminError}
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Emp ID *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. EMP-1001"
+                    value={empId}
+                    onChange={(e) => {
+                      setEmpId(e.target.value);
+                      if (adminError) setAdminError('');
+                    }}
+                    className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
 
                 <div className="space-y-2">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
