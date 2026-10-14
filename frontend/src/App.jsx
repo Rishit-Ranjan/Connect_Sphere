@@ -16,6 +16,7 @@ import AdminDashboard from './components/AdminDashboard';
 import LoginView from './components/LoginView';
 import ProfileView from './components/ProfileView';
 import { useAuth } from './context/AuthContext';
+import { API_URL } from './config/api';
 
 export default function App() {
   const { currentUser, setCurrentUser, logout, loading } = useAuth();
@@ -53,7 +54,7 @@ export default function App() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/users', {
+      const res = await fetch(`${API_URL}/users`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -73,7 +74,7 @@ export default function App() {
   const fetchPosts = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/posts', {
+      const res = await fetch(`${API_URL}/posts`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -93,7 +94,7 @@ export default function App() {
   const fetchNotices = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/notices', {
+      const res = await fetch(`${API_URL}/notices`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -113,7 +114,7 @@ export default function App() {
   const fetchResources = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/resources', {
+      const res = await fetch(`${API_URL}/resources`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -133,7 +134,7 @@ export default function App() {
   const fetchRooms = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/rooms', {
+      const res = await fetch(`${API_URL}/rooms`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -153,7 +154,7 @@ export default function App() {
   const fetchDirectMessages = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/direct-messages', {
+      const res = await fetch(`${API_URL}/direct-messages`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -173,7 +174,7 @@ export default function App() {
   const fetchRoomMessages = async (roomId) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/rooms/${roomId}/messages`, {
+      const res = await fetch(`${API_URL}/rooms/${roomId}/messages`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -226,7 +227,7 @@ export default function App() {
     try {
       const token = localStorage.getItem('token');
 
-      const res = await fetch('http://localhost:5000/api/posts', {
+      const res = await fetch(`${API_URL}/posts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -251,7 +252,7 @@ export default function App() {
     try {
       const token = localStorage.getItem('token');
 
-      const res = await fetch(`http://localhost:5000/api/posts/${postId}`, {
+      const res = await fetch(`${API_URL}/posts/${postId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`
@@ -287,7 +288,7 @@ export default function App() {
     try {
       const token = localStorage.getItem('token');
 
-      const res = await fetch(`http://localhost:5000/api/posts/${postId}/like`, {
+      const res = await fetch(`${API_URL}/posts/${postId}/like`, {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${token}`
@@ -320,7 +321,7 @@ export default function App() {
     try {
       const token = localStorage.getItem('token');
 
-      const res = await fetch(`http://localhost:5000/api/posts/${postId}/comment`, {
+      const res = await fetch(`${API_URL}/posts/${postId}/comment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -361,7 +362,7 @@ export default function App() {
         isUrgent: !!notice.isUrgent
       };
 
-      const res = await fetch('http://localhost:5000/api/notices', {
+      const res = await fetch(`${API_URL}/notices`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -387,7 +388,7 @@ export default function App() {
     try {
       const token = localStorage.getItem('token');
 
-      const res = await fetch(`http://localhost:5000/api/notices/${noticeId}`, {
+      const res = await fetch(`${API_URL}/notices/${noticeId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`
@@ -410,22 +411,18 @@ export default function App() {
     try {
       const token = localStorage.getItem('token');
 
-      const payload = {
-        title: resource.title,
-        description: resource.description,
-        category: resource.category || '',
-        fileType: resource.fileType || '',
-        fileSize: resource.fileSize || '',
-        url: resource.url || '#'
-      };
+      const payload = new FormData();
+      payload.append('title', resource.title);
+      payload.append('description', resource.description);
+      payload.append('category', resource.category);
+      payload.append('file', resource.file);
 
-      const res = await fetch('http://localhost:5000/api/resources', {
+      const res = await fetch(`${API_URL}/resources`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(payload)
+        body: payload
       });
 
       const data = await res.json();
@@ -437,6 +434,7 @@ export default function App() {
       setResources((prev) => [data, ...prev]);
     } catch (error) {
       console.error('Error creating resource:', error);
+      throw error;
     }
   };
 
@@ -444,7 +442,7 @@ export default function App() {
     try {
       const token = localStorage.getItem('token');
 
-      const res = await fetch(`http://localhost:5000/api/resources/${resourceId}`, {
+      const res = await fetch(`${API_URL}/resources/${resourceId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`
@@ -463,35 +461,37 @@ export default function App() {
     }
   };
 
-  const handleIncrementDownloads = async (resourceId) => {
+  const handleDownloadResource = async (resource) => {
     try {
       const token = localStorage.getItem('token');
-
-      const res = await fetch(
-        `http://localhost:5000/api/resources/${resourceId}/download`,
-        {
-          method: 'PATCH',
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      const data = await res.json();
+      const res = await fetch(`${API_URL}/resources/${resource.id}/file`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to update download count');
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to download resource');
       }
 
+      const downloadCountHeader = res.headers.get('X-Download-Count');
+      if (downloadCountHeader === null || !Number.isFinite(Number(downloadCountHeader))) {
+        throw new Error('The backend did not return the updated download count.');
+      }
+      const objectUrl = URL.createObjectURL(await res.blob());
+      const downloadCount = Number(downloadCountHeader);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = resource.fileName || resource.title;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
       setResources((prev) =>
-        prev.map((resource) =>
-          resource.id === resourceId
-            ? { ...resource, downloadCount: data.downloadCount }
-            : resource
-        )
+        prev.map((item) => item.id === resource.id ? { ...item, downloadCount } : item)
       );
     } catch (error) {
-      console.error('Error updating downloads:', error);
+      console.error('Error downloading resource:', error);
+      throw error;
     }
   };
 
@@ -499,7 +499,7 @@ export default function App() {
     try {
       const token = localStorage.getItem('token');
 
-      const res = await fetch('http://localhost:5000/api/rooms', {
+      const res = await fetch(`${API_URL}/rooms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -536,7 +536,7 @@ export default function App() {
     try {
       const token = localStorage.getItem('token');
 
-      const res = await fetch(`http://localhost:5000/api/rooms/${roomId}/verify-password`, {
+      const res = await fetch(`${API_URL}/rooms/${roomId}/verify-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -567,7 +567,7 @@ export default function App() {
     try {
       const token = localStorage.getItem('token');
 
-      const res = await fetch(`http://localhost:5000/api/rooms/${roomId}`, {
+      const res = await fetch(`${API_URL}/rooms/${roomId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`
@@ -604,7 +604,7 @@ export default function App() {
     try {
       const token = localStorage.getItem('token');
 
-      const res = await fetch(`http://localhost:5000/api/rooms/${roomId}/messages`, {
+      const res = await fetch(`${API_URL}/rooms/${roomId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -631,7 +631,7 @@ export default function App() {
     try {
       const token = localStorage.getItem('token');
 
-      const res = await fetch('http://localhost:5000/api/direct-messages', {
+      const res = await fetch(`${API_URL}/direct-messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -652,24 +652,6 @@ export default function App() {
     }
   };
 
-  const handleReceiveDirectMessage = (senderId, text) => {
-    if (!currentUser) return;
-
-    const newDM = {
-      id: `dm-${Date.now()}`,
-      senderId,
-      receiverId: currentUser.id,
-      text,
-      createdAt: new Date().toISOString()
-    };
-
-    setDirectMessages((prev) => [...prev, newDM]);
-
-    if (activeTab !== 'messages') {
-      setUnreadCount((prev) => prev + 1);
-    }
-  };
-
   const handleStartDirectMessage = (recipient) => {
     setSelectedRecipient(recipient);
     setActiveTab('messages');
@@ -678,7 +660,7 @@ export default function App() {
   const handleRemoveUser = async (userId) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/users/${userId}`, {
+      const res = await fetch(`${API_URL}/users/${userId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`
@@ -704,7 +686,7 @@ export default function App() {
   const handleUpdateUserRole = async (userId, newRole) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/users/${userId}/role`, {
+      const res = await fetch(`${API_URL}/users/${userId}/role`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -768,9 +750,9 @@ export default function App() {
     ...notices.slice(0, 5).map((notice) => ({
       id: `notice-${notice.id}`,
       type: 'notice',
-      actor: notice.authorName || 'Campus Admin',
+      actor: notice.authorName || '—',
       text: `published: ${notice.title}`,
-      time: notice.createdAt ? new Date(notice.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently',
+      time: notice.createdAt ? new Date(notice.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—',
       createdAt: notice.createdAt ? new Date(notice.createdAt).getTime() : 0,
     })),
     ...posts.flatMap((post) => {
@@ -779,9 +761,9 @@ export default function App() {
         items.push({
           id: `like-${post.id}`,
           type: 'like',
-          actor: post.author?.name || 'Someone',
+          actor: post.author?.name || '—',
           text: `liked a post: ${(post.text || '').slice(0, 60)}${(post.text || '').length > 60 ? '...' : ''}`,
-          time: post.createdAt ? new Date(post.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently',
+          time: post.createdAt ? new Date(post.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—',
           createdAt: post.createdAt ? new Date(post.createdAt).getTime() : 0,
         });
       }
@@ -789,9 +771,9 @@ export default function App() {
         items.push({
           id: `comment-${comment.id}`,
           type: 'comment',
-          actor: comment.author?.name || 'Someone',
+          actor: comment.author?.name || '—',
           text: `commented: ${(comment.text || '').slice(0, 60)}${(comment.text || '').length > 60 ? '...' : ''}`,
-          time: comment.createdAt ? new Date(comment.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently',
+          time: comment.createdAt ? new Date(comment.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—',
           createdAt: comment.createdAt ? new Date(comment.createdAt).getTime() : 0,
         });
       });
@@ -870,7 +852,7 @@ export default function App() {
               resources={resources}
               onAddResource={handleAddResource}
               onDeleteResource={handleDeleteResource}
-              onIncrementDownloads={handleIncrementDownloads}
+              onDownloadResource={handleDownloadResource}
             />
           )}
 

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API_URL } from '../config/api';
 
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
@@ -6,8 +7,6 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true); // Helps wait for API check
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   // Run once when the app opens to check if the user is already logged in
   useEffect(() => {

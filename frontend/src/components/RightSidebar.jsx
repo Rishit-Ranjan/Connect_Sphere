@@ -74,7 +74,7 @@ export default function RightSidebar({ currentUser, users, onConnect, onFollow, 
                   <img src={user.avatarUrl || null} alt={user.name || 'User Avatar'} referrerPolicy="no-referrer" className="w-9 h-9 rounded-full object-cover border border-slate-100"/>
                   <div className="min-w-0">
                     <h4 className="text-xs font-bold text-slate-900 truncate leading-snug">{user.name}</h4>
-                    <p className="text-[9px] text-slate-500 truncate mt-0.5">{user.department || 'Student'}</p>
+                    <p className="text-[9px] text-slate-500 truncate mt-0.5">{user.department || (user.role === 'admin' ? 'Administrator' : 'Student')}</p>
                   </div>
                 </div>
 

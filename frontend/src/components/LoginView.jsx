@@ -65,7 +65,7 @@ export default function LoginView() {
       email: email.trim().toLowerCase(),
       password: password.trim(),
       department: department.trim(),
-      bio: bio.trim() || `Hi! I'm ${name.trim()}, a new participant in ConnectSphere.`
+      bio: bio.trim()
     };
 
     try {
@@ -281,9 +281,8 @@ export default function LoginView() {
 
                 {showForgotHelp && (
                   <div className="bg-indigo-50 border border-indigo-100 text-indigo-900 text-[11px] px-3.5 py-2.5 rounded-xl leading-relaxed">
-                    Password resets are handled by your campus administrator. Email{' '}
-                    <span className="font-semibold">admin@connectsphere.ac.in</span> from your
-                    registered campus address, or ask your department office to reset it for you.
+                    Password resets are handled by your campus administrator. Contact them from
+                    your registered campus address, or ask your department office to reset it.
                   </div>
                 )}
 
@@ -485,7 +484,7 @@ export default function LoginView() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. EMP-1001"
+                    placeholder="Enter your employee ID"
                     value={empId}
                     onChange={(e) => {
                       setEmpId(e.target.value);

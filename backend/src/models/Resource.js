@@ -28,9 +28,16 @@ const resourceSchema = new Schema(
       default: '',
       trim: true
     },
-    url: {
+    originalName: {
       type: String,
-      default: '#'
+      required: true,
+      trim: true
+    },
+    storageName: {
+      type: String,
+      required: true,
+      unique: true,
+      sparse: true
     },
     downloadCount: {
       type: Number,

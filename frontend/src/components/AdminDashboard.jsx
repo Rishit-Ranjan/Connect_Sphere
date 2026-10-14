@@ -20,22 +20,22 @@ export default function AdminDashboard({ currentUser, users, posts, notices, res
         ...posts.map((post) => ({
             id: `post-${post.id}`,
             action: 'POST PUBLISHED',
-            details: `${(post.text || 'Shared a media post').slice(0, 70)}${(post.text || '').length > 70 ? '...' : ''}`,
-            user: post.author?.name || 'Unknown',
+            details: `${(post.text || '').slice(0, 70)}${(post.text || '').length > 70 ? '...' : ''}`,
+            user: post.author?.name || '—',
             createdAt: post.createdAt ? new Date(post.createdAt).getTime() : 0
         })),
         ...notices.map((notice) => ({
             id: `notice-${notice.id}`,
             action: 'NOTICE BROADCAST',
-            details: notice.title || 'Campus announcement',
-            user: notice.authorName || 'Campus Admin',
+            details: notice.title || '—',
+            user: notice.authorName || '—',
             createdAt: notice.createdAt ? new Date(notice.createdAt).getTime() : 0
         })),
         ...resources.map((resource) => ({
             id: `resource-${resource.id}`,
             action: 'RESOURCE UPLOADED',
-            details: resource.title || 'Study material',
-            user: resource.uploadedBy || 'Unknown',
+            details: resource.title || '—',
+            user: resource.uploadedBy || '—',
             createdAt: resource.createdAt ? new Date(resource.createdAt).getTime() : 0
         }))
     ]
@@ -148,7 +148,7 @@ export default function AdminDashboard({ currentUser, users, posts, notices, res
                       </td>
 
                       <td className="p-4 text-stone-600 truncate max-w-[120px]">
-                        {u.department || 'General Community'}
+                        {u.department || '—'}
                       </td>
 
                       <td className="p-4">

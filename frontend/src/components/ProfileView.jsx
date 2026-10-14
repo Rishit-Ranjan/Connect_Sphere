@@ -132,10 +132,12 @@ export default function ProfileView({
               <p className="text-xs text-slate-300/80 font-mono mt-1">
                 @{currentUser.handle}
               </p>
-              <p className="text-xs text-slate-400 font-medium mt-1 flex items-center gap-1">
-                <MapPin size={11} className="text-slate-400" />
-                {currentUser.department || "General Department"}
-              </p>
+              {currentUser.department && (
+                <p className="text-xs text-slate-400 font-medium mt-1 flex items-center gap-1">
+                  <MapPin size={11} className="text-slate-400" />
+                  {currentUser.department}
+                </p>
+              )}
             </div>
           </div>
 

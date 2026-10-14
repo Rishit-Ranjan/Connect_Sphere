@@ -4,61 +4,49 @@
  */
 import React, { useState } from 'react';
 import { Search, Trash2, FileText, Upload, FolderOpen, Filter, ArrowDownToLine, Loader2 } from 'lucide-react';
-export default function ResourcesView({ currentUser, resources, onAddResource, onDeleteResource, onIncrementDownloads }) {
+export default function ResourcesView({ currentUser, resources, onAddResource, onDeleteResource, onDownloadResource }) {
     const [searchText, setSearchText] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [category, setCategory] = useState('');
-    const [fileType, setFileType] = useState('');
-    const [fileSize, setFileSize] = useState('');
-    // Download simulation state
+    const [category, setCategory] = useState('Lecture Slides');
+    const [file, setFile] = useState(null);
     const [downloadingId, setDownloadingId] = useState(null);
-    const [downloadProgress, setDownloadProgress] = useState(0);
+    const [isUploading, setIsUploading] = useState(false);
+    const [resourceError, setResourceError] = useState('');
     const categories = ['All', 'Lecture Slides', 'Assignments', 'Reference Books', 'Exam Material'];
-    const handleUpload = (e) => {
+    const handleUpload = async (e) => {
         e.preventDefault();
-        if (!title.trim() || !description.trim())
+        setResourceError('');
+        if (!title.trim() || !description.trim() || !file) {
+            setResourceError('Enter a title and description, then choose a file to upload.');
             return;
-        const newResource = {
-            id: `res-${Date.now()}`,
-            title,
-            description,
-            category,
-            fileType,
-            fileSize,
-            downloadCount: 0,
-            url: '#',
-            uploadedBy: currentUser.name,
-            createdAt: new Date().toISOString()
-        };
-        onAddResource(newResource);
-        setTitle('');
-        setDescription('');
-        setCategory('');
-        setFileType('');
-        setFileSize('');
-        setShowUploadForm(false);
+        }
+        try {
+            setIsUploading(true);
+            await onAddResource({ title: title.trim(), description: description.trim(), category, file });
+            setTitle('');
+            setDescription('');
+            setCategory('Lecture Slides');
+            setFile(null);
+            setShowUploadForm(false);
+        } catch (error) {
+            setResourceError(error.message || 'Failed to upload resource.');
+        } finally {
+            setIsUploading(false);
+        }
     };
-    const startDownloadSimulation = (res) => {
-        if (downloadingId)
-            return; // Prevent double downloads
-        setDownloadingId(res.id);
-        setDownloadProgress(0);
-        const interval = setInterval(() => {
-            setDownloadProgress((prev) => {
-                if (prev >= 100) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        onIncrementDownloads(res.id);
-                        setDownloadingId(null);
-                    }, 300);
-                    return 100;
-                }
-                return prev + 20; // 5 steps
-            });
-        }, 250);
+    const downloadResource = async (resource) => {
+        setResourceError('');
+        setDownloadingId(resource.id);
+        try {
+            await onDownloadResource(resource);
+        } catch (error) {
+            setResourceError(error.message || 'Failed to download resource.');
+        } finally {
+            setDownloadingId(null);
+        }
     };
     const filteredResources = resources.filter((res) => {
         const matchesSearch = res.title.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -67,30 +55,6 @@ export default function ResourcesView({ currentUser, resources, onAddResource, o
         return matchesSearch && matchesCategory;
     });
     return (<div className="flex-1 p-4 sm:p-6 space-y-6 max-w-4xl mx-auto font-sans relative">
-      
-      {/* Simulation Download Progress Overlay */}
-      {downloadingId && (<div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 animate-fadeIn">
-          <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-xl w-80 text-center space-y-4">
-            <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-800">
-              <Loader2 size={22} className="animate-spin text-indigo-600"/>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 truncate">
-                Downloading Resource...
-              </h4>
-              <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                Connecting to ConnectSphere Cloud Storage
-              </p>
-            </div>
-            <div className="w-full bg-slate-100 rounded-full h-2">
-              <div className="bg-indigo-600 h-2 rounded-full transition-all duration-300" style={{ width: `${downloadProgress}%` }}/>
-            </div>
-            <div className="flex justify-between items-center text-[10px] font-mono text-slate-500 px-1">
-              <span>{downloadProgress}% Completed</span>
-              <span>SIMULATED</span>
-            </div>
-          </div>
-        </div>)}
 
       {/* Header block */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-200 gap-4">
@@ -102,7 +66,10 @@ export default function ResourcesView({ currentUser, resources, onAddResource, o
           <p className="text-slate-500 text-xs mt-0.5">Download or upload curriculum guidelines, textbook chapters, mock exams, and lecture slides.</p>
         </div>
 
-        <button onClick={() => setShowUploadForm(!showUploadForm)} className="self-start sm:self-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2 px-4 rounded-xl flex items-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer">
+        <button onClick={() => {
+          setResourceError('');
+          setShowUploadForm(!showUploadForm);
+        }} className="self-start sm:self-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2 px-4 rounded-xl flex items-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer">
           <Upload size={14}/>
           <span>Upload Material</span>
         </button>
@@ -122,8 +89,7 @@ export default function ResourcesView({ currentUser, resources, onAddResource, o
                 <input type="text" required placeholder="e.g. Adv. Database Systems Midterm Prep Kit" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 bg-slate-50/50"/>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-2 space-y-1">
+              <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-500 uppercase">Category</label>
                   <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full text-xs px-2 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 bg-white">
                     <option value="Lecture Slides">Lecture Slides</option>
@@ -131,38 +97,42 @@ export default function ResourcesView({ currentUser, resources, onAddResource, o
                     <option value="Reference Books">Reference Books</option>
                     <option value="Exam Material">Exam Material</option>
                   </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Format</label>
-                  <select value={fileType} onChange={(e) => setFileType(e.target.value)} className="w-full text-xs px-2 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 bg-white">
-                    <option value="PDF">PDF</option>
-                    <option value="ZIP">ZIP</option>
-                    <option value="EPUB">EPUB</option>
-                    <option value="PPTX">PPTX</option>
-                    <option value="DOCX">DOCX</option>
-                  </select>
-                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-3 space-y-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 uppercase">Quick description of contents</label>
                 <input type="text" required placeholder="What is included? e.g. Questions 1-5, answer key, and recommended reading bibliography." value={description} onChange={(e) => setDescription(e.target.value)} className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 bg-slate-50/50"/>
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase">File size (MB)</label>
-                <input type="text" required placeholder="e.g. 4.2 MB" value={fileSize} onChange={(e) => setFileSize(e.target.value)} className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 bg-slate-50/50"/>
+                <label className="text-[10px] font-bold text-slate-500 uppercase">File (PDF, ZIP, EPUB, PPTX, DOCX; max 25 MB)</label>
+                <input
+                  type="file"
+                  required
+                  accept=".pdf,.zip,.epub,.pptx,.docx"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 bg-slate-50/50"
+                />
               </div>
             </div>
 
+            {resourceError && (
+              <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+                {resourceError}
+              </p>
+            )}
+
             <div className="flex justify-end gap-2 pt-1">
-              <button type="button" onClick={() => setShowUploadForm(false)} className="px-4 py-2 border border-slate-200 hover:border-slate-400 text-xs font-bold rounded-lg transition-colors cursor-pointer">
+              <button type="button" onClick={() => {
+                setFile(null);
+                setResourceError('');
+                setShowUploadForm(false);
+              }} className="px-4 py-2 border border-slate-200 hover:border-slate-400 text-xs font-bold rounded-lg transition-colors cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer">
-                Publish & Share
+              <button type="submit" disabled={isUploading} className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors cursor-pointer">
+                {isUploading ? 'Uploading...' : 'Publish & Share'}
               </button>
             </div>
           </form>
@@ -176,6 +146,12 @@ export default function ResourcesView({ currentUser, resources, onAddResource, o
           </span>
           <input type="text" placeholder="Search material description, titles..." value={searchText} onChange={(e) => setSearchText(e.target.value)} className="w-full text-xs pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"/>
         </div>
+
+        {resourceError && !showUploadForm && (
+          <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+            {resourceError}
+          </p>
+        )}
 
         <div className="relative">
           <span className="absolute inset-y-0 left-3 flex items-center text-slate-400 pointer-events-none">
@@ -229,9 +205,13 @@ export default function ResourcesView({ currentUser, resources, onAddResource, o
                     <p className="text-[9px] mt-0.5">Size: {res.fileSize} • {res.downloadCount} Download(s)</p>
                   </div>
 
-                  <button onClick={() => startDownloadSimulation(res)} className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] flex items-center gap-1 transition-colors cursor-pointer">
-                    <ArrowDownToLine size={12}/>
-                    <span>Download</span>
+                  <button
+                    onClick={() => downloadResource(res)}
+                    disabled={!res.fileAvailable || downloadingId === res.id}
+                    className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold text-[10px] flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    {downloadingId === res.id ? <Loader2 size={12} className="animate-spin"/> : <ArrowDownToLine size={12}/>}
+                    <span>{res.fileAvailable ? (downloadingId === res.id ? 'Downloading...' : 'Download') : 'Unavailable'}</span>
                   </button>
                 </div>
               </div>);

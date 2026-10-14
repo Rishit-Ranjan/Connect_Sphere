@@ -101,7 +101,7 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
                     {selectedRecipient.name}
                   </h2>
                   <span className="text-[10px] text-slate-500 truncate block mt-1 font-mono">
-                    @{selectedRecipient.handle} • {selectedRecipient.department || 'Faculty'}
+                    @{selectedRecipient.handle} • {selectedRecipient.department || (selectedRecipient.role === 'admin' ? 'Administrator' : 'Student')}
                   </span>
                 </div>
               </div>
@@ -122,9 +122,11 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
               <div className="text-center py-6 border-b border-slate-100 max-w-md mx-auto">
                 <img src={selectedRecipient.avatarUrl || null} alt={selectedRecipient.name || 'User Avatar'} className="w-12 h-12 rounded-full object-cover mx-auto border border-slate-200 shadow-sm mb-2" referrerPolicy="no-referrer"/>
                 <h3 className="text-xs font-extrabold text-slate-900">This is the start of your chat history</h3>
-                <p className="text-[10px] text-slate-400 leading-normal mt-1.5">
-                  {selectedRecipient.bio || `ConnectSphere Peer. Send messages to check placements, discuss homework, or clear syllabus requirements.`}
-                </p>
+                {selectedRecipient.bio && (
+                  <p className="text-[10px] text-slate-400 leading-normal mt-1.5">
+                    {selectedRecipient.bio}
+                  </p>
+                )}
               </div>
 
               {activeChatMessages.map((msg) => {
