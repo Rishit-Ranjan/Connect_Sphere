@@ -3,19 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState } from 'react';
-import { ArrowRight, Sparkles, FlaskConical, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-// TEMPORARY hardcoded test credentials for testing purposes only.
-// TODO: Remove before production.
-export const TEMP_TEST_REG_NO = 'TEST-2026';
-export const TEMP_TEST_PASSWORD = 'Test@1234';
-
-// TEMPORARY hardcoded admin credentials for testing purposes only.
-// Matches the admin account created by backend/src/seed.js.
-// TODO: Remove before production.
-export const TEMP_ADMIN_EMP_ID = 'EMP-1001';
-export const TEMP_ADMIN_PASSWORD = 'password123';
 
 export default function LoginView() {
   const { login, register, logout } = useAuth();
@@ -31,7 +20,7 @@ export default function LoginView() {
   const [password, setPassword] = useState('');
 
   const [regNo, setRegNo] = useState('');
-  const [signInPassword, setSignInPassword] = useState(TEMP_TEST_PASSWORD);
+  const [signInPassword, setSignInPassword] = useState('');
   const [signInError, setSignInError] = useState('');
   const [createError, setCreateError] = useState('');
   const [empId, setEmpId] = useState('');
@@ -278,21 +267,6 @@ export default function LoginView() {
                 >
                   <ArrowRight size={14} />
                   {isSubmitting ? 'Signing In...' : 'Sign In & Sync'}
-                </button>
-
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => {
-                    setSignInError('');
-                    setRegNo(TEMP_TEST_REG_NO);
-                    setSignInPassword(TEMP_TEST_PASSWORD);
-                  }}
-                  className="w-full bg-amber-50 hover:bg-amber-100 disabled:bg-slate-100 text-amber-800 text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all border border-amber-200 cursor-pointer"
-                  title="Fill temporary testing credentials"
-                >
-                  <FlaskConical size={14} />
-                  Use temporary test login ({TEMP_TEST_REG_NO} / {TEMP_TEST_PASSWORD})
                 </button>
 
                 <div className="pt-1">
@@ -547,21 +521,6 @@ export default function LoginView() {
                   {isSubmitting ? 'Verifying Admin...' : 'Enter Admin Portal'}
                 </button>
 
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => {
-                    setAdminError('');
-                    setEmpId('admin');
-                    setEmpId(TEMP_ADMIN_EMP_ID);
-                    setAdminPassword(TEMP_ADMIN_PASSWORD);
-                  }}
-                  className="w-full bg-amber-50 hover:bg-amber-100 disabled:bg-slate-100 text-amber-800 text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all border border-amber-200 cursor-pointer"
-                  title="Fill temporary admin credentials"
-                >
-                  <FlaskConical size={14} />
-                  Use temporary admin login ({TEMP_ADMIN_EMP_ID} / {TEMP_ADMIN_PASSWORD})
-                </button>
               </form>
             )}
           </div>
