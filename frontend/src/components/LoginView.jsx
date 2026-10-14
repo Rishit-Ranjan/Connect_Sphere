@@ -23,6 +23,7 @@ export default function LoginView() {
   const [signInPassword, setSignInPassword] = useState('');
   const [signInError, setSignInError] = useState('');
   const [createError, setCreateError] = useState('');
+  const [registrationSuccess, setRegistrationSuccess] = useState('');
   const [empId, setEmpId] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
@@ -71,6 +72,12 @@ export default function LoginView() {
     try {
       setIsSubmitting(true);
       await register(newUser);
+      setRegNo(newUser.registrationNumber);
+      setSignInPassword('');
+      setPassword('');
+      setCreateError('');
+      setRegistrationSuccess('Account created. Sign in with your registration number and password.');
+      setActiveTab('signin');
     } catch (error) {
       console.error('Registration error:', error);
       setCreateError(error.message || 'Registration failed.');
@@ -226,6 +233,12 @@ export default function LoginView() {
                   </div>
                 )}
 
+                {registrationSuccess && (
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-3.5 py-2.5 rounded-xl font-medium">
+                    {registrationSuccess}
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     Reg. No. *
@@ -237,6 +250,7 @@ export default function LoginView() {
                     value={regNo}
                     onChange={(e) => {
                       setRegNo(e.target.value);
+                      setRegistrationSuccess('');
                       if (signInError) setSignInError('');
                     }}
                     className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
@@ -292,6 +306,7 @@ export default function LoginView() {
                     type="button"
                     onClick={() => {
                       setCreateError('');
+                      setRegistrationSuccess('');
                       setActiveTab('create');
                     }}
                     className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"

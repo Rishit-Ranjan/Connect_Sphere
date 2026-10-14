@@ -63,8 +63,7 @@ export const AuthProvider = ({ children }) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Registration failed');
 
-    localStorage.setItem('token', data.token);
-    setCurrentUser(data.user);
+    return data.user;
   };
 
   const logout = () => {

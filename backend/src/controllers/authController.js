@@ -40,11 +40,8 @@ const registerUser = async (req, res, next) => {
       bio: bio || ''
     });
 
-    const token = generateToken(user._id);
-
     res.status(201).json({
       message: 'User registered successfully',
-      token,
       user: {
         id: user._id,
         name: user.name,
