@@ -8,13 +8,13 @@ import { useAuth } from '../context/AuthContext';
 
 // TEMPORARY hardcoded test credentials for testing purposes only.
 // TODO: Remove before production.
-export const TEMP_TEST_EMAIL = 'test@connectsphere.edu';
+export const TEMP_TEST_REG_NO = 'TEST-2026';
 export const TEMP_TEST_PASSWORD = 'Test@1234';
 
 // TEMPORARY hardcoded admin credentials for testing purposes only.
 // Matches the admin account created by backend/src/seed.js.
 // TODO: Remove before production.
-export const TEMP_ADMIN_EMAIL = 'admin@connectsphere.ac.in';
+export const TEMP_ADMIN_EMP_ID = 'EMP-1001';
 export const TEMP_ADMIN_PASSWORD = 'password123';
 
 export default function LoginView() {
@@ -25,16 +25,15 @@ export default function LoginView() {
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
   const [email, setEmail] = useState('');
+  const [newRegNo, setNewRegNo] = useState('');
   const [department, setDepartment] = useState('');
   const [bio, setBio] = useState('');
   const [password, setPassword] = useState('');
 
-  const [signInQuery, setSignInQuery] = useState(TEMP_TEST_EMAIL);
   const [regNo, setRegNo] = useState('');
   const [signInPassword, setSignInPassword] = useState(TEMP_TEST_PASSWORD);
   const [signInError, setSignInError] = useState('');
   const [createError, setCreateError] = useState('');
-  const [adminQuery, setAdminQuery] = useState('');
   const [empId, setEmpId] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
@@ -45,14 +44,14 @@ export default function LoginView() {
     e.preventDefault();
     setSignInError('');
 
-    if (!signInQuery.trim() || !signInPassword.trim()) {
-      setSignInError('Please enter both handle/email and password.');
+    if (!regNo.trim() || !signInPassword.trim()) {
+      setSignInError('Please enter both registration number and password.');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      await login(signInQuery.trim(), signInPassword.trim());
+      await login(regNo.trim(), signInPassword.trim(), 'registrationNumber');
     } catch (error) {
       console.error('Login error:', error);
       setSignInError(error.message || 'Login failed.');
@@ -65,13 +64,14 @@ export default function LoginView() {
     e.preventDefault();
     setCreateError('');
 
-    if (!name.trim() || !email.trim() || !password.trim()) {
+    if (!name.trim() || !email.trim() || !newRegNo.trim() || !password.trim()) {
       setCreateError('Please fill in all required fields.');
       return;
     }
 
     const newUser = {
       name: name.trim(),
+      registrationNumber: newRegNo.trim(),
       handle: handle.trim().toLowerCase() || name.replace(/\s+/g, '').toLowerCase(),
       email: email.trim().toLowerCase(),
       password: password.trim(),
@@ -94,14 +94,14 @@ export default function LoginView() {
     e.preventDefault();
     setAdminError('');
 
-    if (!adminQuery.trim() || !adminPassword.trim()) {
-      setAdminError('Please enter both admin handle/email and password.');
+    if (!empId.trim() || !adminPassword.trim()) {
+      setAdminError('Please enter both employee ID and password.');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const user = await login(adminQuery.trim(), adminPassword.trim());
+      const user = await login(empId.trim(), adminPassword.trim(), 'employeeId');
 
       // The admin portal only accepts accounts flagged as admin.
       if (!user || user.role !== 'admin') {
@@ -110,7 +110,7 @@ export default function LoginView() {
         return;
       }
 
-      setAdminQuery('');
+      setEmpId('');
       setAdminPassword('');
     } catch (error) {
       console.error('Admin login error:', error);
@@ -285,15 +285,14 @@ export default function LoginView() {
                   disabled={isSubmitting}
                   onClick={() => {
                     setSignInError('');
-                    setRegNo('testuser');
-                    setSignInQuery(TEMP_TEST_EMAIL);
+                    setRegNo(TEMP_TEST_REG_NO);
                     setSignInPassword(TEMP_TEST_PASSWORD);
                   }}
                   className="w-full bg-amber-50 hover:bg-amber-100 disabled:bg-slate-100 text-amber-800 text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all border border-amber-200 cursor-pointer"
                   title="Fill temporary testing credentials"
                 >
                   <FlaskConical size={14} />
-                  Use temporary test login ({TEMP_TEST_EMAIL} / {TEMP_TEST_PASSWORD})
+                  Use temporary test login ({TEMP_TEST_REG_NO} / {TEMP_TEST_PASSWORD})
                 </button>
 
                 <div className="pt-1">
@@ -401,6 +400,22 @@ export default function LoginView() {
                     />
                   </div>
 
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Reg. No. *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 2023CS101"
+                      value={newRegNo}
+                      onChange={(e) => setNewRegNo(e.target.value)}
+                      className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                       Department / Branch
@@ -538,14 +553,14 @@ export default function LoginView() {
                   onClick={() => {
                     setAdminError('');
                     setEmpId('admin');
-                    setAdminQuery(TEMP_ADMIN_EMAIL);
+                    setEmpId(TEMP_ADMIN_EMP_ID);
                     setAdminPassword(TEMP_ADMIN_PASSWORD);
                   }}
                   className="w-full bg-amber-50 hover:bg-amber-100 disabled:bg-slate-100 text-amber-800 text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all border border-amber-200 cursor-pointer"
                   title="Fill temporary admin credentials"
                 >
                   <FlaskConical size={14} />
-                  Use temporary admin login ({TEMP_ADMIN_EMAIL} / {TEMP_ADMIN_PASSWORD})
+                  Use temporary admin login ({TEMP_ADMIN_EMP_ID} / {TEMP_ADMIN_PASSWORD})
                 </button>
               </form>
             )}

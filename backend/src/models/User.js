@@ -14,6 +14,20 @@ const userSchema = new Schema(
       trim: true,
       lowercase: true
     },
+    registrationNumber: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      sparse: true
+    },
+    employeeId: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      sparse: true
+    },
     email: {
       type: String,
       required: true,

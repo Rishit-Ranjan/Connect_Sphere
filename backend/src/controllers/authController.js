@@ -5,10 +5,10 @@ import generateToken from '../utils/generateToken.js';
 
 const registerUser = async (req, res, next) => {
   try {
-    const { name, handle, email, password, department, bio } = req.body;
+    const { name, handle, email, password, department, bio, registrationNumber } = req.body;
 
-    if (!name || !handle || !email || !password) {
-      return res.status(400).json({ message: 'Name, handle, email, and password are required.' });
+    if (!name || !handle || !email || !password || !registrationNumber) {
+      return res.status(400).json({ message: 'Name, handle, email, registration number, and password are required.' });
     }
 
     const existingEmail = await User.findOne({ email: email.toLowerCase() });
@@ -21,11 +21,18 @@ const registerUser = async (req, res, next) => {
       return res.status(400).json({ message: 'Handle already exists.' });
     }
 
+    const normalizedRegistrationNumber = registrationNumber.trim().toLowerCase();
+    const existingRegistrationNumber = await User.findOne({ registrationNumber: normalizedRegistrationNumber });
+    if (existingRegistrationNumber) {
+      return res.status(400).json({ message: 'Registration number already exists.' });
+    }
+
     const hashedPassword = await hash(password, 10);
 
     const user = await User.create({
       name,
       handle: handle.toLowerCase(),
+      registrationNumber: normalizedRegistrationNumber,
       email: email.toLowerCase(),
       password: hashedPassword,
       role: 'student',
@@ -56,21 +63,28 @@ const registerUser = async (req, res, next) => {
 
 const loginUser = async (req, res, next) => {
   try {
-    const { query, password } = req.body;
+    const { query, password, identifierType } = req.body;
 
     if (!query || !password) {
-      return res.status(400).json({ message: 'Handle/email and password are required.' });
+      return res.status(400).json({ message: 'Login ID and password are required.' });
     }
 
     const rawQuery = query.trim().toLowerCase();
-    const cleanQuery = rawQuery.replace(/^@/, '');
+    if (identifierType && identifierType !== 'registrationNumber' && identifierType !== 'employeeId') {
+      return res.status(400).json({ message: 'Invalid login ID type.' });
+    }
 
-    const user = await User.findOne({
-      $or: [
-        { handle: cleanQuery },
-        { email: rawQuery }
-      ]
-    });
+    let loginQuery;
+    if (identifierType === 'registrationNumber') {
+      loginQuery = { registrationNumber: rawQuery, role: 'student' };
+    } else if (identifierType === 'employeeId') {
+      loginQuery = { employeeId: rawQuery, role: 'admin' };
+    } else {
+      const cleanQuery = rawQuery.replace(/^@/, '');
+      loginQuery = { $or: [{ handle: cleanQuery }, { email: rawQuery }] };
+    }
+
+    const user = await User.findOne(loginQuery);
 
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials.' });

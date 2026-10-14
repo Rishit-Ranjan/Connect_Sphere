@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "seed": "node src/seed.js"
+    "seed": "node src/seed.js",
+    "migrate:login-ids": "node src/migrateLoginIds.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

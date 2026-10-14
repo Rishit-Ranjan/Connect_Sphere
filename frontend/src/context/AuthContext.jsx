@@ -37,11 +37,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (query, password) => {
+  const login = async (query, password, identifierType) => {
     const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, password })
+      body: JSON.stringify({ query, password, identifierType })
     });
     
     const data = await res.json();
