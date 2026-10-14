@@ -256,23 +256,6 @@ export default function LoginView() {
 
                 <div className="space-y-2">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Campus Handle or Email *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. janedoe or jane@connectsphere.edu"
-                    value={signInQuery}
-                    onChange={(e) => {
-                      setSignInQuery(e.target.value);
-                      if (signInError) setSignInError('');
-                    }}
-                    className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     Password *
                   </label>
                   <input
@@ -516,23 +499,6 @@ export default function LoginView() {
                     value={empId}
                     onChange={(e) => {
                       setEmpId(e.target.value);
-                      if (adminError) setAdminError('');
-                    }}
-                    className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 transition-colors"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Admin Email or Handle *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. admin@connectsphere.ac.in"
-                    value={adminQuery}
-                    onChange={(e) => {
-                      setAdminQuery(e.target.value);
                       if (adminError) setAdminError('');
                     }}
                     className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 transition-colors"
