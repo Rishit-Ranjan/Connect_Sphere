@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState } from 'react';
-import { ArrowRight, UserPlus, Sparkles, FlaskConical, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Sparkles, FlaskConical, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 // TEMPORARY hardcoded test credentials for testing purposes only.
@@ -207,7 +207,7 @@ export default function LoginView() {
                   setAdminError('');
                   setActiveTab('admin');
                 }}
-                className={`pb-3 text-xs sm:text-sm font-semibold tracking-tight relative transition-all mr-4 sm:mr-6 flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                className={`pb-3 text-xs sm:text-sm font-semibold tracking-tight relative transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
                   activeTab === 'admin'
                     ? 'text-amber-600 border-b-2 border-amber-500'
                     : 'text-slate-400 hover:text-slate-600'
@@ -215,21 +215,6 @@ export default function LoginView() {
               >
                 <ShieldCheck size={16} />
                 Admin
-              </button>
-
-              <button
-                onClick={() => {
-                  setCreateError('');
-                  setActiveTab('create');
-                }}
-                className={`pb-3 text-xs sm:text-sm font-semibold tracking-tight relative transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-                  activeTab === 'create'
-                    ? 'text-indigo-600 border-b-2 border-indigo-600'
-                    : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                <UserPlus size={16} />
-                Create Account
               </button>
             </div>
 
@@ -341,14 +326,26 @@ export default function LoginView() {
                 </div>
               </form>
             ) : activeTab === 'create' ? (
-              <form onSubmit={handleCreateAccount} className="space-y-4">
-                <div className="mb-4">
-                  <h3 className="font-display font-bold text-lg text-slate-900 mb-1">
-                    Build your campus card
-                  </h3>
-                  <p className="text-slate-500 text-xs">
-                    Create your account and personalize your digital presence.
-                  </p>
+              <form onSubmit={handleCreateAccount} className="space-y-4 py-2 animate-fadeIn">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-display font-bold text-lg text-slate-900 mb-1">
+                      Create your ConnectSphere account
+                    </h3>
+                    <p className="text-slate-500 text-xs">
+                      Join your campus community and start connecting with peers.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreateError('');
+                      setActiveTab('signin');
+                    }}
+                    className="text-[11px] font-semibold text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
+                  >
+                    Back to Sign In
+                  </button>
                 </div>
 
                 {createError && (
@@ -453,7 +450,7 @@ export default function LoginView() {
                 </button>
 
                 <div className="pt-4 mt-2 border-t border-slate-100 text-center text-[11px] text-slate-500">
-                  Already have a account?{' '}
+                  Already have an account?{' '}
                   <button
                     type="button"
                     onClick={() => {
