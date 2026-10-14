@@ -285,6 +285,7 @@ export default function LoginView() {
                   disabled={isSubmitting}
                   onClick={() => {
                     setSignInError('');
+                    setRegNo('testuser');
                     setSignInQuery(TEMP_TEST_EMAIL);
                     setSignInPassword(TEMP_TEST_PASSWORD);
                   }}
@@ -536,6 +537,7 @@ export default function LoginView() {
                   disabled={isSubmitting}
                   onClick={() => {
                     setAdminError('');
+                    setEmpId('admin');
                     setAdminQuery(TEMP_ADMIN_EMAIL);
                     setAdminPassword(TEMP_ADMIN_PASSWORD);
                   }}
