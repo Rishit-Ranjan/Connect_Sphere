@@ -23,6 +23,40 @@ import {
   CheckCircle2,
   Lock,
 } from "lucide-react";
+
+const BANNER_GRADIENTS = [
+  {
+    id: "emerald",
+    name: "Emerald",
+    className: "bg-gradient-to-r from-emerald-800 via-green-900 to-teal-950",
+  },
+  {
+    id: "ocean",
+    name: "Ocean",
+    className: "bg-gradient-to-r from-sky-700 via-cyan-800 to-blue-950",
+  },
+  {
+    id: "violet",
+    name: "Violet",
+    className: "bg-gradient-to-r from-violet-800 via-purple-900 to-indigo-950",
+  },
+  {
+    id: "rose",
+    name: "Rose",
+    className: "bg-gradient-to-r from-rose-700 via-pink-900 to-red-950",
+  },
+  {
+    id: "sunset",
+    name: "Sunset",
+    className: "bg-gradient-to-r from-orange-700 via-rose-800 to-fuchsia-950",
+  },
+  {
+    id: "amber",
+    name: "Amber",
+    className: "bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900",
+  },
+];
+
 export default function ProfileView({
   currentUser,
   users,
@@ -38,6 +72,9 @@ export default function ProfileView({
   const [department, setDepartment] = useState(currentUser.department || "");
   const [email, setEmail] = useState(currentUser.email);
   const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl);
+  const [bannerGradient, setBannerGradient] = useState(
+    currentUser.bannerGradient || (currentUser.role === "admin" ? "amber" : "emerald"),
+  );
   const [saveSuccess, setSaveSuccess] = useState(false);
   // Profile avatar presets removed (avoid hardcoded image placeholders)
 
@@ -59,6 +96,7 @@ export default function ProfileView({
       department,
       email,
       avatarUrl,
+      bannerGradient,
     };
     onUpdateProfile(updated);
     setSaveSuccess(true);
@@ -68,6 +106,9 @@ export default function ProfileView({
     }, 1200);
   };
   const isAdmin = currentUser.role === "admin";
+  const selectedBannerGradient =
+    BANNER_GRADIENTS.find((gradient) => gradient.id === bannerGradient) ||
+    BANNER_GRADIENTS[0];
   return (
     <div
       className="flex-1 p-4 sm:p-6 space-y-6 max-w-4xl mx-auto font-sans relative"
@@ -75,16 +116,14 @@ export default function ProfileView({
     >
       {/* 1. Styled Header Hero Banner */}
       <div
-        className={`relative h-44 rounded-3xl overflow-hidden shadow-sm flex items-end p-6 border ${
-          isAdmin
-            ? "bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 border-amber-200/20"
-            : "bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 border-slate-200"
+        className={`relative h-44 rounded-3xl overflow-hidden shadow-sm flex items-end p-6 border ${selectedBannerGradient.className} ${
+          isAdmin ? "border-amber-200/20" : "border-slate-200"
         }`}
         id="profile-hero"
       >
         {/* Abstract background blobs */}
-        <div className="absolute top-[-40%] right-[-10%] w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-30%] left-[-5%] w-60 h-60 bg-slate-500/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute top-[-40%] right-[-10%] w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[-30%] left-[-5%] w-60 h-60 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
         {/* Cover Photo Floating Meta details */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full z-10 gap-4">
@@ -492,6 +531,35 @@ export default function ProfileView({
                 />
               </div>
             </div>
+
+            <fieldset>
+              <legend className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Profile Banner Gradient
+              </legend>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {BANNER_GRADIENTS.map((gradient) => (
+                  <button
+                    key={gradient.id}
+                    type="button"
+                    aria-label={`${gradient.name} banner gradient`}
+                    aria-pressed={bannerGradient === gradient.id}
+                    onClick={() => setBannerGradient(gradient.id)}
+                    className={`rounded-xl border p-2 text-left transition-colors ${
+                      bannerGradient === gradient.id
+                        ? "border-emerald-600 bg-emerald-50"
+                        : "border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    <span
+                      className={`block h-8 rounded-lg ${gradient.className}`}
+                    />
+                    <span className="mt-1.5 block text-[10px] font-semibold text-slate-700">
+                      {gradient.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
 
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
