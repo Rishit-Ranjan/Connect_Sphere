@@ -22,6 +22,7 @@ import {
   Sliders,
   CheckCircle2,
   Lock,
+  Palette,
 } from "lucide-react";
 
 const BANNER_GRADIENTS = [
@@ -75,6 +76,7 @@ export default function ProfileView({
   const [bannerGradient, setBannerGradient] = useState(
     currentUser.bannerGradient || (currentUser.role === "admin" ? "amber" : "emerald"),
   );
+  const [isBannerPickerOpen, setIsBannerPickerOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   // Profile avatar presets removed (avoid hardcoded image placeholders)
 
@@ -105,6 +107,11 @@ export default function ProfileView({
       setActiveSubTab("overview");
     }, 1200);
   };
+  const handleBannerGradientChange = (gradientId) => {
+    setBannerGradient(gradientId);
+    onUpdateProfile({ ...currentUser, bannerGradient: gradientId });
+    setIsBannerPickerOpen(false);
+  };
   const isAdmin = currentUser.role === "admin";
   const selectedBannerGradient =
     BANNER_GRADIENTS.find((gradient) => gradient.id === bannerGradient) ||
@@ -116,14 +123,63 @@ export default function ProfileView({
     >
       {/* 1. Styled Header Hero Banner */}
       <div
-        className={`relative h-44 rounded-3xl overflow-hidden shadow-sm flex items-end p-6 border ${selectedBannerGradient.className} ${
+        className={`relative h-44 rounded-3xl shadow-sm flex items-end p-6 border ${selectedBannerGradient.className} ${
           isAdmin ? "border-amber-200/20" : "border-slate-200"
         }`}
         id="profile-hero"
       >
         {/* Abstract background blobs */}
-        <div className="absolute top-[-40%] right-[-10%] w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-30%] left-[-5%] w-60 h-60 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+          <div className="absolute top-[-40%] right-[-10%] w-72 h-72 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-[-30%] left-[-5%] w-60 h-60 bg-white/10 rounded-full blur-2xl" />
+        </div>
+
+        <div className="absolute top-3 right-3 z-20">
+          <button
+            type="button"
+            onClick={() => setIsBannerPickerOpen((open) => !open)}
+            aria-label="Change profile banner gradient"
+            aria-expanded={isBannerPickerOpen}
+            aria-controls="profile-banner-gradient-picker"
+            className="flex items-center gap-1.5 rounded-full border border-white/20 bg-slate-950/40 px-3 py-2 text-[10px] font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-slate-950/60"
+          >
+            <Palette size={13} />
+            Edit banner
+          </button>
+          {isBannerPickerOpen && (
+            <div
+              id="profile-banner-gradient-picker"
+              className="absolute right-0 top-11 w-52 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl"
+            >
+              <p className="mb-2 text-[9px] font-bold uppercase tracking-wider text-slate-600">
+                Banner gradient
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {BANNER_GRADIENTS.map((gradient) => (
+                  <button
+                    key={gradient.id}
+                    type="button"
+                    aria-label={`${gradient.name} banner gradient`}
+                    aria-pressed={bannerGradient === gradient.id}
+                    onClick={() => handleBannerGradientChange(gradient.id)}
+                    className={`rounded-lg border p-1 transition-colors ${
+                      bannerGradient === gradient.id
+                        ? "border-emerald-600 bg-emerald-50"
+                        : "border-slate-200 hover:border-slate-400"
+                    }`}
+                  >
+                    <span
+                      className={`block h-6 rounded-md ${gradient.className}`}
+                    />
+                    <span className="mt-1 block text-center text-[8px] font-medium text-slate-700">
+                      {gradient.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Cover Photo Floating Meta details */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full z-10 gap-4">
@@ -531,35 +587,6 @@ export default function ProfileView({
                 />
               </div>
             </div>
-
-            <fieldset>
-              <legend className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                Profile Banner Gradient
-              </legend>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {BANNER_GRADIENTS.map((gradient) => (
-                  <button
-                    key={gradient.id}
-                    type="button"
-                    aria-label={`${gradient.name} banner gradient`}
-                    aria-pressed={bannerGradient === gradient.id}
-                    onClick={() => setBannerGradient(gradient.id)}
-                    className={`rounded-xl border p-2 text-left transition-colors ${
-                      bannerGradient === gradient.id
-                        ? "border-emerald-600 bg-emerald-50"
-                        : "border-slate-200 hover:border-slate-300"
-                    }`}
-                  >
-                    <span
-                      className={`block h-8 rounded-lg ${gradient.className}`}
-                    />
-                    <span className="mt-1.5 block text-[10px] font-semibold text-slate-700">
-                      {gradient.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </fieldset>
 
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
