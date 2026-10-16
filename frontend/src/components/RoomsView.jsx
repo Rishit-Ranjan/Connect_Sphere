@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Users, Hash, Sparkles, Plus, Globe, Lock, Eye, EyeOff, Trash2, X, Check } from 'lucide-react';
+import { Send, Users, Hash, Sparkles, Plus, Globe, Lock, Eye, EyeOff, Trash2, X, Check, Search, BookOpen, MessageCircle } from 'lucide-react';
 
 export default function RoomsView({
   currentUser,
@@ -33,6 +33,7 @@ export default function RoomsView({
   const [pendingDeleteRoomId, setPendingDeleteRoomId] = useState('');
   const [isDeletingRoom, setIsDeletingRoom] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [roomSearch, setRoomSearch] = useState('');
   const chatBottomRef = useRef(null);
 
   const isAdmin = currentUser?.role === 'admin';
@@ -51,6 +52,14 @@ export default function RoomsView({
   const isSelectedPrivate = selectedRoom && (selectedRoom.isPrivate || selectedRoom.visibility === 'private');
   const isSelectedUnlocked = !isSelectedPrivate || unlockedRoomIds.includes(selectedRoomId);
   const currentMessages = roomMessages.filter((m) => m.roomId === selectedRoomId);
+  const filteredRooms = rooms.filter((room) => {
+    const search = roomSearch.trim().toLowerCase();
+    return (
+      !search ||
+      room.name?.toLowerCase().includes(search) ||
+      room.description?.toLowerCase().includes(search)
+    );
+  });
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -143,118 +152,220 @@ export default function RoomsView({
 
   if (rooms.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-white border border-slate-200 rounded-3xl m-2 sm:m-3 shadow-sm">
-        <div className="w-full max-w-md px-6 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-50 flex items-center justify-center">
-            <Hash size={28} className="text-indigo-600" />
-          </div>
+      <div className="flex-1 min-h-0 overflow-y-auto bg-slate-50 p-4 sm:p-6 font-sans">
+        <div className="max-w-6xl mx-auto">
+          <header className="mb-6">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600">
+              Connect Sphere · Community
+            </p>
+            <h1 className="mt-1 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+              Campus rooms
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Find your people, share ideas, and make campus projects happen.
+            </p>
+          </header>
 
-          <h2 className="text-xl font-display font-bold text-slate-900">
-            No campus rooms yet
-          </h2>
-          <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-            Create the first room for academics, placements, events, projects, or peer discussions.
-          </p>
-
-          <form onSubmit={handleCreateRoomSubmit} className="mt-6 space-y-3 text-left">
-            <input
-              type="text"
-              placeholder="Room name"
-              value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
-              className="w-full text-sm px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            />
-
-            <textarea
-              placeholder="Room description"
-              value={roomDescription}
-              onChange={(e) => setRoomDescription(e.target.value)}
-              rows={4}
-              className="w-full text-sm px-4 py-3 rounded-xl border border-slate-200 bg-white resize-none focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            />
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setRoomVisibility('public')}
-                className={`flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl border transition-all cursor-pointer ${roomVisibility === 'public' ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
-              >
-                <Globe size={13} />
-                Public
-              </button>
-              <button
-                type="button"
-                onClick={() => setRoomVisibility('private')}
-                className={`flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl border transition-all cursor-pointer ${roomVisibility === 'private' ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
-              >
-                <Lock size={13} />
-                Private
-              </button>
-            </div>
-
-            {roomVisibility === 'private' && (
-              <div className="relative">
-                <input
-                  type={showRoomPassword ? 'text' : 'password'}
-                  placeholder="Set a room password (required)"
-                  value={roomPassword}
-                  onChange={(e) => setRoomPassword(e.target.value)}
-                  className="w-full text-sm px-4 py-3 pr-11 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowRoomPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  title={showRoomPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showRoomPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
+          <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <section className="relative flex min-h-[280px] flex-col justify-between overflow-hidden bg-gradient-to-br from-indigo-700 via-indigo-800 to-slate-900 p-7 sm:p-10 text-white">
+              <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full border-[36px] border-white/5" />
+              <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full border-[42px] border-white/5" />
+              <div className="relative z-10">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 shadow-sm">
+                  <Hash size={23} />
+                </span>
+                <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-200">
+                  Your campus, together
+                </p>
+                <h2 className="mt-2 max-w-md font-display text-2xl sm:text-3xl font-extrabold leading-tight">
+                  Start a room for what you care about.
+                </h2>
+                <p className="mt-3 max-w-md text-sm leading-relaxed text-indigo-100/80">
+                  Create a space for study groups, placements, events, side projects, or the conversations in between.
+                </p>
               </div>
-            )}
+              <div className="relative z-10 mt-8 flex flex-wrap gap-2">
+                {[
+                  { label: 'Study groups', icon: BookOpen },
+                  { label: 'Peer discussions', icon: MessageCircle },
+                  { label: 'Campus projects', icon: Sparkles },
+                ].map(({ label, icon: Icon }) => (
+                  <span key={label} className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-medium text-white/90">
+                    <Icon size={12} />
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </section>
 
-            {createError && (
-              <p className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
-                {createError}
-              </p>
-            )}
+            <section className="p-6 sm:p-8">
+              <div className="mb-5">
+                <h2 className="font-display text-lg font-bold text-slate-900">
+                  Create the first room
+                </h2>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  Give your community a name and choose who can join.
+                </p>
+              </div>
 
-            <button
-              type="submit"
-              disabled={!roomName.trim() || (roomVisibility === 'private' && !roomPassword.trim())}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all cursor-pointer"
-            >
-              Create first room
-            </button>
-          </form>
+              <form onSubmit={handleCreateRoomSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="first-room-name" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Room name
+                  </label>
+                  <input
+                    id="first-room-name"
+                    type="text"
+                    placeholder="e.g. CSE Study Circle"
+                    value={roomName}
+                    onChange={(e) => setRoomName(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="first-room-description" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Description <span className="font-medium normal-case tracking-normal text-slate-400">· optional</span>
+                  </label>
+                  <textarea
+                    id="first-room-description"
+                    placeholder="What will people share or work on here?"
+                    value={roomDescription}
+                    onChange={(e) => setRoomDescription(e.target.value)}
+                    rows={3}
+                    className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  />
+                </div>
+                <div>
+                  <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Access
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRoomVisibility('public')}
+                      aria-pressed={roomVisibility === 'public'}
+                      className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all cursor-pointer ${roomVisibility === 'public' ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50'}`}
+                    >
+                      <Globe size={14} />
+                      Public
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRoomVisibility('private')}
+                      aria-pressed={roomVisibility === 'private'}
+                      className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all cursor-pointer ${roomVisibility === 'private' ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50'}`}
+                    >
+                      <Lock size={14} />
+                      Private
+                    </button>
+                  </div>
+                </div>
+
+                {roomVisibility === 'private' && (
+                  <div className="relative">
+                    <label htmlFor="first-room-password" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Room password
+                    </label>
+                    <input
+                      id="first-room-password"
+                      type={showRoomPassword ? 'text' : 'password'}
+                      placeholder="Choose a password"
+                      value={roomPassword}
+                      onChange={(e) => setRoomPassword(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 pr-11 text-sm focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRoomPassword((prev) => !prev)}
+                      className="absolute right-3 top-[2.35rem] text-slate-400 transition-colors hover:text-slate-700 cursor-pointer"
+                      title={showRoomPassword ? 'Hide password' : 'Show password'}
+                      aria-label={showRoomPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showRoomPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                )}
+
+                {createError && (
+                  <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600">
+                    {createError}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={!roomName.trim() || (roomVisibility === 'private' && !roomPassword.trim())}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Plus size={16} />
+                  Create campus room
+                </button>
+              </form>
+            </section>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row h-[calc(100dvh-4rem-2px)] overflow-hidden font-sans bg-slate-50 gap-3 p-2 sm:p-3">
-      <div className="w-full lg:w-72 bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col justify-between shrink-0 overflow-hidden max-h-[38vh] lg:max-h-none">
+    <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-slate-50 p-3 sm:p-5 font-sans">
+      <header className="mb-4 flex shrink-0 items-end justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600">
+            Connect Sphere · Community
+          </p>
+          <h1 className="mt-1 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
+            Campus rooms
+          </h1>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Meet, learn, and build together with your campus community.
+          </p>
+        </div>
+        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-white px-3 py-1.5 text-[10px] font-semibold text-indigo-700">
+          <Users size={12} />
+          {rooms.length} {rooms.length === 1 ? 'room' : 'rooms'}
+        </span>
+      </header>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden lg:flex-row">
+      <div className="flex w-full shrink-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm max-h-[42vh] lg:max-h-none lg:w-72">
         <div className="flex flex-col min-h-0 flex-1">
           <div className="p-5 pb-4">
             <h3 className="font-display font-bold text-slate-900 text-sm tracking-tight flex items-center gap-2">
-              <span className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-sm">
-                <Users size={14} className="text-white" />
+              <span className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+                <Hash size={15} className="text-indigo-600" />
               </span>
-              Campus Channels
+              Your spaces
+              <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-500">
+                {rooms.length}
+              </span>
             </h3>
             <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-              Multi-user branch rooms &amp; interest categories
+              Join a conversation or start a new one.
             </p>
           </div>
 
-          <div className="px-4 pb-3">
+          <div className="px-4 pb-3 space-y-2">
+            <label className="relative block">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                value={roomSearch}
+                onChange={(e) => setRoomSearch(e.target.value)}
+                placeholder="Search rooms"
+                aria-label="Search campus rooms"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-xs text-slate-700 placeholder:text-slate-400 transition-colors focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              />
+            </label>
             {!showCreateRoom ? (
               <button
                 onClick={() => setShowCreateRoom(true)}
                 className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
               >
                 <Plus size={14} />
-                Create Room
+                Create a room
               </button>
             ) : (
               <form onSubmit={handleCreateRoomSubmit} className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2">
@@ -345,7 +456,12 @@ export default function RoomsView({
                 {deleteError}
               </p>
             )}
-            {rooms.map((room) => {
+            {filteredRooms.length === 0 && (
+              <p className="px-3 py-6 text-center text-xs text-slate-400">
+                No rooms match “{roomSearch}”.
+              </p>
+            )}
+            {filteredRooms.map((room) => {
               const isSelected = room.id === selectedRoomId;
               const isPrivateRoom = room.isPrivate || room.visibility === 'private';
               const isPendingDelete = pendingDeleteRoomId === room.id;
@@ -400,25 +516,22 @@ export default function RoomsView({
                       <span className="flex items-center gap-1.5">
                         <span className="block truncate">{room.name}</span>
                         {isPrivateRoom && (
-                          <span className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border shrink-0 ${isSelected ? 'bg-white/20 border-white/30 text-white' : 'bg-slate-100 border-slate-200 text-slate-500'}`}>
+                          <span className="rounded bg-white px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-500">
                             Private
                           </span>
                         )}
                       </span>
-                      <span
-                        className={`block text-[10px] font-medium truncate mt-0.5 ${
-                          isSelected ? 'text-indigo-100' : 'text-slate-400'
-                        }`}
-                      >
-                        {room.participantsCount || 0} online peers
+                      <span className={`block text-[10px] font-medium truncate mt-0.5 ${isSelected ? 'text-indigo-500' : 'text-slate-400'}`}>
+                        {room.participantsCount || 0} {room.participantsCount === 1 ? 'peer' : 'peers'}
                       </span>
                     </div>
                   </button>
-
                   <button
                     onClick={() => setPendingDeleteRoomId(room.id)}
-                    className="self-center px-2.5 shrink-0 text-slate-300 hover:text-rose-600 transition-colors cursor-pointer"
-                    title={canDeleteRoom(room) ? 'Delete room' : 'Delete room (admin or room creator only)'}
+                    disabled={!canDeleteRoom(room)}
+                    className="self-center px-2.5 shrink-0 text-slate-300 hover:text-rose-600 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-0"
+                    title={canDeleteRoom(room) ? 'Delete room' : 'Only the room creator or an admin can delete this room'}
+                    aria-label={`Delete ${room.name}`}
                   >
                     <Trash2 size={13} />
                   </button>
@@ -428,19 +541,18 @@ export default function RoomsView({
           </div>
         </div>
 
-        <div className="m-3 mt-0 p-4 rounded-2xl bg-indigo-900 text-white relative overflow-hidden shrink-0">
-          <div className="absolute top-[-50%] left-[-20%] w-20 h-20 bg-indigo-500/20 rounded-full blur-xl opacity-80" />
+        <div className="m-3 mt-0 p-4 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-950 relative overflow-hidden shrink-0">
           <div className="flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider mb-1.5 relative z-10">
-            <Sparkles size={11} className="text-amber-300" />
-            <span>Campus Tip</span>
+            <Sparkles size={11} className="text-indigo-600" />
+            <span>Campus tip</span>
           </div>
-          <p className="leading-relaxed text-[11px] text-indigo-100 relative z-10">
-            Need private tutoring? Look up contacts in the Direct Messenger tab for 1-on-1 chats.
+          <p className="leading-relaxed text-[11px] text-indigo-800 relative z-10">
+            Need private tutoring? Find peers in Direct Messages for a one-to-one chat.
           </p>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col h-full min-h-0 bg-white border border-slate-200 rounded-3xl shadow-sm relative overflow-hidden min-w-0">
+      <div className="flex-1 flex flex-col min-h-0 bg-white border border-slate-200 rounded-3xl shadow-sm relative overflow-hidden min-w-0">
         {selectedRoom ? (
           <>
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-white z-10 shrink-0">
@@ -613,6 +725,7 @@ export default function RoomsView({
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }
