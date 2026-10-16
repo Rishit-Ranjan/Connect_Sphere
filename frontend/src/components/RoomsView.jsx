@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Send, Users, Hash, Sparkles, Plus, Globe, Lock, Eye, EyeOff, Trash2, X, Check, Search, BookOpen, MessageCircle } from 'lucide-react';
 
 export default function RoomsView({
@@ -71,7 +72,7 @@ export default function RoomsView({
     }
   }, [rooms, selectedRoomId, setSelectedRoomId]);
 
-  const resetCreateRoomForm = () => {
+  const resetCreateRoomForm = React.useCallback(() => {
     setRoomName('');
     setRoomDescription('');
     setRoomVisibility('public');
@@ -79,7 +80,7 @@ export default function RoomsView({
     setShowRoomPassword(false);
     setCreateError('');
     setShowCreateRoom(false);
-  };
+  }, []);
 
   const handleCreateRoomSubmit = async (e) => {
     e.preventDefault();
@@ -150,6 +151,165 @@ export default function RoomsView({
     setTypedMessage('');
   };
 
+  useEffect(() => {
+    if (!showCreateRoom) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        resetCreateRoomForm();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showCreateRoom, resetCreateRoomForm]);
+
+  const createRoomDialog = showCreateRoom && createPortal((
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) resetCreateRoomForm();
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="create-room-title"
+        className="w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+      >
+        <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-indigo-600">
+              Connect Sphere · Community
+            </p>
+            <h2 id="create-room-title" className="mt-1 font-display text-lg font-extrabold text-slate-900">
+              Create a campus room
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Start a space for your campus community.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={resetCreateRoomForm}
+            aria-label="Close create room dialog"
+            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleCreateRoomSubmit} className="space-y-4 p-5 sm:p-6">
+          <div>
+            <label htmlFor="room-name" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Room name
+            </label>
+            <input
+              id="room-name"
+              type="text"
+              placeholder="e.g. CSE Study Circle"
+              value={roomName}
+              onChange={(e) => setRoomName(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              required
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label htmlFor="room-description" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Description <span className="font-medium normal-case tracking-normal text-slate-400">· optional</span>
+            </label>
+            <textarea
+              id="room-description"
+              placeholder="What will people share or work on here?"
+              value={roomDescription}
+              onChange={(e) => setRoomDescription(e.target.value)}
+              rows={3}
+              className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            />
+          </div>
+
+          <fieldset>
+            <legend className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Room access
+            </legend>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setRoomVisibility('public')}
+                aria-pressed={roomVisibility === 'public'}
+                className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all ${roomVisibility === 'public' ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50'}`}
+              >
+                <Globe size={14} />
+                Public
+              </button>
+              <button
+                type="button"
+                onClick={() => setRoomVisibility('private')}
+                aria-pressed={roomVisibility === 'private'}
+                className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all ${roomVisibility === 'private' ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50'}`}
+              >
+                <Lock size={14} />
+                Private
+              </button>
+            </div>
+          </fieldset>
+
+          {roomVisibility === 'private' && (
+            <div className="relative">
+              <label htmlFor="room-password" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                Room password
+              </label>
+              <input
+                id="room-password"
+                type={showRoomPassword ? 'text' : 'password'}
+                placeholder="Choose a password"
+                value={roomPassword}
+                onChange={(e) => setRoomPassword(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 pr-11 text-sm focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowRoomPassword((prev) => !prev)}
+                className="absolute right-3 top-[2.35rem] text-slate-400 transition-colors hover:text-slate-700"
+                title={showRoomPassword ? 'Hide password' : 'Show password'}
+                aria-label={showRoomPassword ? 'Hide password' : 'Show password'}
+              >
+                {showRoomPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+          )}
+
+          {createError && (
+            <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600">
+              {createError}
+            </p>
+          )}
+
+          <div className="flex gap-2 border-t border-slate-100 pt-4">
+            <button
+              type="submit"
+              disabled={!roomName.trim() || (roomVisibility === 'private' && !roomPassword.trim())}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Plus size={16} />
+              Create room
+            </button>
+            <button
+              type="button"
+              onClick={resetCreateRoomForm}
+              className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  ), document.body);
+
   if (rooms.length === 0) {
     return (
       <div className="flex-1 min-h-0 overflow-y-auto bg-slate-50 p-4 sm:p-6 font-sans">
@@ -208,109 +368,29 @@ export default function RoomsView({
                 </p>
               </div>
 
-              <form onSubmit={handleCreateRoomSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="first-room-name" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Room name
-                  </label>
-                  <input
-                    id="first-room-name"
-                    type="text"
-                    placeholder="e.g. CSE Study Circle"
-                    value={roomName}
-                    onChange={(e) => setRoomName(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="first-room-description" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Description <span className="font-medium normal-case tracking-normal text-slate-400">· optional</span>
-                  </label>
-                  <textarea
-                    id="first-room-description"
-                    placeholder="What will people share or work on here?"
-                    value={roomDescription}
-                    onChange={(e) => setRoomDescription(e.target.value)}
-                    rows={3}
-                    className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-                <div>
-                  <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Access
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setRoomVisibility('public')}
-                      aria-pressed={roomVisibility === 'public'}
-                      className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all cursor-pointer ${roomVisibility === 'public' ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50'}`}
-                    >
-                      <Globe size={14} />
-                      Public
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRoomVisibility('private')}
-                      aria-pressed={roomVisibility === 'private'}
-                      className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all cursor-pointer ${roomVisibility === 'private' ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50'}`}
-                    >
-                      <Lock size={14} />
-                      Private
-                    </button>
-                  </div>
-                </div>
-
-                {roomVisibility === 'private' && (
-                  <div className="relative">
-                    <label htmlFor="first-room-password" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Room password
-                    </label>
-                    <input
-                      id="first-room-password"
-                      type={showRoomPassword ? 'text' : 'password'}
-                      placeholder="Choose a password"
-                      value={roomPassword}
-                      onChange={(e) => setRoomPassword(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 pr-11 text-sm focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowRoomPassword((prev) => !prev)}
-                      className="absolute right-3 top-[2.35rem] text-slate-400 transition-colors hover:text-slate-700 cursor-pointer"
-                      title={showRoomPassword ? 'Hide password' : 'Show password'}
-                      aria-label={showRoomPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showRoomPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
-                  </div>
-                )}
-
-                {createError && (
-                  <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600">
-                    {createError}
-                  </p>
-                )}
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
+                <p className="text-xs text-slate-600">
+                  Make the first space for your campus community.
+                </p>
                 <button
-                  type="submit"
-                  disabled={!roomName.trim() || (roomVisibility === 'private' && !roomPassword.trim())}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  type="button"
+                  onClick={() => setShowCreateRoom(true)}
+                  className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-indigo-700"
                 >
-                  <Plus size={16} />
-                  Create campus room
+                  <Plus size={14} />
+                  Create first room
                 </button>
-              </form>
+              </div>
             </section>
           </div>
         </div>
+        {createRoomDialog}
       </div>
     );
   }
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-slate-50 p-3 sm:p-5 font-sans">
+    <div className="flex-1 min-h-[calc(100dvh-4rem)] flex flex-col overflow-hidden bg-slate-50 p-3 sm:p-5 font-sans">
       <header className="mb-4 flex shrink-0 items-end justify-between gap-4">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600">
@@ -359,95 +439,17 @@ export default function RoomsView({
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-xs text-slate-700 placeholder:text-slate-400 transition-colors focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
               />
             </label>
-            {!showCreateRoom ? (
-              <button
-                onClick={() => setShowCreateRoom(true)}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
-              >
-                <Plus size={14} />
-                Create a room
-              </button>
-            ) : (
-              <form onSubmit={handleCreateRoomSubmit} className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2">
-                <input
-                  type="text"
-                  placeholder="Room name"
-                  value={roomName}
-                  onChange={(e) => setRoomName(e.target.value)}
-                  className="w-full text-xs px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500"
-                />
-
-                <textarea
-                  placeholder="Room description"
-                  value={roomDescription}
-                  onChange={(e) => setRoomDescription(e.target.value)}
-                  rows={3}
-                  className="w-full text-xs px-3 py-2.5 rounded-xl border border-slate-200 resize-none focus:outline-none focus:border-indigo-500"
-                />
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setRoomVisibility('public')}
-                    className={`flex items-center justify-center gap-1.5 text-[11px] font-semibold px-2 py-2 rounded-xl border transition-all cursor-pointer ${roomVisibility === 'public' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
-                  >
-                    <Globe size={12} />
-                    Public
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRoomVisibility('private')}
-                    className={`flex items-center justify-center gap-1.5 text-[11px] font-semibold px-2 py-2 rounded-xl border transition-all cursor-pointer ${roomVisibility === 'private' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
-                  >
-                    <Lock size={12} />
-                    Private
-                  </button>
-                </div>
-
-                {roomVisibility === 'private' && (
-                  <div className="relative">
-                    <input
-                      type={showRoomPassword ? 'text' : 'password'}
-                      placeholder="Room password (required)"
-                      value={roomPassword}
-                      onChange={(e) => setRoomPassword(e.target.value)}
-                      className="w-full text-xs px-3 py-2.5 pr-9 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowRoomPassword((prev) => !prev)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                      title={showRoomPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showRoomPassword ? <EyeOff size={13} /> : <Eye size={13} />}
-                    </button>
-                  </div>
-                )}
-
-                {createError && (
-                  <p className="text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
-                    {createError}
-                  </p>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={!roomName.trim() || (roomVisibility === 'private' && !roomPassword.trim())}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all"
-                  >
-                    Create
-                  </button>
-                  <button
-                    type="button"
-                    onClick={resetCreateRoomForm}
-                    className="flex-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                setCreateError('');
+                setShowCreateRoom(true);
+              }}
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
+            >
+              <Plus size={14} />
+              Create a room
+            </button>
           </div>
 
           <div className="px-3 pb-3 space-y-1.5 overflow-y-auto flex-1 min-h-0">
@@ -725,6 +727,7 @@ export default function RoomsView({
           </div>
         )}
       </div>
+      {createRoomDialog}
     </div>
     </div>
   );
