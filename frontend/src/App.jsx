@@ -740,6 +740,71 @@ export default function App() {
     );
   };
 
+  const handleUpdateAvatar = async (avatar) => {
+    const token = localStorage.getItem('token');
+    const isFileUpload = avatar instanceof File;
+    const requestBody = isFileUpload ? new FormData() : JSON.stringify({ avatarUrl: avatar });
+    if (isFileUpload) requestBody.append('avatar', avatar);
+
+    const response = await fetch(
+      `${API_URL}/users/me/avatar${isFileUpload ? '/upload' : ''}`,
+      {
+        method: isFileUpload ? 'POST' : 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(isFileUpload ? {} : { 'Content-Type': 'application/json' }),
+        },
+        body: requestBody,
+      },
+    );
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || 'Failed to update profile photo.');
+    }
+
+    const userId = currentUser.id || currentUser._id;
+    setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: result.avatarUrl } : prev));
+    setUsers((prev) =>
+      prev.map((user) =>
+        String(user.id || user._id) === String(userId)
+          ? { ...user, avatarUrl: result.avatarUrl }
+          : user,
+      ),
+    );
+    setPosts((prev) =>
+      prev.map((post) =>
+        String(post.author?.id || post.author?._id) === String(userId)
+          ? {
+              ...post,
+              author: { ...post.author, avatarUrl: result.avatarUrl },
+              comments: post.comments?.map((comment) =>
+                String(comment.author?.id || comment.author?._id || comment.user?.id || comment.user?._id) === String(userId)
+                  ? {
+                      ...comment,
+                      author: comment.author
+                        ? { ...comment.author, avatarUrl: result.avatarUrl }
+                        : comment.author,
+                      user: comment.user
+                        ? { ...comment.user, avatarUrl: result.avatarUrl }
+                        : comment.user,
+                    }
+                  : comment,
+              ),
+            }
+          : post,
+      ),
+    );
+    setRoomMessages((prev) =>
+      prev.map((message) =>
+        String(message.sender?.id || message.sender?._id) === String(userId)
+          ? { ...message, sender: { ...message.sender, avatarUrl: result.avatarUrl } }
+          : message,
+      ),
+    );
+
+    return result.avatarUrl;
+  };
+
   const urgentNotices = notices.filter((n) => n.isUrgent);
 
   // Notifications feed derived from existing app data (notices, likes, comments).
@@ -903,6 +968,7 @@ export default function App() {
               posts={posts}
               resources={resources}
               onUpdateProfile={handleUpdateProfile}
+              onUpdateAvatar={handleUpdateAvatar}
               onNavigateTab={setActiveTab}
             />
           )}

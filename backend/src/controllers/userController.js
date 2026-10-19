@@ -1,7 +1,55 @@
+import { unlink } from 'fs/promises';
 import User from '../models/User.js';
+
+const allowedAvatarPresets = new Set([
+  '/avatars/avatar-blue.svg',
+  '/avatars/avatar-green.svg',
+  '/avatars/avatar-orange.svg',
+  '/avatars/avatar-purple.svg',
+  '/avatars/avatar-rose.svg',
+  '/avatars/avatar-teal.svg'
+]);
 
 const getMe = async (req, res) => {
   res.json(req.user);
+};
+
+const updateAvatarPreset = async (req, res, next) => {
+  try {
+    const { avatarUrl } = req.body;
+    if (!allowedAvatarPresets.has(avatarUrl)) {
+      return res.status(400).json({ message: 'Choose one of the available avatars.' });
+    }
+
+    req.user.avatarUrl = avatarUrl;
+    await req.user.save();
+    res.json({ avatarUrl: req.user.avatarUrl });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const uploadAvatar = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Choose an image to upload.' });
+    }
+
+    req.user.avatarUrl = `${req.protocol}://${req.get('host')}/api/users/avatars/${req.file.filename}`;
+    await req.user.save();
+    res.json({ avatarUrl: req.user.avatarUrl });
+  } catch (error) {
+    if (req.file) {
+      try {
+        await unlink(req.file.path);
+      } catch (cleanupError) {
+        if (cleanupError.code !== 'ENOENT') {
+          return next(cleanupError);
+        }
+      }
+    }
+    next(error);
+  }
 };
 
 const getUsers = async (req, res, next) => {
@@ -73,4 +121,11 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
-export default { getMe, getUsers, updateUserRole, deleteUser };
+export default {
+  getMe,
+  getUsers,
+  updateAvatarPreset,
+  uploadAvatar,
+  updateUserRole,
+  deleteUser
+};

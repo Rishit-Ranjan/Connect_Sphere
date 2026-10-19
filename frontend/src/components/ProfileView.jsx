@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Shield,
   Sparkles,
@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   Lock,
   Palette,
+  ImagePlus,
+  Upload,
 } from "lucide-react";
 
 const BANNER_GRADIENTS = [
@@ -58,12 +60,22 @@ const BANNER_GRADIENTS = [
   },
 ];
 
+const AVATAR_PRESETS = [
+  { name: "Blue", src: "/avatars/avatar-blue.svg" },
+  { name: "Green", src: "/avatars/avatar-green.svg" },
+  { name: "Orange", src: "/avatars/avatar-orange.svg" },
+  { name: "Purple", src: "/avatars/avatar-purple.svg" },
+  { name: "Rose", src: "/avatars/avatar-rose.svg" },
+  { name: "Teal", src: "/avatars/avatar-teal.svg" },
+];
+
 export default function ProfileView({
   currentUser,
   users,
   posts,
   resources,
   onUpdateProfile,
+  onUpdateAvatar,
   onNavigateTab,
 }) {
   const [activeSubTab, setActiveSubTab] = useState("overview");
@@ -78,6 +90,9 @@ export default function ProfileView({
   );
   const [isBannerPickerOpen, setIsBannerPickerOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
+  const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
+  const avatarInputRef = useRef(null);
   // Profile avatar presets removed (avoid hardcoded image placeholders)
 
   // Derive counts
@@ -111,6 +126,34 @@ export default function ProfileView({
     setBannerGradient(gradientId);
     onUpdateProfile({ ...currentUser, bannerGradient: gradientId });
     setIsBannerPickerOpen(false);
+  };
+  const handleAvatarSelection = async (avatar) => {
+    setAvatarError("");
+    setIsUpdatingAvatar(true);
+    try {
+      const savedAvatarUrl = await onUpdateAvatar(avatar);
+      setAvatarUrl(savedAvatarUrl);
+    } catch (error) {
+      setAvatarError(error.message || "Unable to update your profile photo.");
+    } finally {
+      setIsUpdatingAvatar(false);
+    }
+  };
+  const handleAvatarFileChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setAvatarError("Choose a JPG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError("Choose an image no larger than 5 MB.");
+      return;
+    }
+    handleAvatarSelection(file);
   };
   const isAdmin = currentUser.role === "admin";
   const selectedBannerGradient =
@@ -186,7 +229,7 @@ export default function ProfileView({
           <div className="flex items-center gap-4.5">
             <div className="relative">
               <img
-                src={currentUser.avatarUrl || null}
+                src={avatarUrl || null}
                 alt={currentUser.name || 'User Avatar'}
                 className={`w-20 h-20 rounded-full object-cover border-4 bg-white ${isAdmin ? "border-amber-400" : "border-indigo-500"}`}
                 referrerPolicy="no-referrer"
@@ -531,6 +574,75 @@ export default function ProfileView({
                 Profile updated successfully! Syncing details...
               </div>
             )}
+
+            <fieldset className="border-b border-slate-100 pb-5">
+              <legend className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                Profile photo
+              </legend>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-indigo-100 bg-slate-50">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Profile photo preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <ImagePlus size={22} className="text-slate-400" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-800">Choose a photo or avatar</p>
+                    <p className="mt-1 text-[10px] text-slate-500">
+                      JPG, PNG, or WebP · up to 5 MB. Changes save immediately.
+                    </p>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleAvatarFileChange}
+                      className="hidden"
+                      aria-label="Upload profile photo"
+                    />
+                    <button
+                      type="button"
+                      disabled={isUpdatingAvatar}
+                      onClick={() => avatarInputRef.current?.click()}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-700 transition-colors hover:border-indigo-200 hover:bg-indigo-50 disabled:opacity-50"
+                    >
+                      <Upload size={12} />
+                      {isUpdatingAvatar ? "Saving photo..." : "Upload from device"}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="mb-2 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                    Or pick a custom avatar
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {AVATAR_PRESETS.map((avatar) => (
+                      <button
+                        key={avatar.src}
+                        type="button"
+                        disabled={isUpdatingAvatar}
+                        onClick={() => handleAvatarSelection(avatar.src)}
+                        aria-label={`Use ${avatar.name} avatar`}
+                        aria-pressed={avatarUrl === avatar.src}
+                        className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 bg-white transition-all hover:scale-105 disabled:opacity-50 ${
+                          avatarUrl === avatar.src
+                            ? "border-indigo-600 ring-2 ring-indigo-100"
+                            : "border-slate-200 hover:border-indigo-300"
+                        }`}
+                      >
+                        <img src={avatar.src} alt="" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {avatarError && (
+                <p role="alert" className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600">
+                  {avatarError}
+                </p>
+              )}
+            </fieldset>
 
             <div className="grid grid-cols-2 gap-4">
               <div>

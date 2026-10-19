@@ -12,6 +12,7 @@ import resourceRoutes from './routes/resourceRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import errorMiddleware from './middlewares/errorMiddleware.js';
 import directMessageRoutes from './routes/directMessageRoutes.js';
+import { AVATARS_DIR } from './config/uploads.js';
 
 config();
 
@@ -25,6 +26,7 @@ app.use(cors({
 app.use(json());
 app.use(cookieParser());
 app.use(morgan('dev'));
+app.use('/api/users/avatars', express.static(AVATARS_DIR, { immutable: true, maxAge: '1y' }));
 
 app.get('/', (req, res) => {
   res.json({ message: 'ConnectSphere API is running' });
