@@ -835,11 +835,14 @@ export default function App() {
   // Notifications feed derived from existing app data (notices, likes, comments).
   // Read/unread tracked locally by id so "Mark all read" works without backend changes.
   const [readNotificationIds, setReadNotificationIds] = useState([]);
+  const [dismissedNotificationIds, setDismissedNotificationIds] = useState([]);
+  const [notificationTarget, setNotificationTarget] = useState(null);
 
   const notifications = [
     ...notices.slice(0, 5).map((notice) => ({
       id: `notice-${notice.id}`,
       type: 'notice',
+      noticeId: notice.id,
       actor: notice.authorName || '—',
       text: `published: ${notice.title}`,
       time: notice.createdAt ? new Date(notice.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—',
@@ -851,6 +854,7 @@ export default function App() {
         items.push({
           id: `like-${post.id}`,
           type: 'like',
+          postId: post.id,
           actor: post.author?.name || '—',
           text: `liked a post: ${(post.text || '').slice(0, 60)}${(post.text || '').length > 60 ? '...' : ''}`,
           time: post.createdAt ? new Date(post.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—',
@@ -861,6 +865,8 @@ export default function App() {
         items.push({
           id: `comment-${comment.id}`,
           type: 'comment',
+          postId: post.id,
+          commentId: comment.id,
           actor: comment.author?.name || '—',
           text: `commented: ${(comment.text || '').slice(0, 60)}${(comment.text || '').length > 60 ? '...' : ''}`,
           time: comment.createdAt ? new Date(comment.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—',
@@ -871,6 +877,7 @@ export default function App() {
     }),
   ]
     .sort((a, b) => b.createdAt - a.createdAt)
+    .filter((n) => !dismissedNotificationIds.includes(n.id))
     .slice(0, 20)
     .map((n) => ({ ...n, unread: !readNotificationIds.includes(n.id) }));
 
@@ -878,6 +885,17 @@ export default function App() {
 
   const handleMarkAllNotificationsRead = () => {
     setReadNotificationIds(notifications.map((n) => n.id));
+  };
+
+  const handleNotificationClick = (notification) => {
+    setReadNotificationIds((previous) =>
+      previous.includes(notification.id) ? previous : [...previous, notification.id],
+    );
+    setDismissedNotificationIds((previous) =>
+      previous.includes(notification.id) ? previous : [...previous, notification.id],
+    );
+    setNotificationTarget(notification);
+    setActiveTab(notification.type === 'notice' ? 'notices' : 'feed');
   };
 
   if (loading) {
@@ -904,6 +922,7 @@ export default function App() {
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
           onMarkAllRead={handleMarkAllNotificationsRead}
+          onNotificationClick={handleNotificationClick}
         />
 
         <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
@@ -925,6 +944,7 @@ export default function App() {
               onLikePost={handleLikePost}
               onAddComment={handleAddComment}
               onViewProfile={handleViewProfile}
+              notificationTarget={notificationTarget}
             />
           )}
 
@@ -934,6 +954,7 @@ export default function App() {
               notices={notices}
               onAddNotice={handleAddNotice}
               onDeleteNotice={handleDeleteNotice}
+              notificationTarget={notificationTarget}
             />
           )}
 
@@ -1012,6 +1033,7 @@ export default function App() {
               notifications={notifications}
               unreadNotificationsCount={unreadNotificationsCount}
               onMarkAllRead={handleMarkAllNotificationsRead}
+              onNotificationClick={handleNotificationClick}
               onNavigateTab={setActiveTab}
             />
           </div>

@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Heart,
   MessageCircle,
@@ -24,7 +24,8 @@ export default function FeedView({
   onEditPost,
   onLikePost,
   onAddComment,
-  onViewProfile
+  onViewProfile,
+  notificationTarget
 }) {
   const fileInputRef = useRef(null);
   const attachmentInputRef = useRef(null);
@@ -37,6 +38,41 @@ export default function FeedView({
   const [expandedComments, setExpandedComments] = useState({});
   const [editingPostId, setEditingPostId] = useState(null);
   const [editPostText, setEditPostText] = useState('');
+  const [highlightedCommentId, setHighlightedCommentId] = useState(null);
+
+  useEffect(() => {
+    if (notificationTarget?.type === 'comment' && notificationTarget.postId) {
+      setExpandedComments((previous) => ({
+        ...previous,
+        [notificationTarget.postId]: true,
+      }));
+    }
+  }, [notificationTarget]);
+
+  useEffect(() => {
+    if (!notificationTarget?.postId) return;
+    if (
+      notificationTarget.type === 'comment' &&
+      !expandedComments[notificationTarget.postId]
+    ) {
+      return;
+    }
+
+    const targetId =
+      notificationTarget.type === 'comment' && notificationTarget.commentId
+        ? `feed-comment-${notificationTarget.commentId}`
+        : `feed-post-${notificationTarget.postId}`;
+    const targetElement = document.getElementById(targetId);
+    targetElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    if (notificationTarget.commentId) {
+      setHighlightedCommentId(notificationTarget.commentId);
+      const timeoutId = window.setTimeout(() => {
+        setHighlightedCommentId(null);
+      }, 2500);
+      return () => window.clearTimeout(timeoutId);
+    }
+  }, [notificationTarget, expandedComments]);
 
   const handleCreatePost = (e) => {
   e.preventDefault();
@@ -242,7 +278,7 @@ export default function FeedView({
             const hasLiked = !!post.likedByMe;
 
             return (
-              <div key={post.id} className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+              <div id={`feed-post-${post.id}`} key={post.id} className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <button
@@ -385,7 +421,15 @@ export default function FeedView({
                     {post.comments.length > 0 && (
                       <div className="space-y-3">
                         {post.comments.map((comment) => (
-                          <div key={comment.id} className="flex gap-2.5 items-start">
+                          <div
+                            id={`feed-comment-${comment.id}`}
+                            key={comment.id}
+                            className={`flex gap-2.5 items-start rounded-xl transition-colors ${
+                              highlightedCommentId === comment.id
+                                ? 'bg-indigo-50 ring-2 ring-indigo-300'
+                                : ''
+                            }`}
+                          >
                             <button
                               type="button"
                               onClick={() => onViewProfile?.(comment.author)}

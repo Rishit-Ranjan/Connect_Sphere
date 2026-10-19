@@ -6,7 +6,7 @@ import React from 'react';
 import { UserPlus, XCircle, Bell, MessageSquare } from 'lucide-react';
 import NotificationsCard from './NotificationsCard';
 
-export default function RightSidebar({ currentUser, users, onConnect, onFollow, urgentNotices, onStartDirectMessage, notifications, unreadNotificationsCount, onMarkAllRead, onNavigateTab }) {
+export default function RightSidebar({ currentUser, users, onConnect, onFollow, urgentNotices, onStartDirectMessage, notifications, unreadNotificationsCount, onMarkAllRead, onNavigateTab, onNotificationClick }) {
   // Helper function to compare two user objects based on various unique identifiers
   const isSameUser = (userA, userB) => {
     if (!userA || !userB) return false;
@@ -33,6 +33,7 @@ export default function RightSidebar({ currentUser, users, onConnect, onFollow, 
         unreadNotificationsCount={unreadNotificationsCount}
         onMarkAllRead={onMarkAllRead}
         onNavigateTab={onNavigateTab}
+        onNotificationClick={onNotificationClick}
       />
 
       {/* 2. Curated Campus Notices Carousel/Banner */}

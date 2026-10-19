@@ -8,7 +8,7 @@ import logo from '../assets/ConnectSphere.png';
 import NotificationsDropdown from './NotificationsDropdown';
 import { useTheme } from '../context/ThemeContext';
 
-export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount, notifications, unreadNotificationsCount, onMarkAllRead }) {
+export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount, notifications, unreadNotificationsCount, onMarkAllRead, onNotificationClick }) {
   const { isDark, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const isHomeActive = activeTab === 'feed';
@@ -85,6 +85,7 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
           onMarkAllRead={onMarkAllRead}
+          onNotificationClick={onNotificationClick}
         />
 
         <button

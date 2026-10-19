@@ -2,9 +2,9 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Bell, Plus, Trash2, Calendar, CheckSquare, ListFilter, Sparkles, AlertCircle } from 'lucide-react';
-export default function NoticesView({ currentUser, notices, onAddNotice, onDeleteNotice }) {
+export default function NoticesView({ currentUser, notices, onAddNotice, onDeleteNotice, notificationTarget }) {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [title, setTitle] = useState('');
@@ -12,6 +12,22 @@ export default function NoticesView({ currentUser, notices, onAddNotice, onDelet
     const [category, setCategory] = useState('');
     const [isUrgent, setIsUrgent] = useState(false);
     const categories = ['All', 'Placements', 'Academics', 'Schedules', 'General'];
+
+    useEffect(() => {
+        if (notificationTarget?.type === 'notice' && notificationTarget.noticeId) {
+            setSelectedCategory('All');
+        }
+    }, [notificationTarget]);
+
+    useEffect(() => {
+        if (notificationTarget?.type !== 'notice' || !notificationTarget.noticeId || selectedCategory !== 'All') {
+            return;
+        }
+        document
+            .getElementById(`notice-card-${notificationTarget.noticeId}`)
+            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [notificationTarget, selectedCategory, notices]);
+
     const handleSubmitNotice = (e) => {
         e.preventDefault();
         if (!title.trim() || !content.trim())
@@ -122,7 +138,7 @@ export default function NoticesView({ currentUser, notices, onAddNotice, onDelet
       {/* Notices Stream */}
       <div className="space-y-4">
         {filteredNotices.length > 0 ? (filteredNotices.map((notice) => {
-            return (<div key={notice.id} className={`border rounded-3xl p-6 shadow-sm bg-white hover:shadow-md transition-all relative overflow-hidden ${notice.isUrgent ? 'border-rose-200/90 hover:border-rose-300' : 'border-slate-200 hover:border-slate-300'}`}>
+            return (<div id={`notice-card-${notice.id}`} key={notice.id} className={`border rounded-3xl p-6 shadow-sm bg-white hover:shadow-md transition-all relative overflow-hidden ${notice.isUrgent ? 'border-rose-200/90 hover:border-rose-300' : 'border-slate-200 hover:border-slate-300'}`}>
                 {/* Urgent indicator stripe */}
                 {notice.isUrgent && (<div className="absolute top-0 left-0 right-0 h-1 bg-rose-500 animate-pulse"/>)}
 

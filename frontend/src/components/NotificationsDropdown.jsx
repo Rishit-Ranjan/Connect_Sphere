@@ -10,7 +10,7 @@ import { Bell, Heart, MessageCircle, Megaphone, X, CheckCheck } from 'lucide-rea
  * Renders a bell with unread badge + a dropdown panel.
  * Purely derived from props — no data fetching or side effects.
  */
-export default function NotificationsDropdown({ notifications, unreadNotificationsCount, onMarkAllRead }) {
+export default function NotificationsDropdown({ notifications, unreadNotificationsCount, onMarkAllRead, onNotificationClick }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -93,10 +93,15 @@ export default function NotificationsDropdown({ notifications, unreadNotificatio
           <div className="max-h-80 overflow-y-auto">
             {notifications.length > 0 ? (
               notifications.slice(0, 20).map((n) => (
-                <div
+                <button
                   key={n.id}
-                  className={`flex items-start gap-2.5 px-4 py-3 border-b border-slate-50 last:border-0 ${
-                    n.unread ? 'bg-indigo-50/40' : ''
+                  type="button"
+                  onClick={() => {
+                    onNotificationClick(n);
+                    setIsOpen(false);
+                  }}
+                  className={`flex w-full items-start gap-2.5 px-4 py-3 border-b border-slate-50 last:border-0 text-left hover:bg-slate-50 transition-colors ${
+                    n.unread ? 'bg-indigo-50/40' : 'bg-white'
                   }`}
                 >
                   <span className="mt-0.5 p-1.5 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
@@ -109,7 +114,7 @@ export default function NotificationsDropdown({ notifications, unreadNotificatio
                     <p className="text-[10px] text-slate-400 font-mono mt-1">{n.time}</p>
                   </div>
                   {n.unread && <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0 mt-1.5" />}
-                </div>
+                </button>
               ))
             ) : (
               <div className="text-center py-8 px-4">

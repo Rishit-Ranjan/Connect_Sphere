@@ -9,7 +9,7 @@ import { Bell, CheckCheck } from 'lucide-react';
  * Notifications card for the right sidebar.
  * Purely derived from props — no data fetching or side effects.
  */
-export default function NotificationsCard({ notifications, unreadNotificationsCount, onMarkAllRead, onNavigateTab }) {
+export default function NotificationsCard({ notifications, unreadNotificationsCount, onMarkAllRead, onNavigateTab, onNotificationClick }) {
   return (
     <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm" id="notifications-card">
       <div className="flex items-center justify-between mb-4">
@@ -35,9 +35,11 @@ export default function NotificationsCard({ notifications, unreadNotificationsCo
       {notifications.length > 0 ? (
         <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
           {notifications.slice(0, 5).map((n) => (
-            <div
+            <button
               key={n.id}
-              className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-colors ${
+              type="button"
+              onClick={() => onNotificationClick(n)}
+              className={`flex w-full items-start gap-2.5 p-2.5 rounded-xl border text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50 ${
                 n.unread
                   ? 'bg-indigo-50/60 border-indigo-100'
                   : 'bg-slate-50 border-slate-100'
@@ -50,7 +52,7 @@ export default function NotificationsCard({ notifications, unreadNotificationsCo
                 <p className="text-[9px] text-slate-400 font-mono mt-1">{n.time}</p>
               </div>
               {n.unread && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0 mt-1.5" />}
-            </div>
+            </button>
           ))}
         </div>
       ) : (
