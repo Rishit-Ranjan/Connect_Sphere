@@ -69,13 +69,15 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
           onClick={() => setActiveTab('feed')}
           className={`relative flex flex-col items-center justify-center gap-0.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
             isHomeActive
-              ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
+              ? isDark
+                ? 'navbar-active-item text-slate-900 border-white shadow-sm'
+                : 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
           }`}
           title="Home"
           id="navbar-home-btn"
         >
-          <Home size={16} className={isHomeActive ? 'text-indigo-700' : 'text-slate-400'} />
+          <Home size={16} className={isHomeActive ? (isDark ? 'navbar-active-icon' : 'text-indigo-700') : 'text-slate-400'} />
           <span className="hidden sm:inline">Home</span>
         </button>
 
@@ -89,13 +91,15 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
           onClick={() => setActiveTab('rooms')}
           className={`relative flex flex-col items-center justify-center gap-0.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
             isRoomsActive
-              ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
+              ? isDark
+                ? 'navbar-active-item text-slate-900 border-white shadow-sm'
+                : 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
           }`}
           title="Campus Rooms"
           id="navbar-rooms-btn"
         >
-          <Users size={16} className={isRoomsActive ? 'text-indigo-700' : 'text-slate-400'} />
+          <Users size={16} className={isRoomsActive ? (isDark ? 'navbar-active-icon' : 'text-indigo-700') : 'text-slate-400'} />
           <span className="hidden sm:inline">Campus Rooms</span>
         </button>
 
@@ -103,13 +107,15 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
           onClick={() => setActiveTab('messages')}
           className={`relative flex flex-col items-center justify-center gap-0.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
             isMessagesActive
-              ? 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
+              ? isDark
+                ? 'navbar-active-item text-slate-900 border-white shadow-sm'
+                : 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
           }`}
           title="Direct Messages"
           id="navbar-messages-btn"
         >
-          <MessageSquare size={16} className={isMessagesActive ? 'text-indigo-700' : 'text-slate-400'} />
+          <MessageSquare size={16} className={isMessagesActive ? (isDark ? 'navbar-active-icon' : 'text-indigo-700') : 'text-slate-400'} />
           <span className="hidden sm:inline">Messages</span>
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white leading-none">
@@ -139,7 +145,9 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
           onClick={() => setActiveTab('profile')}
           className={`flex items-center gap-2.5 pl-1.5 pr-2 sm:pr-3 py-1.5 rounded-xl transition-all cursor-pointer border group ${
             isProfileActive
-              ? 'bg-indigo-50/60 border-indigo-200'
+              ? isDark
+                ? 'navbar-active-item border-white'
+                : 'bg-indigo-50/60 border-indigo-200'
               : 'border-transparent hover:bg-slate-50 hover:border-slate-200'
           }`}
           title={currentUser.name ? `${currentUser.name} (View Profile)` : 'View Profile'}

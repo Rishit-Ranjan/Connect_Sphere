@@ -144,7 +144,17 @@ html.dark * {
   .dark .text-emerald-800 { color: var(--color-emerald-300); }
   .dark .text-rose-800 { color: var(--color-rose-300); }
 
-/* Floating assistant follows the app theme. */
+  .dark .navbar-active-item {
+    background-color: #fff;
+    border-color: #fff;
+    color: #111827 !important;
+  }
+
+  .dark .navbar-active-item .navbar-active-icon {
+    color: #111827 !important;
+  }
+
+  /* Floating assistant follows the app theme. */
 .dark .chatbot-window {
   background-color: #0f172a;
   border-color: #1e293b;
