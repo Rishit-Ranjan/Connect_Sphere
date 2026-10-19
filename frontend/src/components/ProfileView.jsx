@@ -68,6 +68,7 @@ const AVATAR_PRESETS = [
   { name: "Rose", src: "/avatars/avatar-rose.svg" },
   { name: "Teal", src: "/avatars/avatar-teal.svg" },
 ];
+const DEFAULT_AVATAR_URL = AVATAR_PRESETS[0].src;
 
 export default function ProfileView({
   currentUser,
@@ -610,6 +611,16 @@ export default function ProfileView({
                       <Upload size={12} />
                       {isUpdatingAvatar ? "Saving photo..." : "Upload from device"}
                     </button>
+                    {avatarUrl && avatarUrl !== DEFAULT_AVATAR_URL && (
+                      <button
+                        type="button"
+                        disabled={isUpdatingAvatar}
+                        onClick={() => handleAvatarSelection(DEFAULT_AVATAR_URL)}
+                        className="mt-2 ml-2 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold text-rose-600 transition-colors hover:bg-rose-50 disabled:opacity-50"
+                      >
+                        Remove photo
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="flex-1">
