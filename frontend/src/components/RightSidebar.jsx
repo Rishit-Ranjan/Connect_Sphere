@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React from 'react';
-import { UserPlus, XCircle, Bell, ArrowRight, MessageSquare } from 'lucide-react';
+import { UserPlus, XCircle, Bell, MessageSquare } from 'lucide-react';
 import NotificationsCard from './NotificationsCard';
 
 export default function RightSidebar({ currentUser, users, onConnect, onFollow, urgentNotices, onStartDirectMessage, notifications, unreadNotificationsCount, onMarkAllRead, onNavigateTab }) {
@@ -129,17 +129,5 @@ export default function RightSidebar({ currentUser, users, onConnect, onFollow, 
         </div>
       </div>
 
-      {/* Helpful small instructions card - Bento Indigo Style */}
-      <div className="bg-indigo-900 text-white p-6 rounded-3xl shadow-sm relative overflow-hidden">
-        <div className="absolute top-[-50%] left-[-20%] w-20 h-20 bg-indigo-500/20 rounded-full blur-xl opacity-80"/>
-        <h4 className="text-xs font-display font-bold mb-1 relative z-10">Campus Placement Drive</h4>
-        <p className="text-[10px] text-indigo-200 leading-relaxed mb-3 relative z-10">
-          Make sure your portfolio links and digital CV are uploaded under the Resource Library to be visible to external evaluators.
-        </p>
-        <div className="flex items-center gap-1 text-[9px] font-mono text-white hover:underline cursor-pointer relative z-10">
-          <span>Read Placement FAQ</span>
-          <ArrowRight size={10}/>
-        </div>
-      </div>
     </aside>);
 }
