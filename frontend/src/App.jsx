@@ -30,6 +30,7 @@ export default function App() {
   const [directMessages, setDirectMessages] = useState([]);
 
   const [activeTab, setActiveTab] = useState('feed');
+  const [viewedProfileUser, setViewedProfileUser] = useState(null);
   const [selectedRecipient, setSelectedRecipient] = useState(null);
   const [selectedRoomId, setSelectedRoomId] = useState('');
   // Private rooms the user has unlocked with a password (persisted per browser).
@@ -45,10 +46,34 @@ export default function App() {
 
   const isAdmin = currentUser?.role === 'admin';
 
+  const handleNavbarTabChange = (tab) => {
+    if (tab === 'profile') {
+      setViewedProfileUser(null);
+    }
+    setActiveTab(tab);
+  };
+
+  const handleViewProfile = (author) => {
+    const authorId = String(author.id || author._id || '');
+    const ownId = String(currentUser.id || currentUser._id || '');
+    const profileUser = users.find((user) => {
+      const userId = String(user.id || user._id || '');
+      return (authorId && userId === authorId) ||
+        (author.handle && user.handle === author.handle);
+    }) || author;
+    const isOwnProfile =
+      (authorId && ownId && authorId === ownId) ||
+      (author.handle && currentUser.handle === author.handle);
+
+    setViewedProfileUser(isOwnProfile ? null : profileUser);
+    setActiveTab('profile');
+  };
+
   const handleLogout = () => {
     logout();
     setSelectedRecipient(null);
     setSelectedRoomId('');
+    setViewedProfileUser(null);
   };
 
   const fetchUsers = async () => {
@@ -873,7 +898,7 @@ export default function App() {
         <Navbar
           currentUser={currentUser}
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleNavbarTabChange}
           onLogout={handleLogout}
           unreadCount={unreadCount}
           notifications={notifications}
@@ -899,6 +924,7 @@ export default function App() {
               onEditPost={handleEditPost}
               onLikePost={handleLikePost}
               onAddComment={handleAddComment}
+              onViewProfile={handleViewProfile}
             />
           )}
 
@@ -964,6 +990,7 @@ export default function App() {
           {activeTab === 'profile' && (
             <ProfileView
               currentUser={currentUser}
+              viewedUser={viewedProfileUser}
               users={users}
               posts={posts}
               resources={resources}

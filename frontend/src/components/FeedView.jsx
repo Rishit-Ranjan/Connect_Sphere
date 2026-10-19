@@ -23,7 +23,8 @@ export default function FeedView({
   onDeletePost,
   onEditPost,
   onLikePost,
-  onAddComment
+  onAddComment,
+  onViewProfile
 }) {
   const fileInputRef = useRef(null);
   const attachmentInputRef = useRef(null);
@@ -244,15 +245,28 @@ export default function FeedView({
               <div key={post.id} className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={post.author.avatarUrl || null}
-                      alt={post.author.name || 'User Avatar'}
-                      referrerPolicy="no-referrer"
-                      className="w-9 h-9 rounded-full object-cover border border-slate-100"
-                    />
-                    <div>
+                    <button
+                      type="button"
+                      onClick={() => onViewProfile?.(post.author)}
+                      className="shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      aria-label={`View ${post.author.name}'s profile`}
+                    >
+                      <img
+                        src={post.author.avatarUrl || null}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                        className="w-9 h-9 rounded-full object-cover border border-slate-100"
+                      />
+                    </button>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-extrabold text-slate-900">{post.author.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => onViewProfile?.(post.author)}
+                          className="truncate text-left text-xs font-extrabold text-slate-900 hover:text-indigo-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+                        >
+                          {post.author.name}
+                        </button>
                         {post.author.role === 'admin' && (
                           <span className="text-[8px] font-mono font-bold bg-amber-50 text-amber-700 px-1 py-0.2 rounded border border-amber-200">
                             Admin
@@ -372,14 +386,27 @@ export default function FeedView({
                       <div className="space-y-3">
                         {post.comments.map((comment) => (
                           <div key={comment.id} className="flex gap-2.5 items-start">
-                            <img
-                              src={comment.author.avatarUrl || null}
-                              alt={comment.author.name || 'User Avatar'}
-                              className="w-7 h-7 rounded-full object-cover border border-slate-100 shrink-0"
-                            />
+                            <button
+                              type="button"
+                              onClick={() => onViewProfile?.(comment.author)}
+                              className="shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              aria-label={`View ${comment.author.name}'s profile`}
+                            >
+                              <img
+                                src={comment.author.avatarUrl || null}
+                                alt=""
+                                className="w-7 h-7 rounded-full object-cover border border-slate-100"
+                              />
+                            </button>
                             <div className="bg-white border border-slate-200/80 rounded-2xl p-3 flex-1 shadow-sm">
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-slate-950">{comment.author.name}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => onViewProfile?.(comment.author)}
+                                  className="rounded text-left text-[10px] font-bold text-slate-950 hover:text-indigo-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                >
+                                  {comment.author.name}
+                                </button>
                                 <span className="text-[9px] text-slate-400 font-mono">
                                   {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>

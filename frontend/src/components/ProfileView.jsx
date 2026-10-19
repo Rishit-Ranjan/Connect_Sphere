@@ -71,7 +71,8 @@ const AVATAR_PRESETS = [
 const DEFAULT_AVATAR_URL = AVATAR_PRESETS[0].src;
 
 export default function ProfileView({
-  currentUser,
+  currentUser: signedInUser,
+  viewedUser,
   users,
   posts,
   resources,
@@ -79,6 +80,13 @@ export default function ProfileView({
   onUpdateAvatar,
   onNavigateTab,
 }) {
+  const currentUser = viewedUser || signedInUser;
+  const currentUserId = currentUser.id || currentUser._id;
+  const signedInUserId = signedInUser.id || signedInUser._id;
+  const isOwnProfile = !viewedUser || (
+    (currentUserId && signedInUserId && String(currentUserId) === String(signedInUserId)) ||
+    (currentUser.handle && currentUser.handle === signedInUser.handle)
+  );
   const [activeSubTab, setActiveSubTab] = useState("overview");
   // Edit Profile States
   const [name, setName] = useState(currentUser.name);
@@ -178,7 +186,7 @@ export default function ProfileView({
           <div className="absolute bottom-[-30%] left-[-5%] w-60 h-60 bg-white/10 rounded-full blur-2xl" />
         </div>
 
-        <div className="absolute top-3 right-3 z-20">
+        {isOwnProfile && <div className="absolute top-3 right-3 z-20">
           <button
             type="button"
             onClick={() => setIsBannerPickerOpen((open) => !open)}
@@ -223,7 +231,7 @@ export default function ProfileView({
               </div>
             </div>
           )}
-        </div>
+        </div>}
 
         {/* Cover Photo Floating Meta details */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full z-10 gap-4">
@@ -292,7 +300,7 @@ export default function ProfileView({
             >
               Overview
             </button>
-            <button
+            {isOwnProfile && <button
               onClick={() => setActiveSubTab("edit")}
               className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer ${
                 activeSubTab === "edit"
@@ -302,7 +310,7 @@ export default function ProfileView({
               id="profile-btn-edit"
             >
               Edit Card
-            </button>
+            </button>}
           </div>
         </div>
       </div>
@@ -325,10 +333,12 @@ export default function ProfileView({
                 "
               </p>
               <div className="space-y-2.5 pt-1 text-[11px] text-slate-500">
-                <div className="flex items-center gap-2">
-                  <Mail size={12} className="text-slate-400" />
-                  <span className="truncate">{currentUser.email}</span>
-                </div>
+                {isOwnProfile && (
+                  <div className="flex items-center gap-2">
+                    <Mail size={12} className="text-slate-400" />
+                    <span className="truncate">{currentUser.email}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <Calendar size={12} className="text-slate-400" />
                   <span>Joined Semester: </span>
@@ -545,7 +555,7 @@ export default function ProfileView({
             </div>
           </div>
         </div>
-      ) : (
+      ) : isOwnProfile ? (
         /* Edit Profile Mode Form console */
         <div
           className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm max-w-2xl mx-auto"
@@ -743,7 +753,7 @@ export default function ProfileView({
             </div>
           </form>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
