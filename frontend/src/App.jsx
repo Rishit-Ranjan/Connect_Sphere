@@ -908,22 +908,20 @@ export default function App() {
           )}
           </main>
 
-          {activeTab !== 'messages' && activeTab !== 'rooms' && (
-            <div className="hidden xl:block w-80 2xl:w-96 bg-slate-50 shrink-0">
-              <RightSidebar
-                currentUser={currentUser}
-                users={users}
-                onConnect={handleConnectWithUser}
-                onFollow={handleFollowUser}
-                urgentNotices={urgentNotices}
-                onStartDirectMessage={handleStartDirectMessage}
-                notifications={notifications}
-                unreadNotificationsCount={unreadNotificationsCount}
-                onMarkAllRead={handleMarkAllNotificationsRead}
-                onNavigateTab={setActiveTab}
-              />
-            </div>
-          )}
+          <div className="hidden xl:block w-80 2xl:w-96 bg-slate-50 shrink-0">
+            <RightSidebar
+              currentUser={currentUser}
+              users={users}
+              onConnect={handleConnectWithUser}
+              onFollow={handleFollowUser}
+              urgentNotices={urgentNotices}
+              onStartDirectMessage={handleStartDirectMessage}
+              notifications={notifications}
+              unreadNotificationsCount={unreadNotificationsCount}
+              onMarkAllRead={handleMarkAllNotificationsRead}
+              onNavigateTab={setActiveTab}
+            />
+          </div>
         </div>
       </div>
       <Chatbot />
