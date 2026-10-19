@@ -881,7 +881,7 @@ export default function App() {
           onMarkAllRead={handleMarkAllNotificationsRead}
         />
 
-        <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
           <Sidebar
             currentUser={currentUser}
             activeTab={activeTab}
@@ -974,7 +974,7 @@ export default function App() {
           )}
           </main>
 
-          <div className="hidden xl:block w-80 2xl:w-96 bg-slate-50 shrink-0">
+          <div className="hidden md:block md:w-56 lg:w-64 xl:w-80 2xl:w-96 bg-slate-50 shrink-0">
             <RightSidebar
               currentUser={currentUser}
               users={users}
