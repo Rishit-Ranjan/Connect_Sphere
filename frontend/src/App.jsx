@@ -376,6 +376,60 @@ export default function App() {
     }
   };
 
+  const handleEditComment = async (postId, commentId, text) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/posts/${postId}/comment/${commentId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ text }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || 'Failed to edit comment.');
+    }
+
+    setPosts((previous) =>
+      previous.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              comments: post.comments.map((comment) =>
+                comment.id === commentId ? { ...comment, text: result.text } : comment,
+              ),
+            }
+          : post,
+      ),
+    );
+  };
+
+  const handleDeleteComment = async (postId, commentId) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/posts/${postId}/comment/${commentId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || 'Failed to delete comment.');
+    }
+
+    setPosts((previous) =>
+      previous.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              comments: post.comments.filter((comment) => comment.id !== commentId),
+            }
+          : post,
+      ),
+    );
+  };
+
   const handleAddNotice = async (notice) => {
     try {
       const token = localStorage.getItem('token');
@@ -943,6 +997,8 @@ export default function App() {
               onEditPost={handleEditPost}
               onLikePost={handleLikePost}
               onAddComment={handleAddComment}
+              onEditComment={handleEditComment}
+              onDeleteComment={handleDeleteComment}
               onViewProfile={handleViewProfile}
               notificationTarget={notificationTarget}
             />

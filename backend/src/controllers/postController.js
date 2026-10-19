@@ -142,6 +142,75 @@ const addCommentToPost = async (req, res, next) => {
   }
 };
 
+const updateComment = async (req, res, next) => {
+  try {
+    const { postId, commentId } = req.params;
+    const { text } = req.body;
+
+    if (typeof text !== 'string' || !text.trim()) {
+      return res.status(400).json({ message: 'Comment text is required.' });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found.' });
+    }
+
+    const comment = post.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found.' });
+    }
+
+    if (comment.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to edit this comment.' });
+    }
+
+    comment.text = text.trim();
+    await post.save();
+
+    res.json({
+      id: comment._id,
+      text: comment.text,
+      createdAt: comment.createdAt,
+      author: {
+        id: req.user._id,
+        name: req.user.name,
+        handle: req.user.handle,
+        avatarUrl: req.user.avatarUrl
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteComment = async (req, res, next) => {
+  try {
+    const { postId, commentId } = req.params;
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found.' });
+    }
+
+    const comment = post.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found.' });
+    }
+
+    if (comment.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to delete this comment.' });
+    }
+
+    comment.deleteOne();
+    await post.save();
+
+    res.json({ message: 'Comment deleted successfully.', postId, commentId });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const deletePost = async (req, res, next) => {
   try {
     const { postId } = req.params;
@@ -174,5 +243,7 @@ export default {
   createPost, 
   toggleLikePost, 
   addCommentToPost,
+  updateComment,
+  deleteComment,
   deletePost 
 };

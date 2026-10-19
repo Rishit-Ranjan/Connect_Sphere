@@ -24,6 +24,8 @@ export default function FeedView({
   onEditPost,
   onLikePost,
   onAddComment,
+  onEditComment,
+  onDeleteComment,
   onViewProfile,
   notificationTarget
 }) {
@@ -39,6 +41,9 @@ export default function FeedView({
   const [editingPostId, setEditingPostId] = useState(null);
   const [editPostText, setEditPostText] = useState('');
   const [highlightedCommentId, setHighlightedCommentId] = useState(null);
+  const [editingComment, setEditingComment] = useState(null);
+  const [editCommentText, setEditCommentText] = useState('');
+  const [commentActionError, setCommentActionError] = useState('');
 
   useEffect(() => {
     if (notificationTarget?.type === 'comment' && notificationTarget.postId) {
@@ -105,6 +110,32 @@ export default function FeedView({
     onAddComment(postId, text);
     setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
     setExpandedComments((prev) => ({ ...prev, [postId]: true }));
+  };
+
+  const handleSaveComment = async (postId, commentId) => {
+    const text = editCommentText.trim();
+    if (!text) {
+      setCommentActionError('Comment cannot be empty.');
+      return;
+    }
+
+    setCommentActionError('');
+    try {
+      await onEditComment(postId, commentId, text);
+      setEditingComment(null);
+      setEditCommentText('');
+    } catch (error) {
+      setCommentActionError(error.message || 'Failed to edit comment.');
+    }
+  };
+
+  const handleRemoveComment = async (postId, commentId) => {
+    setCommentActionError('');
+    try {
+      await onDeleteComment(postId, commentId);
+    } catch (error) {
+      setCommentActionError(error.message || 'Failed to delete comment.');
+    }
   };
 
   const handleImageUpload = (event) => {
@@ -443,25 +474,92 @@ export default function FeedView({
                               />
                             </button>
                             <div className="bg-white border border-slate-200/80 rounded-2xl p-3 flex-1 shadow-sm">
-                              <div className="flex items-center justify-between">
+                              <div className="flex items-center justify-between gap-2">
                                 <button
                                   type="button"
                                   onClick={() => onViewProfile?.(comment.author)}
-                                  className="rounded text-left text-[10px] font-bold text-slate-950 hover:text-indigo-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                  className="truncate rounded text-left text-[10px] font-bold text-slate-950 hover:text-indigo-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                                 >
                                   {comment.author.name}
                                 </button>
-                                <span className="text-[9px] text-slate-400 font-mono">
-                                  {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
+                                <div className="flex shrink-0 items-center gap-2">
+                                  <span className="text-[9px] text-slate-400 font-mono">
+                                    {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                  {String(comment.author.id || comment.author._id) ===
+                                    String(currentUser.id || currentUser._id) && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setEditingComment({ postId: post.id, commentId: comment.id });
+                                          setEditCommentText(comment.text);
+                                          setCommentActionError('');
+                                        }}
+                                        className="rounded p-1 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                                        aria-label="Edit your comment"
+                                        title="Edit comment"
+                                      >
+                                        <Pencil size={12} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveComment(post.id, comment.id)}
+                                        className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                                        aria-label="Delete your comment"
+                                        title="Delete comment"
+                                      >
+                                        <Trash2 size={12} />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
                               </div>
-                              <p className="text-[10px] text-slate-600 leading-normal mt-0.5 whitespace-pre-wrap">
-                                {comment.text}
-                              </p>
+                              {editingComment?.commentId === comment.id ? (
+                                <div className="mt-2 space-y-2">
+                                  <textarea
+                                    value={editCommentText}
+                                    onChange={(event) => setEditCommentText(event.target.value)}
+                                    rows={2}
+                                    maxLength={1000}
+                                    aria-label="Edit comment text"
+                                    className="w-full resize-y rounded-lg border border-slate-200 px-2.5 py-2 text-xs text-slate-700 focus:border-indigo-400 focus:outline-none"
+                                  />
+                                  <div className="flex justify-end gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingComment(null);
+                                        setEditCommentText('');
+                                        setCommentActionError('');
+                                      }}
+                                      className="rounded-lg px-2.5 py-1 text-[10px] font-semibold text-slate-500 hover:bg-slate-100"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSaveComment(post.id, comment.id)}
+                                      className="rounded-lg bg-indigo-600 px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-indigo-700"
+                                    >
+                                      Save
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-[10px] text-slate-600 leading-normal mt-0.5 whitespace-pre-wrap">
+                                  {comment.text}
+                                </p>
+                              )}
                             </div>
                           </div>
                         ))}
                       </div>
+                    )}
+                    {commentActionError && (
+                      <p role="alert" className="text-xs font-medium text-rose-600">
+                        {commentActionError}
+                      </p>
                     )}
 
                     <div className="flex gap-2 items-center">
