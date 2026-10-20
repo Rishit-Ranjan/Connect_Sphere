@@ -121,83 +121,88 @@ export default function LoginView() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative overflow-hidden font-sans">
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40">
-        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-slate-200/50 filter blur-[100px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-50/70 filter blur-[100px]" />
-        <div className="absolute top-[40%] right-[15%] w-[300px] h-[300px] rounded-full bg-slate-200/40 filter blur-[80px]" />
+    <div className="min-h-screen flex items-center justify-center bg-[#f5f6fc] p-3 sm:p-6 relative overflow-hidden font-sans">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-48 -left-40 w-[34rem] h-[34rem] rounded-full bg-indigo-200/35 blur-[110px]" />
+        <div className="absolute -bottom-52 -right-40 w-[38rem] h-[38rem] rounded-full bg-violet-200/35 blur-[120px]" />
+        <div className="absolute top-1/3 right-1/3 w-72 h-72 rounded-full bg-sky-100/50 blur-[100px]" />
       </div>
 
-      <div className="w-full max-w-4xl grid md:grid-cols-5 bg-white border border-slate-200 rounded-3xl shadow-xl overflow-hidden relative z-10">
+      <div className="w-full max-w-5xl grid md:grid-cols-5 bg-white border border-white rounded-[1.75rem] shadow-[0_32px_90px_-35px_rgba(30,41,59,0.35)] overflow-hidden relative z-10">
         <div
-          className="hidden md:flex md:col-span-2 text-slate-100 p-6 lg:p-8 flex-col justify-between relative overflow-hidden"
-          style={{
-            backgroundImage:
-              "linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.78)), url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
+          className="flex h-44 shrink-0 md:min-h-[650px] md:h-full md:col-span-2 text-slate-100 p-5 sm:p-6 lg:p-8 flex-col justify-between relative overflow-hidden"
         >
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
-          <div>
-            <div className="flex items-center gap-2 mb-8">
-              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-indigo-600 font-display font-extrabold text-lg shadow-sm">
+          <img
+            src="/welcome-abstract.png"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#17134f]/75 via-indigo-900/45 to-blue-950/65" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-3 md:mb-8">
+              <div className="w-9 h-9 rounded-xl bg-white/95 flex items-center justify-center text-indigo-600 font-display font-extrabold text-lg shadow-sm">
                 C
               </div>
               <span className="font-display font-bold tracking-tight text-xl text-white">ConnectSphere</span>
             </div>
 
-            <h1 className="font-display font-semibold text-3xl tracking-tight leading-tight mb-4 text-white">
+            <div className="hidden md:inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/85 mb-5">
+              Your campus, connected
+            </div>
+            <h1 className="font-display font-semibold text-xl md:text-[2.1rem] tracking-tight leading-[1.12] mb-2 md:mb-4 text-white">
               Where your campus comes together.
             </h1>
-            <p className="text-slate-400 text-sm leading-relaxed mb-6">
+            <p className="hidden md:block text-white/80 text-[13px] leading-6 mb-6">
               Connect with peers, view academic schedules, coordinate placements, download course material, and message directly in a highly cohesive local network.
             </p>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-md bg-slate-800 flex items-center justify-center text-xs">📢</div>
+          <div className="relative z-10 hidden md:block space-y-3">
+            <div className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm">
+              <div className="w-8 h-8 rounded-xl bg-slate-900/60 flex items-center justify-center text-sm shrink-0">📢</div>
               <div>
-                <h4 className="text-xs font-semibold text-slate-200">Instant Broadcasts</h4>
-                <p className="text-slate-400 text-[11px]">Seamless lecture schedule and placement updates</p>
+                <h4 className="text-xs font-semibold text-white">Instant Broadcasts</h4>
+                <p className="text-white/65 text-[11px] mt-1">Lecture schedules and placement updates</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-md bg-slate-800 flex items-center justify-center text-xs">💬</div>
+            <div className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm">
+              <div className="w-8 h-8 rounded-xl bg-slate-900/60 flex items-center justify-center text-sm shrink-0">💬</div>
               <div>
-                <h4 className="text-xs font-semibold text-slate-200">Live Messenger</h4>
-                <p className="text-slate-400 text-[11px]">Real-time chat rooms and direct communication</p>
+                <h4 className="text-xs font-semibold text-white">Live Messenger</h4>
+                <p className="text-white/65 text-[11px] mt-1">Group rooms and direct conversations</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-md bg-slate-800 flex items-center justify-center text-xs">📁</div>
+            <div className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm">
+              <div className="w-8 h-8 rounded-xl bg-slate-900/60 flex items-center justify-center text-sm shrink-0">📁</div>
               <div>
-                <h4 className="text-xs font-semibold text-slate-200">Resource Library</h4>
-                <p className="text-slate-400 text-[11px]">Download class lectures and exam syllabus papers</p>
+                <h4 className="text-xs font-semibold text-white">Resource Library</h4>
+                <p className="text-white/65 text-[11px] mt-1">Share notes, lectures, and study material</p>
               </div>
             </div>
           </div>
 
-          <div className="pt-6 border-t border-slate-800 mt-6 flex items-center justify-between text-slate-500 text-[10px] font-mono">
+          <div className="relative z-10 hidden md:flex pt-5 border-t border-white/25 mt-5 items-center justify-between text-white/70 text-[10px] font-mono">
             <span>© 2026 ConnectSphere</span>
           </div>
         </div>
 
-        <div className="md:col-span-3 p-5 sm:p-8 flex flex-col justify-between bg-white">
+        <div className="md:col-span-3 p-5 sm:p-8 lg:p-10 flex flex-col justify-between bg-white">
           <div>
-            <div className="flex items-center border-b border-slate-200 mb-6 sm:mb-8 overflow-x-auto">
+            <div className="flex items-center gap-1 rounded-2xl border border-slate-100 bg-slate-50 p-1.5 mb-7 sm:mb-10">
               <button
+                type="button"
                 onClick={() => {
                   setSignInError('');
                   setActiveTab('signin');
                 }}
-                className={`pb-3 text-xs sm:text-sm font-semibold tracking-tight relative transition-all mr-4 sm:mr-6 flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                aria-pressed={activeTab === 'signin'}
+                className={`flex-1 py-2.5 text-xs sm:text-sm font-semibold tracking-tight rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${
                   activeTab === 'signin'
-                    ? 'text-indigo-600 border-b-2 border-indigo-600'
-                    : 'text-slate-400 hover:text-slate-600'
+                    ? 'text-indigo-700 bg-white shadow-sm ring-1 ring-slate-200/70'
+                    : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
                 <Sparkles size={16} />
@@ -205,14 +210,16 @@ export default function LoginView() {
               </button>
 
               <button
+                type="button"
                 onClick={() => {
                   setAdminError('');
                   setActiveTab('admin');
                 }}
-                className={`pb-3 text-xs sm:text-sm font-semibold tracking-tight relative transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                aria-pressed={activeTab === 'admin'}
+                className={`flex-1 py-2.5 text-xs sm:text-sm font-semibold tracking-tight rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${
                   activeTab === 'admin'
-                    ? 'text-amber-600 border-b-2 border-amber-500'
-                    : 'text-slate-400 hover:text-slate-600'
+                    ? 'text-amber-700 bg-white shadow-sm ring-1 ring-slate-200/70'
+                    : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
                 <ShieldCheck size={16} />
@@ -221,13 +228,13 @@ export default function LoginView() {
             </div>
 
             {activeTab === 'signin' ? (
-              <form onSubmit={handleSignIn} className="space-y-4 py-2 animate-fadeIn">
-                <div className="mb-4">
-                  <h3 className="font-display font-bold text-lg text-slate-900 mb-1">
-                    Sign in with your campus card
+              <form onSubmit={handleSignIn} className="space-y-5 py-1 animate-fadeIn">
+                <div className="mb-6">
+                  <h3 className="font-display font-bold text-2xl tracking-tight text-slate-900 mb-2">
+                    Welcome back
                   </h3>
-                  <p className="text-slate-500 text-xs">
-                    Enter your digital student handle or registered email to sign back into your session.
+                  <p className="text-slate-500 text-sm leading-relaxed">
+                    Sign in with your student registration number to continue.
                   </p>
                 </div>
 
@@ -244,8 +251,8 @@ export default function LoginView() {
                 )}
 
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Reg. No. *
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-[0.12em]">
+                    Registration number
                   </label>
                   <input
                     type="text"
@@ -258,13 +265,13 @@ export default function LoginView() {
                       setRegistrationSuccess('');
                       if (signInError) setSignInError('');
                     }}
-                    className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full text-sm px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-400"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Password *
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-[0.12em]">
+                    Password
                   </label>
                   <input
                     type="password"
@@ -275,14 +282,14 @@ export default function LoginView() {
                       setSignInPassword(e.target.value);
                       if (signInError) setSignInError('');
                     }}
-                    className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full text-sm px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-400"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
+                  className="w-full mt-6 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:from-indigo-400 disabled:to-violet-400 text-white text-sm font-semibold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/30 cursor-pointer"
                 >
                   <ArrowRight size={14} />
                   {isSubmitting ? 'Signing In...' : 'Sign In & Sync'}
@@ -292,7 +299,7 @@ export default function LoginView() {
                   <button
                     type="button"
                     onClick={() => setShowForgotHelp((prev) => !prev)}
-                    className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
                   >
                     Forgot password?
                   </button>
@@ -305,8 +312,8 @@ export default function LoginView() {
                   </div>
                 )}
 
-                <div className="pt-4 mt-2 border-t border-slate-100 text-center text-[11px] text-slate-500">
-                  Don&apos;t have a account?{' '}
+                <div className="pt-5 mt-2 border-t border-slate-100 text-center text-xs text-slate-500">
+                  New to ConnectSphere?{' '}
                   <button
                     type="button"
                     onClick={() => {
