@@ -53,9 +53,9 @@ export default function RightSidebar({ currentUser, users, relationshipError, on
         </div>)}
 
       {/* Who to Connect With */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-bold text-slate-900 text-xs uppercase tracking-wider">Discover People</h3>
+      <div className="bg-white border border-slate-200 rounded-3xl p-7 shadow-sm">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-display font-bold text-slate-900 text-sm uppercase tracking-wider">Discover People</h3>
           <span className="text-[10px] font-mono text-slate-400 font-medium">{connectCandidates.length} Suggestion(s)</span>
         </div>
 
@@ -89,16 +89,16 @@ export default function RightSidebar({ currentUser, users, relationshipError, on
                   </button>
                 </div>
               </div>))}
-          </div>) : (<div className="text-center py-4 border border-dashed border-slate-200 rounded-xl">
-            <XCircle size={18} className="mx-auto text-slate-300 mb-1.5"/>
-            <p className="text-[10px] text-slate-400 font-medium">You are not connected to anyone!</p>
+          </div>) : (<div className="text-center py-6 border border-dashed border-slate-200 rounded-xl">
+            <XCircle size={20} className="mx-auto text-slate-300 mb-2"/>
+            <p className="text-[11px] text-slate-400 font-medium">You are not connected to anyone!</p>
           </div>)}
       </div>
 
       {/* Live Active Members & Instant Messenger Link */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-bold text-slate-900 text-xs uppercase tracking-wider">Online Contacts</h3>
+      <div className="bg-white border border-slate-200 rounded-3xl p-7 shadow-sm">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-display font-bold text-slate-900 text-sm uppercase tracking-wider">Online Contacts</h3>
           <div className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"/>
             <span className="text-[9px] font-mono text-emerald-600 font-bold">LIVE</span>
