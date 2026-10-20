@@ -240,6 +240,8 @@ export default function App() {
   };
 
   useEffect(() => {
+    setReadNotificationIds([]);
+    setDismissedNotificationIds([]);
     if (currentUser) {
       fetchPosts();
       fetchUsers();
@@ -928,14 +930,14 @@ export default function App() {
       }
 
       if (typeof status.read === 'boolean') {
-        setReadNotificationIds((previous) => [
-          ...new Set([...previous, ...notificationIds])
-        ]);
+        setReadNotificationIds((previous) => status.read
+          ? [...new Set([...previous, ...notificationIds])]
+          : previous.filter((id) => !notificationIds.includes(id)));
       }
       if (typeof status.dismissed === 'boolean') {
-        setDismissedNotificationIds((previous) => [
-          ...new Set([...previous, ...notificationIds])
-        ]);
+        setDismissedNotificationIds((previous) => status.dismissed
+          ? [...new Set([...previous, ...notificationIds])]
+          : previous.filter((id) => !notificationIds.includes(id)));
       }
     } catch (error) {
       console.error('Error updating notification status:', error);
