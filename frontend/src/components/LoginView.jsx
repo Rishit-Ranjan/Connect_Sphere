@@ -122,13 +122,20 @@ export default function LoginView() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f5f6fc] p-3 sm:p-6 relative overflow-hidden font-sans">
+      <img
+        src="/welcome-background.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover opacity-35 pointer-events-none"
+      />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/55 via-indigo-50/50 to-slate-50/65 pointer-events-none" />
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-48 -left-40 w-[34rem] h-[34rem] rounded-full bg-indigo-200/35 blur-[110px]" />
         <div className="absolute -bottom-52 -right-40 w-[38rem] h-[38rem] rounded-full bg-violet-200/35 blur-[120px]" />
         <div className="absolute top-1/3 right-1/3 w-72 h-72 rounded-full bg-sky-100/50 blur-[100px]" />
       </div>
 
-      <div className="w-full max-w-5xl grid md:grid-cols-5 bg-white border border-white rounded-[1.75rem] shadow-[0_32px_90px_-35px_rgba(30,41,59,0.35)] overflow-hidden relative z-10">
+      <div className="w-full max-w-5xl grid md:grid-cols-5 bg-white border border-white rounded-[1.75rem] shadow-[0_32px_90px_-35px_rgba(30,41,59,0.35)] overflow-hidden relative z-10 transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_40px_100px_-30px_rgba(30,41,59,0.42)] motion-reduce:transition-none motion-reduce:hover:transform-none">
         <div
           className="flex h-44 shrink-0 md:min-h-[650px] md:h-full md:col-span-2 text-slate-100 p-5 sm:p-6 lg:p-8 flex-col justify-between relative overflow-hidden"
         >
