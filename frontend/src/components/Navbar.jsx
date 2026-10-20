@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState } from 'react';
-import { Bell, Home, MessageSquare, Shield, Sparkles, LogOut, Search, X, Users, Sun, Moon } from 'lucide-react';
+import { Bell, Home, MessageSquare, Shield, Sparkles, LogOut, Search, X, Users, UserPlus, Sun, Moon } from 'lucide-react';
 import logo from '../assets/ConnectSphere.png';
 import { useTheme } from '../context/ThemeContext';
 
@@ -15,6 +15,7 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
   const isMessagesActive = activeTab === 'messages';
   const isProfileActive = activeTab === 'profile';
   const isNotificationsActive = activeTab === 'notifications';
+  const isNetworkActive = activeTab === 'network';
 
   return (
     <header
@@ -79,6 +80,24 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
         >
           <Home size={16} className={isHomeActive ? (isDark ? 'navbar-active-icon' : 'text-indigo-700') : 'text-slate-400'} />
           <span className="hidden sm:inline">Home</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('network')}
+          aria-current={isNetworkActive ? 'page' : undefined}
+          className={`relative flex flex-col items-center justify-center gap-0.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+            isNetworkActive
+              ? isDark
+                ? 'navbar-active-item text-slate-900 border-white shadow-sm'
+                : 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
+          }`}
+          title="My Network"
+          id="navbar-network-btn"
+        >
+          <UserPlus size={16} className={isNetworkActive ? (isDark ? 'navbar-active-icon' : 'text-indigo-700') : 'text-slate-400'} />
+          <span className="hidden sm:inline">My Network</span>
         </button>
 
         <button

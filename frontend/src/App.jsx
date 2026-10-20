@@ -16,6 +16,7 @@ import AdminDashboard from './components/AdminDashboard';
 import LoginView from './components/LoginView';
 import ProfileView from './components/ProfileView';
 import NotificationsView from './components/NotificationsView';
+import NetworkView from './components/NetworkView';
 import { useAuth } from './context/AuthContext';
 import { API_URL } from './config/api';
 
@@ -821,7 +822,7 @@ export default function App() {
     }
   };
 
-  const handleConnectWithUser = async (userId) => {
+  const handleConnectWithUser = async (userId, connected = true) => {
     try {
       setRelationshipError('');
       const token = localStorage.getItem('token');
@@ -831,7 +832,7 @@ export default function App() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ connected: true })
+        body: JSON.stringify({ connected })
       });
       const result = await response.json();
       if (!response.ok) {
@@ -1118,6 +1119,18 @@ export default function App() {
               onMarkAllRead={handleMarkAllNotificationsRead}
               onNotificationClick={handleNotificationClick}
               onDismissNotification={handleDismissNotification}
+            />
+          )}
+
+          {activeTab === 'network' && (
+            <NetworkView
+              currentUser={currentUser}
+              users={users}
+              relationshipError={relationshipError}
+              onConnect={handleConnectWithUser}
+              onFollow={handleFollowUser}
+              onStartDirectMessage={handleStartDirectMessage}
+              onViewProfile={handleViewProfile}
             />
           )}
 
