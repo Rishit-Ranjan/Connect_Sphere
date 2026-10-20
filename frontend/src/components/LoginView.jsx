@@ -264,7 +264,6 @@ export default function LoginView({ verificationNotice }) {
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                <Sparkles size={16} />
                 Sign In
               </button>
 
