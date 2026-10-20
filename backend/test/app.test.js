@@ -20,12 +20,22 @@ const [
   { default: User },
   { default: Post },
   { default: NotificationStatus },
+  { default: Resource },
+  { default: DirectMessage },
+  { default: Notice },
+  { default: Room },
+  { default: RoomMessage },
   { default: emailService }
 ] = await Promise.all([
   import('../src/app.js'),
   import('../src/models/User.js'),
   import('../src/models/Post.js'),
   import('../src/models/NotificationStatus.js'),
+  import('../src/models/Resource.js'),
+  import('../src/models/DirectMessage.js'),
+  import('../src/models/Notice.js'),
+  import('../src/models/Room.js'),
+  import('../src/models/RoomMessage.js'),
   import('../src/services/emailService.js')
 ]);
 
@@ -628,4 +638,71 @@ test('following and connections are authenticated and persist in the user relati
     body: { following: true }
   });
   assert.equal(unauthenticated.response.status, 401);
+});
+
+test('account deletion requires the current password and removes only the signed-in account', async (t) => {
+  const userId = '507f1f77bcf86cd799439011';
+  const passwordHash = await bcrypt.hash('account-password', 4);
+  const account = { ...student, _id: userId, password: passwordHash };
+  const deletedUsers = [];
+  const updateManyCalls = [];
+  const deleteManyCalls = [];
+
+  t.mock.method(User, 'findById', () => ({
+    select: async () => account
+  }));
+  t.mock.method(User, 'updateMany', async (...args) => updateManyCalls.push(args));
+  t.mock.method(User, 'findByIdAndDelete', async (id) => {
+    deletedUsers.push(String(id));
+    return account;
+  });
+  for (const model of [Post, Resource, Room]) {
+    t.mock.method(model, 'find', () => ({
+      session() {
+        return this;
+      },
+      select: async () => []
+    }));
+  }
+  t.mock.method(User, 'startSession', async () => ({
+    withTransaction: async (callback) => callback(),
+    endSession: async () => {}
+  }));
+  t.mock.method(Post, 'updateMany', async (...args) => updateManyCalls.push(args));
+  for (const model of [Post, Resource, DirectMessage, NotificationStatus, Notice, RoomMessage]) {
+    t.mock.method(model, 'deleteMany', async (...args) => deleteManyCalls.push([model.modelName, ...args]));
+  }
+
+  const token = tokenFor(userId);
+  const missingPassword = await request('/api/users/me', { method: 'DELETE', token });
+  assert.equal(missingPassword.response.status, 400);
+  assert.deepEqual(deletedUsers, []);
+
+  const wrongPassword = await request('/api/users/me', {
+    method: 'DELETE',
+    token,
+    body: { password: 'not-the-password' }
+  });
+  assert.equal(wrongPassword.response.status, 400);
+  assert.deepEqual(deletedUsers, []);
+
+  const deleted = await request('/api/users/me', {
+    method: 'DELETE',
+    token,
+    body: { password: 'account-password' }
+  });
+  assert.equal(deleted.response.status, 200);
+  assert.equal(deleted.data.id, userId);
+  assert.deepEqual(deletedUsers, [userId]);
+  assert.deepEqual(updateManyCalls[0][1], {
+    $pull: { following: userId, followers: userId, connections: userId }
+  });
+  assert.ok(deleteManyCalls.some(([modelName]) => modelName === 'DirectMessage'));
+  assert.ok(deleteManyCalls.some(([modelName]) => modelName === 'Resource'));
+
+  const adminRouteDenied = await request(`/api/users/${userId}`, {
+    method: 'DELETE',
+    token
+  });
+  assert.equal(adminRouteDenied.response.status, 403);
 });

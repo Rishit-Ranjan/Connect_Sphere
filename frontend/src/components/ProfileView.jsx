@@ -25,6 +25,8 @@ import {
   Palette,
   ImagePlus,
   Upload,
+  Trash2,
+  X,
 } from "lucide-react";
 
 const BANNER_GRADIENTS = [
@@ -78,6 +80,7 @@ export default function ProfileView({
   resources,
   onUpdateProfile,
   onUpdateAvatar,
+  onDeleteAccount,
   onNavigateTab,
 }) {
   const currentUser = viewedUser || signedInUser;
@@ -101,6 +104,10 @@ export default function ProfileView({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [avatarError, setAvatarError] = useState("");
   const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const avatarInputRef = useRef(null);
   // Profile avatar presets removed (avoid hardcoded image placeholders)
 
@@ -163,6 +170,17 @@ export default function ProfileView({
       return;
     }
     handleAvatarSelection(file);
+  };
+  const handleDeleteAccount = async (event) => {
+    event.preventDefault();
+    setDeleteError("");
+    setIsDeletingAccount(true);
+    try {
+      await onDeleteAccount(deletePassword);
+    } catch (error) {
+      setDeleteError(error.message || "Unable to delete your account.");
+      setIsDeletingAccount(false);
+    }
   };
   const isAdmin = currentUser.role === "admin";
   const selectedBannerGradient =
@@ -403,6 +421,29 @@ export default function ProfileView({
                     Resource Moderation
                   </li>
                 </ul>
+              </div>
+            )}
+
+            {isOwnProfile && (
+              <div className="rounded-3xl border border-rose-200 bg-rose-50/60 p-5 shadow-sm">
+                <h3 className="text-xs font-display font-bold uppercase tracking-wider text-rose-800">
+                  Account management
+                </h3>
+                <p className="mt-2 text-[11px] leading-relaxed text-slate-600">
+                  Permanently delete your account and its posts, uploads, messages, and other content.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeletePassword("");
+                    setDeleteError("");
+                    setIsDeleteDialogOpen(true);
+                  }}
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-white px-3.5 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-600 hover:text-white"
+                >
+                  <Trash2 size={13} />
+                  Delete account
+                </button>
               </div>
             )}
           </div>
@@ -754,6 +795,80 @@ export default function ProfileView({
           </form>
         </div>
       ) : null}
+
+      {isOwnProfile && isDeleteDialogOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/55 p-4">
+          <section
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-account-title"
+            aria-describedby="delete-account-description"
+            className="w-full max-w-md rounded-2xl border border-rose-100 bg-white p-5 shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <span className="rounded-xl bg-rose-50 p-2 text-rose-600">
+                  <Trash2 size={18} />
+                </span>
+                <div>
+                  <h2 id="delete-account-title" className="text-base font-bold text-slate-900">
+                    Delete your account?
+                  </h2>
+                  <p id="delete-account-description" className="mt-2 text-xs leading-relaxed text-slate-600">
+                    This permanently removes your profile, posts, uploaded resources, messages, notices, and rooms you created. This cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={isDeletingAccount}
+                onClick={() => setIsDeleteDialogOpen(false)}
+                aria-label="Close account deletion dialog"
+                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleDeleteAccount} className="mt-5 space-y-3">
+              {deleteError && (
+                <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+                  {deleteError}
+                </p>
+              )}
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                Enter your password to confirm
+                <input
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  value={deletePassword}
+                  onChange={(event) => setDeletePassword(event.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm normal-case tracking-normal outline-none focus:border-rose-400 focus:ring-4 focus:ring-rose-500/10"
+                />
+              </label>
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  disabled={isDeletingAccount}
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isDeletingAccount || !deletePassword}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Trash2 size={13} />
+                  {isDeletingAccount ? "Deleting..." : "Permanently delete"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

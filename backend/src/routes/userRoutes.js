@@ -44,6 +44,7 @@ const handleAvatarUpload = (req, res, next) => {
 router.get('/me', protect, userController.getMe);
 router.patch('/me/avatar', protect, userController.updateAvatarPreset);
 router.post('/me/avatar/upload', protect, handleAvatarUpload, userController.uploadAvatar);
+router.delete('/me', protect, userController.deleteMyAccount);
 router.get('/', protect, userController.getUsers);
 router.patch('/:userId/follow', protect, userController.updateFollow);
 router.patch('/:userId/connection', protect, userController.updateConnection);

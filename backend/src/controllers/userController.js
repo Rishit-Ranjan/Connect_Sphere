@@ -1,6 +1,27 @@
 import { unlink } from 'fs/promises';
+import { basename, join } from 'path';
+import bcrypt from 'bcryptjs';
 import { isValidObjectId } from 'mongoose';
 import User from '../models/User.js';
+import Post from '../models/Post.js';
+import Resource from '../models/Resource.js';
+import DirectMessage from '../models/DirectMessage.js';
+import NotificationStatus from '../models/NotificationStatus.js';
+import Notice from '../models/Notice.js';
+import Room from '../models/Room.js';
+import RoomMessage from '../models/RoomMessage.js';
+import { AVATARS_DIR, POST_IMAGES_DIR, UPLOADS_DIR } from '../config/uploads.js';
+
+const { compare } = bcrypt;
+
+const removeUploadedFile = async (directory, filename, pattern) => {
+  if (!filename || basename(filename) !== filename || !pattern.test(filename)) return;
+  try {
+    await unlink(join(directory, filename));
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+};
 
 const allowedAvatarPresets = new Set([
   '/avatars/avatar-blue.svg',
@@ -218,6 +239,120 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+const deleteMyAccount = async (req, res, next) => {
+  let session;
+  try {
+    const { password } = req.body;
+    if (typeof password !== 'string' || !password) {
+      return res.status(400).json({ message: 'Enter your password to confirm account deletion.' });
+    }
+
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) {
+      return res.status(404).json({ message: 'Account not found.' });
+    }
+
+    if (!(await compare(password, user.password))) {
+      return res.status(400).json({ message: 'The password you entered is incorrect.' });
+    }
+
+    const userId = user._id;
+    const userIdString = String(userId);
+    let posts = [];
+    let resources = [];
+    session = await User.startSession();
+    await session.withTransaction(async () => {
+      const [ownedPosts, ownedResources, rooms] = await Promise.all([
+        Post.find({ author: userId }).session(session).select('imageName'),
+        Resource.find({ uploadedBy: userId }).session(session).select('storageName'),
+        Room.find({ createdBy: userId }).session(session).select('_id')
+      ]);
+      posts = ownedPosts;
+      resources = ownedResources;
+      const roomIds = rooms.map((room) => room._id);
+
+      await Promise.all([
+        User.updateMany(
+          { _id: { $ne: userId } },
+          { $pull: { following: userId, followers: userId, connections: userId } },
+          { session }
+        ),
+        Post.updateMany(
+          { author: { $ne: userId } },
+          { $pull: { likes: userId, comments: { user: userId } } },
+          { session }
+        ),
+        Post.deleteMany({ author: userId }, { session }),
+        Resource.deleteMany({ uploadedBy: userId }, { session }),
+        DirectMessage.deleteMany(
+          { $or: [{ senderId: userId }, { receiverId: userId }] },
+          { session }
+        ),
+        NotificationStatus.deleteMany({ user: userId }, { session }),
+        Notice.deleteMany({ author: userId }, { session }),
+        RoomMessage.deleteMany({
+          $or: [
+            { sender: userId },
+            ...(roomIds.length > 0 ? [{ roomId: { $in: roomIds } }] : [])
+          ]
+        }, { session }),
+        ...(roomIds.length > 0 ? [Room.deleteMany({ _id: { $in: roomIds } }, { session })] : [])
+      ]);
+      await User.findByIdAndDelete(userId, { session });
+    });
+
+    const fileCleanupTasks = [
+      ...posts.map((post) => () => removeUploadedFile(
+        POST_IMAGES_DIR,
+        post.imageName,
+        /^[a-f\d-]{36}\.(jpg|jpeg|png|webp)$/i
+      )),
+      ...resources.map((resource) => () => removeUploadedFile(
+        UPLOADS_DIR,
+        resource.storageName,
+        /^[a-f\d-]{36}\.[a-z\d]+$/i
+      ))
+    ];
+
+    if (typeof user.avatarUrl === 'string' && user.avatarUrl) {
+      let avatarFilename;
+      try {
+        const avatarUrl = new URL(user.avatarUrl);
+        avatarFilename = avatarUrl.pathname.startsWith('/api/users/avatars/')
+          ? basename(avatarUrl.pathname)
+          : '';
+      } catch {
+        avatarFilename = '';
+      }
+      fileCleanupTasks.push(() => removeUploadedFile(
+        AVATARS_DIR,
+        avatarFilename,
+        /^[a-f\d-]{36}\.(jpg|jpeg|png|webp)$/i
+      ));
+    }
+
+    const cleanupResults = await Promise.allSettled(fileCleanupTasks.map((cleanup) => cleanup()));
+    const cleanupFailures = cleanupResults.filter((result) => result.status === 'rejected');
+    if (cleanupFailures.length > 0) {
+      cleanupFailures.forEach((failure) => console.error('Unable to remove account upload:', failure.reason));
+    }
+
+    res.json({
+      message: cleanupFailures.length > 0
+        ? 'Account and associated content were deleted, but some uploaded files could not be removed.'
+        : 'Account and associated content were permanently deleted.',
+      id: userIdString,
+      uploadsCleanupRequired: cleanupFailures.length > 0
+    });
+  } catch (error) {
+    next(error);
+  } finally {
+    if (session) {
+      await session.endSession();
+    }
+  }
+};
+
 export default {
   getMe,
   getUsers,
@@ -226,5 +361,6 @@ export default {
   updateAvatarPreset,
   uploadAvatar,
   updateUserRole,
-  deleteUser
+  deleteUser,
+  deleteMyAccount
 };

@@ -23,6 +23,9 @@ Following and adding contacts are saved to the signed-in user's account and
 remain in place after refreshing or signing in on another device. Follow
 updates also maintain the followed user's follower list in a MongoDB
 transaction, so the database must support transactions (as MongoDB Atlas does).
+Users can permanently delete their own accounts from the profile overview after
+confirming their password. This also removes their posts, uploaded resources,
+messages, notices, rooms they created, and social-relationship references.
 
 Post images accept JPG, PNG, and WebP files up to 5 MB. Resource uploads accept
 PDF, ZIP, EPUB, PPTX, and DOCX files up to 25 MB. Post images, profile avatars,

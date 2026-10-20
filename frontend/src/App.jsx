@@ -820,6 +820,29 @@ export default function App() {
     }
   };
 
+  const handleDeleteMyAccount = async (password) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/users/me`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ password })
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Unable to delete your account.');
+    }
+
+    logout();
+    setIsMessagesOpen(false);
+    setSelectedRecipient(null);
+    setSelectedRoomId('');
+    setViewedProfileUser(null);
+  };
+
   const handleUpdateUserRole = async (userId, newRole) => {
     try {
       const token = localStorage.getItem('token');
@@ -1223,6 +1246,7 @@ export default function App() {
               resources={resources}
               onUpdateProfile={handleUpdateProfile}
               onUpdateAvatar={handleUpdateAvatar}
+              onDeleteAccount={handleDeleteMyAccount}
               onNavigateTab={setActiveTab}
             />
           )}
