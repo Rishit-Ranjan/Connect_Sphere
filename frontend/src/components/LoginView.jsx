@@ -177,9 +177,9 @@ export default function LoginView({ verificationNotice }) {
         src="/welcome-background.png"
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover opacity-60 pointer-events-none"
+        className="absolute inset-0 h-full w-full object-cover opacity-95 pointer-events-none"
       />
-      <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-indigo-50/25 to-slate-50/35 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-indigo-50/25 to-slate-50/35 pointer-events-none" />
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-48 -left-40 w-[34rem] h-[34rem] rounded-full bg-indigo-200/35 blur-[110px]" />
         <div className="absolute -bottom-52 -right-40 w-[38rem] h-[38rem] rounded-full bg-violet-200/35 blur-[120px]" />
