@@ -100,6 +100,67 @@ test('sign-in returns a token and public user details for valid credentials', as
   assert.equal('password' in data.user, false);
 });
 
+test('students can register with either a registration number or email and sign in with email', async (t) => {
+  const createdUsers = [];
+  t.mock.method(User, 'findOne', async () => null);
+  t.mock.method(User, 'create', async (fields) => {
+    const user = { ...fields, _id: `new-user-${createdUsers.length}` };
+    createdUsers.push(user);
+    return user;
+  });
+
+  const emailRegistration = await request('/api/auth/register', {
+    method: 'POST',
+    body: {
+      name: 'Email Student',
+      handle: 'EmailStudent',
+      email: ' EMAIL@example.com ',
+      password: 'email-password'
+    }
+  });
+  assert.equal(emailRegistration.response.status, 201);
+  assert.equal(createdUsers[0].email, 'email@example.com');
+  assert.equal(createdUsers[0].handle, 'emailstudent');
+  assert.equal('registrationNumber' in createdUsers[0], false);
+  assert.equal(createdUsers[0].role, 'student');
+
+  const registrationNumberSignup = await request('/api/auth/register', {
+    method: 'POST',
+    body: {
+      name: 'Registration Student',
+      handle: 'RegistrationStudent',
+      email: 'registration@example.com',
+      registrationNumber: ' 2026CS101 ',
+      password: 'registration-password'
+    }
+  });
+  assert.equal(registrationNumberSignup.response.status, 201);
+  assert.equal(createdUsers[1].registrationNumber, '2026cs101');
+
+  const invalidEmail = await request('/api/auth/register', {
+    method: 'POST',
+    body: {
+      name: 'Invalid Email',
+      handle: 'invalidemail',
+      email: 'not-an-email',
+      password: 'password'
+    }
+  });
+  assert.equal(invalidEmail.response.status, 400);
+
+  const emailPasswordHash = await bcrypt.hash('email-password', 4);
+  t.mock.method(User, 'findOne', async (query) => {
+    assert.deepEqual(query, { email: 'email@example.com', role: 'student' });
+    return { ...createdUsers[0], password: emailPasswordHash };
+  });
+  const emailLogin = await request('/api/auth/login', {
+    method: 'POST',
+    body: { query: 'EMAIL@example.com', password: 'email-password', identifierType: 'email' }
+  });
+  assert.equal(emailLogin.response.status, 200);
+  assert.equal(emailLogin.data.user.email, 'email@example.com');
+});
+
 test('posting requires text and returns a created post', async (t) => {
   mockAuthenticatedUsers(t);
   const createdAt = new Date('2026-01-01T00:00:00.000Z');

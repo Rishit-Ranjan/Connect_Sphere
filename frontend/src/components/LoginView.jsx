@@ -15,12 +15,20 @@ export default function LoginView() {
   const [handle, setHandle] = useState('');
   const [email, setEmail] = useState('');
   const [newRegNo, setNewRegNo] = useState('');
+  const [signupMethod, setSignupMethod] = useState('registrationNumber');
   const [department, setDepartment] = useState('');
   const [bio, setBio] = useState('');
   const [password, setPassword] = useState('');
 
+  const [loginIdentifierType, setLoginIdentifierType] = useState(
+    () => localStorage.getItem('connectsphere.loginIdentifierType') || 'registrationNumber'
+  );
   const [regNo, setRegNo] = useState(
-    () => localStorage.getItem('connectsphere.registrationNumber') || ''
+    () => localStorage.getItem(
+      localStorage.getItem('connectsphere.loginIdentifierType') === 'email'
+        ? 'connectsphere.email'
+        : 'connectsphere.registrationNumber'
+    ) || ''
   );
   const [signInPassword, setSignInPassword] = useState('');
   const [signInError, setSignInError] = useState('');
@@ -34,18 +42,24 @@ export default function LoginView() {
   const [showForgotHelp, setShowForgotHelp] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const changeLoginIdentifierType = (type) => {
+    setLoginIdentifierType(type);
+    localStorage.setItem('connectsphere.loginIdentifierType', type);
+    setRegNo(localStorage.getItem(type === 'email' ? 'connectsphere.email' : 'connectsphere.registrationNumber') || '');
+  };
+
   const handleSignIn = async (e) => {
     e.preventDefault();
     setSignInError('');
 
     if (!regNo.trim() || !signInPassword.trim()) {
-      setSignInError('Please enter both registration number and password.');
+      setSignInError('Please enter your registration number or email, and password.');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      await login(regNo.trim(), signInPassword.trim(), 'registrationNumber');
+      await login(regNo.trim(), signInPassword.trim(), loginIdentifierType);
     } catch (error) {
       console.error('Login error:', error);
       setSignInError(error.message || 'Login failed.');
@@ -58,14 +72,15 @@ export default function LoginView() {
     e.preventDefault();
     setCreateError('');
 
-    if (!name.trim() || !email.trim() || !newRegNo.trim() || !password.trim()) {
+    if (!name.trim() || !email.trim() || !password.trim() ||
+      (signupMethod === 'registrationNumber' && !newRegNo.trim())) {
       setCreateError('Please fill in all required fields.');
       return;
     }
 
     const newUser = {
       name: name.trim(),
-      registrationNumber: newRegNo.trim(),
+      ...(signupMethod === 'registrationNumber' ? { registrationNumber: newRegNo.trim() } : {}),
       handle: handle.trim().toLowerCase() || name.replace(/\s+/g, '').toLowerCase(),
       email: email.trim().toLowerCase(),
       password: password.trim(),
@@ -76,12 +91,22 @@ export default function LoginView() {
     try {
       setIsSubmitting(true);
       await register(newUser);
-      setRegNo(newUser.registrationNumber);
-      localStorage.setItem('connectsphere.registrationNumber', newUser.registrationNumber);
+      const nextLoginIdentifier = signupMethod === 'registrationNumber'
+        ? newUser.registrationNumber
+        : newUser.email;
+      const nextLoginIdentifierType = signupMethod === 'registrationNumber' ? 'registrationNumber' : 'email';
+      setRegNo(nextLoginIdentifier);
+      setLoginIdentifierType(nextLoginIdentifierType);
+      localStorage.setItem('connectsphere.loginIdentifierType', nextLoginIdentifierType);
+      if (signupMethod === 'registrationNumber') {
+        localStorage.setItem('connectsphere.registrationNumber', nextLoginIdentifier);
+      } else {
+        localStorage.setItem('connectsphere.email', nextLoginIdentifier);
+      }
       setSignInPassword('');
       setPassword('');
       setCreateError('');
-      setRegistrationSuccess('Account created. Sign in with your registration number and password.');
+      setRegistrationSuccess(`Account created. Sign in with your ${signupMethod === 'email' ? 'email address' : 'registration number'} and password.`);
       setActiveTab('signin');
     } catch (error) {
       console.error('Registration error:', error);
@@ -168,11 +193,12 @@ export default function LoginView() {
           <div className="relative z-10 hidden md:block space-y-3">
             <div className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm">
               <div className="w-8 h-8 rounded-xl bg-slate-900/60 flex items-center justify-center text-sm shrink-0">📢</div>
-              <div>
+              {signupMethod === 'registrationNumber' && <div>
                 <h4 className="text-xs font-semibold text-white">Instant Broadcasts</h4>
                 <p className="text-white/65 text-[11px] mt-1">Lecture schedules and placement updates</p>
-              </div>
+              </div>}
             </div>
+            
 
             <div className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm">
               <div className="w-8 h-8 rounded-xl bg-slate-900/60 flex items-center justify-center text-sm shrink-0">💬</div>
@@ -241,7 +267,7 @@ export default function LoginView() {
                     Welcome back
                   </h3>
                   <p className="text-slate-500 text-sm leading-relaxed">
-                    Sign in with your student registration number to continue.
+                    Sign in with your student registration number or email address.
                   </p>
                 </div>
 
@@ -257,18 +283,47 @@ export default function LoginView() {
                   </div>
                 )}
 
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => changeLoginIdentifierType('registrationNumber')}
+                    aria-pressed={loginIdentifierType === 'registrationNumber'}
+                    className={`flex-1 py-2 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
+                      loginIdentifierType === 'registrationNumber'
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                        : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-200'
+                    }`}
+                  >
+                    Registration number
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeLoginIdentifierType('email')}
+                    aria-pressed={loginIdentifierType === 'email'}
+                    className={`flex-1 py-2 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
+                      loginIdentifierType === 'email'
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                        : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-200'
+                    }`}
+                  >
+                    Email
+                  </button>
+                </div>
+
                 <div className="space-y-2">
                   <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-[0.12em]">
-                    Registration number
+                    {loginIdentifierType === 'email' ? 'Email address' : 'Registration number'}
                   </label>
                   <input
-                    type="text"
                     required
-                    placeholder="e.g. 2023CS101"
+                    placeholder={loginIdentifierType === 'email' ? 'you@campus.edu' : 'e.g. 2023CS101'}
+                    type={loginIdentifierType === 'email' ? 'email' : 'text'}
                     value={regNo}
                     onChange={(e) => {
                       setRegNo(e.target.value);
-                      localStorage.setItem('connectsphere.registrationNumber', e.target.value);
+                      if (loginIdentifierType === 'registrationNumber') {
+                        localStorage.setItem('connectsphere.registrationNumber', e.target.value);
+                      }
                       setRegistrationSuccess('');
                       if (signInError) setSignInError('');
                     }}
@@ -363,6 +418,39 @@ export default function LoginView() {
                   </div>
                 )}
 
+                <fieldset className="space-y-2">
+                  <legend className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Sign up using
+                  </legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSignupMethod('registrationNumber')}
+                      aria-pressed={signupMethod === 'registrationNumber'}
+                      className={`py-2 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
+                        signupMethod === 'registrationNumber'
+                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                          : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-200'
+                      }`}
+                    >
+                      Registration number
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSignupMethod('email')}
+                      aria-pressed={signupMethod === 'email'}
+                      className={`py-2 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
+                        signupMethod === 'email'
+                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                          : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-200'
+                      }`}
+                    >
+                      Email address
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400">Every account needs a unique email address.</p>
+                </fieldset>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
@@ -392,7 +480,7 @@ export default function LoginView() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className={`grid ${signupMethod === 'registrationNumber' ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                       Email Address *
@@ -407,19 +495,19 @@ export default function LoginView() {
                     />
                   </div>
 
-                  <div>
+                  {signupMethod === 'registrationNumber' && <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      Reg. No. *
+                      Reg. No.
                     </label>
                     <input
                       type="text"
-                      required
+                      required={signupMethod === 'registrationNumber'}
                       placeholder="e.g. 2023CS101"
                       value={newRegNo}
                       onChange={(e) => setNewRegNo(e.target.value)}
                       className="w-full text-xs px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
                     />
-                  </div>
+                  </div>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
