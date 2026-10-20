@@ -1252,7 +1252,7 @@ export default function App() {
           )}
           </main>
 
-          <div className="hidden md:block md:w-56 lg:w-64 xl:w-80 2xl:w-96 bg-slate-50 shrink-0">
+          <div className="hidden md:block md:w-64 lg:w-72 xl:w-96 2xl:w-[28rem] bg-slate-50 shrink-0">
             <RightSidebar
               currentUser={currentUser}
               users={users}
