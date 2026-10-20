@@ -271,17 +271,21 @@ export default function App() {
     }
   }, [activeTab, selectedRoomId]);
 
-  const handleAddPost = async ({ text, imageUrl }) => {
+  const handleAddPost = async ({ text, image }) => {
     try {
       const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('text', text);
+      if (image) {
+        formData.append('image', image);
+      }
 
       const res = await fetch(`${API_URL}/posts`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ text, imageUrl })
+        body: formData
       });
 
       const data = await res.json();
@@ -293,6 +297,7 @@ export default function App() {
       setPosts((prev) => [data, ...prev]);
     } catch (error) {
       console.error('Error creating post:', error);
+      throw error;
     }
   };
 

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useEffect, useRef, useState } from 'react';
+import { API_URL, resolveApiAssetUrl } from '../config/api';
 import {
   Heart,
   MessageCircle,
@@ -15,6 +16,60 @@ import {
   X,
   Pencil
 } from 'lucide-react';
+
+function PostImage({ imageUrl }) {
+  const [imageSrc, setImageSrc] = useState('');
+
+  useEffect(() => {
+    setImageSrc('');
+    if (!imageUrl?.startsWith('/api/posts/images/')) {
+      setImageSrc(resolveApiAssetUrl(imageUrl));
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    let objectUrl;
+    let cancelled = false;
+    const token = localStorage.getItem('token');
+
+    fetch(resolveApiAssetUrl(imageUrl), {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to load post image (${response.status}).`);
+        }
+        return response.blob();
+      })
+      .then((imageBlob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(imageBlob);
+        setImageSrc(objectUrl);
+      })
+      .catch((error) => {
+        if (error.name !== 'AbortError') {
+          console.error('Error loading post image:', error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [imageUrl]);
+
+  if (!imageSrc) return null;
+  return (
+    <img
+      src={imageSrc}
+      alt="Post attachment"
+      className="w-full h-full object-cover"
+      referrerPolicy="no-referrer"
+    />
+  );
+}
 
 export default function FeedView({
   currentUser,
@@ -35,6 +90,9 @@ export default function FeedView({
   const [searchText, setSearchText] = useState('');
   const [newPostText, setNewPostText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [postError, setPostError] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
   const [attachedFile, setAttachedFile] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
   const [expandedComments, setExpandedComments] = useState({});
@@ -44,6 +102,17 @@ export default function FeedView({
   const [editingComment, setEditingComment] = useState(null);
   const [editCommentText, setEditCommentText] = useState('');
   const [commentActionError, setCommentActionError] = useState('');
+
+  useEffect(() => {
+    if (!selectedImage) {
+      setImagePreview('');
+      return undefined;
+    }
+
+    const previewUrl = URL.createObjectURL(selectedImage);
+    setImagePreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [selectedImage]);
 
   useEffect(() => {
     if (notificationTarget?.type === 'comment' && notificationTarget.postId) {
@@ -79,21 +148,31 @@ export default function FeedView({
     }
   }, [notificationTarget, expandedComments]);
 
-  const handleCreatePost = (e) => {
-  e.preventDefault();
+  const handleCreatePost = async (e) => {
+    e.preventDefault();
+    setPostError('');
+    if (!newPostText.trim()) {
+      setPostError('Post text is required.');
+      return;
+    }
 
-  if (!newPostText.trim() && !selectedImage && !attachedFile) return;
+    setIsPosting(true);
+    try {
+      await onAddPost({
+        text: newPostText,
+        image: selectedImage
+      });
 
-  onAddPost({
-    text: newPostText,
-    imageUrl: selectedImage || ''
-  });
-
-  setNewPostText('');
-  setSelectedImage(null);
-  setShowImagePicker(false);
-  setAttachedFile(null);
-};
+      setNewPostText('');
+      setSelectedImage(null);
+      setShowImagePicker(false);
+      setAttachedFile(null);
+    } catch (error) {
+      setPostError(error.message || 'Failed to create post.');
+    } finally {
+      setIsPosting(false);
+    }
+  };
 
   const handleAttachmentSelect = (event) => {
     const file = event.target.files[0];
@@ -140,12 +219,16 @@ export default function FeedView({
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
+    setPostError('');
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result);
-      };
-      reader.readAsDataURL(file);
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        setPostError('Choose a JPG, PNG, or WebP image.');
+      } else if (file.size > 5 * 1024 * 1024) {
+        setPostError('Choose an image no larger than 5 MB.');
+      } else {
+        setSelectedImage(file);
+      }
     }
     event.target.value = '';
   };
@@ -221,15 +304,21 @@ export default function FeedView({
 
               {selectedImage && (
                 <div className="relative mt-3 rounded-2xl overflow-hidden border border-slate-100 group max-h-[220px]">
-                  <img src={selectedImage} alt="Attachment Preview" className="w-full h-full object-cover" />
+                  <img src={imagePreview} alt="Attachment Preview" className="w-full h-full object-cover" />
                   <button
                     type="button"
-                    onClick={() => setSelectedImage(null)}
+                    onClick={() => {
+                      setSelectedImage(null);
+                      setPostError('');
+                    }}
                     className="absolute top-2 right-2 bg-slate-900/80 hover:bg-slate-900 text-white p-1 rounded-full cursor-pointer"
                   >
                     <X size={12} />
                   </button>
                 </div>
+              )}
+              {postError && (
+                <p role="alert" className="mt-2 text-xs text-rose-600">{postError}</p>
               )}
 
               {attachedFile && (
@@ -257,7 +346,7 @@ export default function FeedView({
             <div className="flex items-center gap-1">
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 ref={fileInputRef}
                 onChange={handleImageUpload}
                 className="hidden"
@@ -292,10 +381,10 @@ export default function FeedView({
 
             <button
               type="submit"
-              disabled={!newPostText.trim() && !selectedImage && !attachedFile}
+              disabled={isPosting || (!newPostText.trim() && !selectedImage && !attachedFile)}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-45 disabled:pointer-events-none text-white font-semibold text-xs py-2 px-5 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
-              <span>Broadcast</span>
+              <span>{isPosting ? 'Posting…' : 'Broadcast'}</span>
               <Send size={12} />
             </button>
           </div>
@@ -400,12 +489,7 @@ export default function FeedView({
 
                 {post.imageUrl && (
                   <div className="rounded-2xl overflow-hidden border border-slate-100 max-h-[350px]">
-                    <img
-                      src={post.imageUrl || null}
-                      alt="Post attachment"
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
+                    <PostImage imageUrl={post.imageUrl} />
                   </div>
                 )}
 

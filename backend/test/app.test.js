@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
+import { unlink } from 'node:fs/promises';
+import { join } from 'node:path';
 import { after, test } from 'node:test';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { POST_IMAGES_DIR } from '../src/config/uploads.js';
 
 process.env.JWT_SECRET = 'connect-sphere-test-secret';
 
@@ -47,9 +50,9 @@ async function request(path, { method = 'GET', token, body } = {}) {
     method,
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(body ? { 'Content-Type': 'application/json' } : {})
+      ...(body && !(body instanceof FormData) ? { 'Content-Type': 'application/json' } : {})
     },
-    ...(body ? { body: JSON.stringify(body) } : {})
+    ...(body ? { body: body instanceof FormData ? body : JSON.stringify(body) } : {})
   });
 
   return { response, data: await response.json() };
@@ -113,7 +116,8 @@ test('posting requires text and returns a created post', async (t) => {
     assert.deepEqual(fields, {
       author: student._id,
       text: 'Hello, ConnectSphere!',
-      imageUrl: ''
+      imageUrl: '',
+      imageName: ''
     });
     return { _id: populatedPost._id };
   });
@@ -125,7 +129,6 @@ test('posting requires text and returns a created post', async (t) => {
       return Promise.resolve(populatedPost).then(resolve, reject);
     }
   }));
-
   const token = tokenFor(student._id);
   const missingText = await request('/api/posts', {
     method: 'POST',
@@ -145,6 +148,107 @@ test('posting requires text and returns a created post', async (t) => {
   assert.equal(created.data.text, populatedPost.text);
   assert.equal(created.data.author._id, student._id);
   assert.deepEqual(created.data.comments, []);
+});
+
+test('post images upload as files and are served from persistent upload storage', async (t) => {
+  mockAuthenticatedUsers(t);
+  const imageBytes = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jXioAAAAASUVORK5CYII=',
+    'base64'
+  );
+  let createdFields;
+  let populatedPost;
+
+  t.mock.method(Post, 'create', async (fields) => {
+    createdFields = fields;
+    populatedPost = {
+      _id: 'image-post-id',
+      text: fields.text,
+      imageUrl: fields.imageUrl,
+      imageName: fields.imageName,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      author: student
+    };
+    return { _id: populatedPost._id };
+  });
+  t.mock.method(Post, 'findById', () => ({
+    populate() {
+      return this;
+    },
+    then(resolve, reject) {
+      return Promise.resolve(populatedPost).then(resolve, reject);
+    }
+  }));
+  t.mock.method(Post, 'findOne', (query) => ({
+    select() {
+      assert.equal(query.imageName, createdFields.imageName);
+      return Promise.resolve({ _id: populatedPost._id });
+    }
+  }));
+
+  const form = new FormData();
+  form.set('text', 'Post with an image');
+  form.set('image', new Blob([imageBytes], { type: 'image/png' }), 'pixel.png');
+  const { response, data } = await request('/api/posts', {
+    method: 'POST',
+    token: tokenFor(student._id),
+    body: form
+  });
+
+  assert.equal(response.status, 201);
+  assert.equal(createdFields.author, student._id);
+  assert.equal(createdFields.text, 'Post with an image');
+  assert.match(createdFields.imageName, /^[a-f\d-]+\.png$/i);
+  assert.equal(data.imageUrl, `/api/posts/images/${createdFields.imageName}`);
+
+  t.after(async () => {
+    await unlink(join(POST_IMAGES_DIR, createdFields.imageName));
+  });
+
+  const imageResponse = await fetch(`${baseUrl}${data.imageUrl}`, {
+    headers: { Authorization: `Bearer ${tokenFor(student._id)}` }
+  });
+  assert.equal(imageResponse.status, 200);
+  assert.deepEqual(Buffer.from(await imageResponse.arrayBuffer()), imageBytes);
+
+  const unauthorizedImage = await fetch(`${baseUrl}${data.imageUrl}`);
+  assert.equal(unauthorizedImage.status, 401);
+
+  const invalidImageForm = new FormData();
+  invalidImageForm.set('text', 'File with a false image type');
+  invalidImageForm.set('image', new Blob(['not a PNG'], { type: 'image/png' }), 'invalid.png');
+  const invalidImage = await request('/api/posts', {
+    method: 'POST',
+    token: tokenFor(student._id),
+    body: invalidImageForm
+  });
+  assert.equal(invalidImage.response.status, 400);
+  assert.equal(invalidImage.data.message, 'Uploaded file is not a valid image.');
+  assert.equal(createdFields.imageName, new URL(data.imageUrl, baseUrl).pathname.split('/').pop());
+
+  const unsupportedForm = new FormData();
+  unsupportedForm.set('text', 'Unsupported image');
+  unsupportedForm.set('image', new Blob(['not an image'], { type: 'image/gif' }), 'image.gif');
+  const unsupported = await request('/api/posts', {
+    method: 'POST',
+    token: tokenFor(student._id),
+    body: unsupportedForm
+  });
+  assert.equal(unsupported.response.status, 400);
+
+  const oversizedForm = new FormData();
+  oversizedForm.set('text', 'Oversized image');
+  oversizedForm.set(
+    'image',
+    new Blob([Buffer.alloc(5 * 1024 * 1024 + 1)], { type: 'image/png' }),
+    'oversized.png'
+  );
+  const oversized = await request('/api/posts', {
+    method: 'POST',
+    token: tokenFor(student._id),
+    body: oversizedForm
+  });
+  assert.equal(oversized.response.status, 413);
 });
 
 test('comments can be added and only their author can edit or delete them', async (t) => {

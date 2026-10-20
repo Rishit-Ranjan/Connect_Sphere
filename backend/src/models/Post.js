@@ -33,6 +33,11 @@ const postSchema = new Schema(
       type: String,
       default: ''
     },
+    imageName: {
+      type: String,
+      default: '',
+      index: true
+    },
     likes: [
       {
         type: Schema.Types.ObjectId,

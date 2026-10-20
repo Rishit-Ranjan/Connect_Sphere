@@ -1,4 +1,36 @@
+import { open, unlink } from 'fs/promises';
+import { basename, join } from 'path';
 import Post from '../models/Post.js';
+import { POST_IMAGES_DIR } from '../config/uploads.js';
+
+const removeUploadedImage = async (filePath) => {
+  if (!filePath) return;
+  try {
+    await unlink(filePath);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+};
+
+const hasValidImageSignature = async (file) => {
+  const handle = await open(file.path, 'r');
+  try {
+    const header = Buffer.alloc(12);
+    const { bytesRead } = await handle.read(header, 0, header.length, 0);
+    if (file.mimetype === 'image/jpeg') {
+      return bytesRead >= 3 && header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
+    }
+    if (file.mimetype === 'image/png') {
+      return header.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    }
+    return file.mimetype === 'image/webp' &&
+      bytesRead >= 12 &&
+      header.toString('ascii', 0, 4) === 'RIFF' &&
+      header.toString('ascii', 8, 12) === 'WEBP';
+  } finally {
+    await handle.close();
+  }
+};
 
 const getPosts = async (req, res, next) => {
   try {
@@ -31,18 +63,56 @@ const getPosts = async (req, res, next) => {
   }
 };
 
+const getPostImage = async (req, res, next) => {
+  try {
+    const { imageName } = req.params;
+    if (
+      basename(imageName) !== imageName ||
+      !/^[a-f\d-]{36}\.(jpg|jpeg|png|webp)$/i.test(imageName)
+    ) {
+      return res.status(404).json({ message: 'Image not found.' });
+    }
+
+    const post = await Post.findOne({ imageName }).select('_id');
+    if (!post) {
+      return res.status(404).json({ message: 'Image not found.' });
+    }
+
+    res.set('Cache-Control', 'private, no-store');
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.sendFile(join(POST_IMAGES_DIR, imageName), (error) => {
+      if (error?.code === 'ENOENT') {
+        if (!res.headersSent) {
+          res.status(404).json({ message: 'Image not found.' });
+        }
+      } else if (error) {
+        next(error);
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const createPost = async (req, res, next) => {
   try {
     const { text, imageUrl } = req.body;
 
     if (!text || !text.trim()) {
+      await removeUploadedImage(req.file?.path);
       return res.status(400).json({ message: 'Post text is required.' });
+    }
+
+    if (req.file && !(await hasValidImageSignature(req.file))) {
+      await removeUploadedImage(req.file.path);
+      return res.status(400).json({ message: 'Uploaded file is not a valid image.' });
     }
 
     const post = await Post.create({
       author: req.user._id,
       text: text.trim(),
-      imageUrl: imageUrl || ''
+      imageUrl: req.file ? `/api/posts/images/${req.file.filename}` : (imageUrl || ''),
+      imageName: req.file?.filename || ''
     });
 
     const populatedPost = await Post.findById(post._id)
@@ -60,6 +130,11 @@ const createPost = async (req, res, next) => {
       comments: []
     });
   } catch (error) {
+    try {
+      await removeUploadedImage(req.file?.path);
+    } catch (cleanupError) {
+      return next(cleanupError);
+    }
     next(error);
   }
 };
@@ -231,6 +306,9 @@ const deletePost = async (req, res, next) => {
     }
 
     await Post.findByIdAndDelete(postId);
+    if (post.imageName) {
+      await removeUploadedImage(join(POST_IMAGES_DIR, basename(post.imageName)));
+    }
 
     res.json({ message: 'Post deleted successfully.', postId });
   } catch (error) {
@@ -239,7 +317,8 @@ const deletePost = async (req, res, next) => {
 };
 
 export default { 
-  getPosts, 
+  getPosts,
+  getPostImage,
   createPost, 
   toggleLikePost, 
   addCommentToPost,

@@ -16,9 +16,10 @@ remain in place after refreshing or signing in on another device. Follow
 updates also maintain the followed user's follower list in a MongoDB
 transaction, so the database must support transactions (as MongoDB Atlas does).
 
-Resource uploads accept PDF, ZIP, EPUB, PPTX, and DOCX files up to 25 MB. Files
-are stored in `backend/uploads`, so preserve that directory when backing up or
-moving the backend.
+Post images accept JPG, PNG, and WebP files up to 5 MB. Resource uploads accept
+PDF, ZIP, EPUB, PPTX, and DOCX files up to 25 MB. Post images, profile avatars,
+and resource files are stored in `backend/uploads`; preserve that directory
+when backing up or moving the backend.
 
 ### Tests
 
@@ -55,11 +56,13 @@ start, environment, and storage settings with your hosting provider:
    backend environment, then run `npm run create-admin` in `backend` once.
    `ADMIN_DEPARTMENT` is optional. Do not expose these values in the frontend.
 
-Uploaded resources and user avatar images are written to `backend/uploads`
-(avatars are in its `avatars` subdirectory). The application creates these
-directories if they do not exist, but it does not use remote object storage.
-Attach persistent storage to the backend service at `backend/uploads` and
-include it in backups; otherwise uploads can be lost when an instance is
+Uploaded post images, resources, and user avatar images are written to
+`backend/uploads` (in the `posts`, `avatars`, and root subdirectories,
+respectively). Post images are served through an authenticated endpoint. The
+application creates these directories if they do not exist, but it does not use
+remote object storage. Attach persistent storage to the
+backend service at `backend/uploads` and include it in backups; otherwise
+uploads can be lost when an instance is
 replaced, restarted, or redeployed. If the hosting provider cannot mount
 persistent storage, uploads need to be migrated to a persistent object-storage
 service before production use.
