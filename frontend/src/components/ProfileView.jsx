@@ -112,7 +112,17 @@ export default function ProfileView({
   // Profile avatar presets removed (avoid hardcoded image placeholders)
 
   // Derive counts
-  const myPosts = posts.filter((p) => p.author.id === currentUser.id);
+  const myPosts = posts.filter((post) =>
+    String(post.author?.id || post.author?._id || '') === String(currentUserId || '')
+  );
+  const myComments = posts.flatMap((post) =>
+    (post.comments || [])
+      .filter((comment) =>
+        String(comment.author?.id || comment.author?._id || comment.user?.id || comment.user?._id || '') ===
+        String(currentUserId || '')
+      )
+      .map((comment) => ({ ...comment, post }))
+  ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   const myResources = resources.filter(
     (r) => r.uploadedBy === currentUser.name,
   );
@@ -514,85 +524,115 @@ export default function ProfileView({
                 </span>
               </div>
 
-              {myPosts.length === 0 && myResources.length === 0 ? (
-                <div className="text-center py-10 border border-dashed border-slate-200 rounded-2xl">
-                  <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center mx-auto text-slate-400 mb-2">
-                    <FileText size={18} />
+              <div className="max-h-[430px] space-y-5 overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <section aria-labelledby="profile-posts-heading" className="min-w-0 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <h4 id="profile-posts-heading" className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                      <FileText size={12} className="text-indigo-600" />
+                      Posts
+                    </h4>
+                    <span className="text-[10px] font-mono text-slate-400">{myPosts.length}</span>
                   </div>
-                  <p className="text-xs font-semibold text-slate-500">
-                    No postings discovered
-                  </p>
-                  <p className="text-[10px] text-slate-400 mt-1 max-w-xs mx-auto">
-                    Your updates, files, and lectures will show up here once you
-                    post.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
-                  {/* Render Posts */}
-                  {myPosts.map((post) => (
-                    <div
-                      key={post.id}
-                      className="border border-slate-100 bg-slate-50/30 p-3 rounded-2xl space-y-2"
-                    >
-                      <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                        <span className="font-bold text-indigo-600 uppercase">
-                          FEED POST
-                        </span>
-                        <span>
-                          {new Date(post.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-800 leading-relaxed font-medium line-clamp-3">
-                        {post.text}
-                      </p>
-                      <div className="flex items-center gap-4 text-[10px] font-mono text-slate-500 pt-1 border-t border-slate-100/60">
-                        <span className="flex items-center gap-1">
-                          <Heart size={11} className="text-rose-500" />{" "}
-                          {post.likesCount} Likes
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageSquare size={11} className="text-slate-400" />{" "}
-                          {post.comments.length} Comments
-                        </span>
-                      </div>
+                  {myPosts.length > 0 ? (
+                    <div className="space-y-2.5">
+                      {myPosts.map((post) => (
+                        <article
+                          key={post.id}
+                          className="rounded-2xl border border-slate-100 bg-slate-50/40 p-3"
+                        >
+                          <div className="flex items-center justify-between gap-3 text-[10px] font-mono text-slate-400">
+                            <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                            <span>{post.comments?.length || 0} comments</span>
+                          </div>
+                          <p className="mt-2 whitespace-pre-wrap break-words text-xs font-medium leading-relaxed text-slate-800">
+                            {post.text}
+                          </p>
+                          <div className="mt-2 flex items-center gap-4 border-t border-slate-100 pt-2 text-[10px] font-mono text-slate-500">
+                            <span className="flex items-center gap-1">
+                              <Heart size={11} className="text-rose-500" />
+                              {post.likesCount || 0} likes
+                            </span>
+                          </div>
+                        </article>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-center text-[11px] text-slate-400">
+                      No posts yet.
+                    </p>
+                  )}
+                </section>
 
-                  {/* Render Resources */}
-                  {myResources.map((res) => (
-                    <div
-                      key={res.id}
-                      className="border border-slate-100 bg-slate-50/30 p-3 rounded-2xl space-y-2"
-                    >
-                      <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                        <span className="font-bold text-emerald-600 uppercase">
-                          RESOURCE FILE
-                        </span>
-                        <span>
-                          {new Date(res.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-900">
-                          {res.title}
-                        </h4>
-                        <p className="text-[10px] text-slate-500 line-clamp-2 mt-0.5">
-                          {res.description}
-                        </p>
-                      </div>
-                      <div className="flex items-center justify-between text-[9px] font-mono text-slate-400 pt-1 border-t border-slate-100/60">
-                        <span>
-                          Type: {res.fileType} • Size: {res.fileSize}
-                        </span>
-                        <span className="font-bold text-slate-600">
-                          {res.downloadCount} Downloads
-                        </span>
-                      </div>
+                <section aria-labelledby="profile-comments-heading" className="min-w-0 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <h4 id="profile-comments-heading" className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                      <MessageSquare size={12} className="text-violet-600" />
+                      Comments
+                    </h4>
+                    <span className="text-[10px] font-mono text-slate-400">{myComments.length}</span>
+                  </div>
+                  {myComments.length > 0 ? (
+                    <div className="space-y-2.5">
+                      {myComments.map((comment) => (
+                        <article
+                          key={`${comment.post.id}-${comment.id}`}
+                          className="rounded-2xl border border-slate-100 bg-violet-50/30 p-3"
+                        >
+                          <div className="flex items-center justify-between gap-3 text-[10px] font-mono text-slate-400">
+                            <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                            <span className="shrink-0">On a post</span>
+                          </div>
+                          <p className="mt-2 whitespace-pre-wrap break-words text-xs font-medium leading-relaxed text-slate-800">
+                            {comment.text}
+                          </p>
+                          <p className="mt-2 border-t border-violet-100 pt-2 text-[10px] leading-relaxed text-slate-500">
+                            On: {comment.post.text}
+                          </p>
+                        </article>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-center text-[11px] text-slate-400">
+                      No comments yet.
+                    </p>
+                  )}
+                </section>
                 </div>
-              )}
+
+                {myResources.length > 0 && (
+                  <section aria-labelledby="profile-resources-heading" className="space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <h4 id="profile-resources-heading" className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                        <BookOpen size={12} className="text-emerald-600" />
+                        Shared resources
+                      </h4>
+                      <span className="text-[10px] font-mono text-slate-400">{myResources.length}</span>
+                    </div>
+                    <div className="space-y-2.5">
+                      {myResources.map((resource) => (
+                        <article
+                          key={resource.id}
+                          className="rounded-2xl border border-slate-100 bg-slate-50/40 p-3"
+                        >
+                          <div className="flex items-center justify-between gap-3 text-[10px] font-mono text-slate-400">
+                            <span>Resource file</span>
+                            <span>{new Date(resource.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <h5 className="mt-2 text-xs font-bold text-slate-900">{resource.title}</h5>
+                          {resource.description && (
+                            <p className="mt-1 line-clamp-2 text-[10px] text-slate-500">{resource.description}</p>
+                          )}
+                          <div className="mt-2 flex justify-between border-t border-slate-100 pt-2 text-[9px] font-mono text-slate-400">
+                            <span>{resource.fileType} · {resource.fileSize}</span>
+                            <span>{resource.downloadCount} downloads</span>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </div>
             </div>
           </div>
         </div>
