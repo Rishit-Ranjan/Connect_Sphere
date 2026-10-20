@@ -15,6 +15,7 @@ import MessagesView from './components/MessagesView';
 import AdminDashboard from './components/AdminDashboard';
 import LoginView from './components/LoginView';
 import ProfileView from './components/ProfileView';
+import NotificationsView from './components/NotificationsView';
 import { useAuth } from './context/AuthContext';
 import { API_URL } from './config/api';
 
@@ -1042,9 +1043,13 @@ export default function App() {
   };
 
   const handleNotificationClick = (notification) => {
-    persistNotificationStatus([notification.id], { read: true, dismissed: true });
+    persistNotificationStatus([notification.id], { read: true });
     setNotificationTarget(notification);
     setActiveTab(notification.type === 'notice' ? 'notices' : 'feed');
+  };
+
+  const handleDismissNotification = (notification) => {
+    persistNotificationStatus([notification.id], { read: true, dismissed: true });
   };
 
   if (loading) {
@@ -1068,10 +1073,7 @@ export default function App() {
           setActiveTab={handleNavbarTabChange}
           onLogout={handleLogout}
           unreadCount={unreadCount}
-          notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
-          onMarkAllRead={handleMarkAllNotificationsRead}
-          onNotificationClick={handleNotificationClick}
         />
 
         <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
@@ -1106,6 +1108,16 @@ export default function App() {
               onAddNotice={handleAddNotice}
               onDeleteNotice={handleDeleteNotice}
               notificationTarget={notificationTarget}
+            />
+          )}
+
+          {activeTab === 'notifications' && (
+            <NotificationsView
+              notifications={notifications}
+              unreadNotificationsCount={unreadNotificationsCount}
+              onMarkAllRead={handleMarkAllNotificationsRead}
+              onNotificationClick={handleNotificationClick}
+              onDismissNotification={handleDismissNotification}
             />
           )}
 
@@ -1182,11 +1194,6 @@ export default function App() {
               onFollow={handleFollowUser}
               urgentNotices={urgentNotices}
               onStartDirectMessage={handleStartDirectMessage}
-              notifications={notifications}
-              unreadNotificationsCount={unreadNotificationsCount}
-              onMarkAllRead={handleMarkAllNotificationsRead}
-              onNotificationClick={handleNotificationClick}
-              onNavigateTab={setActiveTab}
             />
           </div>
         </div>

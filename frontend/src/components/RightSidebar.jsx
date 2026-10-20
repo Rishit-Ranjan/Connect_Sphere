@@ -4,9 +4,8 @@
  */
 import React from 'react';
 import { UserPlus, XCircle, Bell, MessageSquare } from 'lucide-react';
-import NotificationsCard from './NotificationsCard';
 
-export default function RightSidebar({ currentUser, users, relationshipError, onConnect, onFollow, urgentNotices, onStartDirectMessage, notifications, unreadNotificationsCount, onMarkAllRead, onNavigateTab, onNotificationClick }) {
+export default function RightSidebar({ currentUser, users, relationshipError, onConnect, onFollow, urgentNotices, onStartDirectMessage }) {
   // Helper function to compare two user objects based on various unique identifiers
   const isSameUser = (userA, userB) => {
     if (!userA || !userB) return false;
@@ -27,16 +26,7 @@ export default function RightSidebar({ currentUser, users, relationshipError, on
     const onlineUsers = users.filter((u) => !isSameUser(u, currentUser));
     return (<aside className="w-full bg-slate-50 p-4 2xl:p-6 space-y-4 2xl:space-y-6 overflow-y-auto h-full font-sans z-10">
       
-      {/* 1. Notifications Card */}
-      <NotificationsCard
-        notifications={notifications}
-        unreadNotificationsCount={unreadNotificationsCount}
-        onMarkAllRead={onMarkAllRead}
-        onNavigateTab={onNavigateTab}
-        onNotificationClick={onNotificationClick}
-      />
-
-      {/* 2. Curated Campus Notices Carousel/Banner */}
+      {/* Curated Campus Notices Carousel/Banner */}
       {urgentNotices.length > 0 && (<div className="bg-amber-50 border border-amber-200 rounded-3xl p-6 shadow-sm relative overflow-hidden">
           {/* Subtle design element */}
           <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-amber-100 rounded-full opacity-50 blur-xl"/>
@@ -62,7 +52,7 @@ export default function RightSidebar({ currentUser, users, relationshipError, on
           </div>
         </div>)}
 
-      {/* 3. Who to Connect With */}
+      {/* Who to Connect With */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-display font-bold text-slate-900 text-xs uppercase tracking-wider">Discover People</h3>
@@ -105,7 +95,7 @@ export default function RightSidebar({ currentUser, users, relationshipError, on
           </div>)}
       </div>
 
-      {/* 4. Live Active Members & Instant Messenger Link */}
+      {/* Live Active Members & Instant Messenger Link */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-display font-bold text-slate-900 text-xs uppercase tracking-wider">Online Contacts</h3>

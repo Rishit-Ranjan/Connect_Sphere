@@ -3,18 +3,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState } from 'react';
-import { Home, MessageSquare, Shield, Sparkles, LogOut, Search, X, Users, Sun, Moon } from 'lucide-react';
+import { Bell, Home, MessageSquare, Shield, Sparkles, LogOut, Search, X, Users, Sun, Moon } from 'lucide-react';
 import logo from '../assets/ConnectSphere.png';
-import NotificationsDropdown from './NotificationsDropdown';
 import { useTheme } from '../context/ThemeContext';
 
-export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount, notifications, unreadNotificationsCount, onMarkAllRead, onNotificationClick }) {
+export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount, unreadNotificationsCount }) {
   const { isDark, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const isHomeActive = activeTab === 'feed';
   const isRoomsActive = activeTab === 'rooms';
   const isMessagesActive = activeTab === 'messages';
   const isProfileActive = activeTab === 'profile';
+  const isNotificationsActive = activeTab === 'notifications';
 
   return (
     <header
@@ -81,12 +81,29 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
           <span className="hidden sm:inline">Home</span>
         </button>
 
-        <NotificationsDropdown
-          notifications={notifications}
-          unreadNotificationsCount={unreadNotificationsCount}
-          onMarkAllRead={onMarkAllRead}
-          onNotificationClick={onNotificationClick}
-        />
+        <button
+          type="button"
+          onClick={() => setActiveTab('notifications')}
+          aria-label={`Notifications${unreadNotificationsCount > 0 ? `, ${unreadNotificationsCount} unread` : ''}`}
+          aria-current={isNotificationsActive ? 'page' : undefined}
+          className={`relative flex flex-col items-center justify-center gap-0.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+            isNotificationsActive
+              ? isDark
+                ? 'navbar-active-item text-slate-900 border-white shadow-sm'
+                : 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
+          }`}
+          title="Notifications"
+          id="navbar-notifications-btn"
+        >
+          <Bell size={16} className={isNotificationsActive ? (isDark ? 'navbar-active-icon' : 'text-indigo-700') : 'text-slate-400'} />
+          <span className="hidden sm:inline">Notifications</span>
+          {unreadNotificationsCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-4 text-center text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white leading-none">
+              {unreadNotificationsCount}
+            </span>
+          )}
+        </button>
 
         <button
           onClick={() => setActiveTab('rooms')}
