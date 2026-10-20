@@ -91,6 +91,7 @@ export default function ProfileView({
     (currentUser.handle && currentUser.handle === signedInUser.handle)
   );
   const [activeSubTab, setActiveSubTab] = useState("overview");
+  const [activeContributionTab, setActiveContributionTab] = useState("posts");
   // Edit Profile States
   const [name, setName] = useState(currentUser.name);
   const [bio, setBio] = useState(currentUser.bio || "");
@@ -524,80 +525,85 @@ export default function ProfileView({
                 </span>
               </div>
 
-              <div className="max-h-[430px] space-y-5 overflow-y-auto pr-1">
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <section aria-labelledby="profile-posts-heading" className="min-w-0 space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <h4 id="profile-posts-heading" className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700">
-                      <FileText size={12} className="text-indigo-600" />
-                      Posts
-                    </h4>
-                    <span className="text-[10px] font-mono text-slate-400">{myPosts.length}</span>
-                  </div>
-                  {myPosts.length > 0 ? (
-                    <div className="space-y-2.5">
-                      {myPosts.map((post) => (
-                        <article
-                          key={post.id}
-                          className="rounded-2xl border border-slate-100 bg-slate-50/40 p-3"
-                        >
-                          <div className="flex items-center justify-between gap-3 text-[10px] font-mono text-slate-400">
-                            <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                            <span>{post.comments?.length || 0} comments</span>
-                          </div>
-                          <p className="mt-2 whitespace-pre-wrap break-words text-xs font-medium leading-relaxed text-slate-800">
-                            {post.text}
-                          </p>
-                          <div className="mt-2 flex items-center gap-4 border-t border-slate-100 pt-2 text-[10px] font-mono text-slate-500">
-                            <span className="flex items-center gap-1">
-                              <Heart size={11} className="text-rose-500" />
-                              {post.likesCount || 0} likes
-                            </span>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-center text-[11px] text-slate-400">
-                      No posts yet.
-                    </p>
-                  )}
-                </section>
+              <div className="space-y-4">
+                <div role="tablist" aria-label="Recent contribution type" className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeContributionTab === "posts"}
+                    onClick={() => setActiveContributionTab("posts")}
+                    className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
+                      activeContributionTab === "posts"
+                        ? "border-emerald-500 bg-emerald-500 text-white"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
+                    }`}
+                  >
+                    Posts <span className="ml-1 opacity-75">{myPosts.length}</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeContributionTab === "comments"}
+                    onClick={() => setActiveContributionTab("comments")}
+                    className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
+                      activeContributionTab === "comments"
+                        ? "border-emerald-500 bg-emerald-500 text-white"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
+                    }`}
+                  >
+                    Comments <span className="ml-1 opacity-75">{myComments.length}</span>
+                  </button>
+                </div>
 
-                <section aria-labelledby="profile-comments-heading" className="min-w-0 space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <h4 id="profile-comments-heading" className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700">
-                      <MessageSquare size={12} className="text-violet-600" />
-                      Comments
-                    </h4>
-                    <span className="text-[10px] font-mono text-slate-400">{myComments.length}</span>
-                  </div>
-                  {myComments.length > 0 ? (
-                    <div className="space-y-2.5">
-                      {myComments.map((comment) => (
-                        <article
-                          key={`${comment.post.id}-${comment.id}`}
-                          className="rounded-2xl border border-slate-100 bg-violet-50/30 p-3"
-                        >
-                          <div className="flex items-center justify-between gap-3 text-[10px] font-mono text-slate-400">
-                            <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
-                            <span className="shrink-0">On a post</span>
-                          </div>
-                          <p className="mt-2 whitespace-pre-wrap break-words text-xs font-medium leading-relaxed text-slate-800">
-                            {comment.text}
-                          </p>
-                          <p className="mt-2 border-t border-violet-100 pt-2 text-[10px] leading-relaxed text-slate-500">
-                            On: {comment.post.text}
-                          </p>
-                        </article>
-                      ))}
-                    </div>
+                <div role="tabpanel" className="max-h-[350px] space-y-2.5 overflow-y-auto pr-1">
+                  {activeContributionTab === "posts" ? (
+                    myPosts.length > 0 ? myPosts.map((post) => (
+                      <article
+                        key={post.id}
+                        className="rounded-2xl border border-slate-100 bg-slate-50/40 p-3"
+                      >
+                        <div className="flex items-center justify-between gap-3 text-[10px] font-mono text-slate-400">
+                          <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                          <span>{post.comments?.length || 0} comments</span>
+                        </div>
+                        <p className="mt-2 whitespace-pre-wrap break-words text-xs font-medium leading-relaxed text-slate-800">
+                          {post.text}
+                        </p>
+                        <div className="mt-2 flex items-center gap-4 border-t border-slate-100 pt-2 text-[10px] font-mono text-slate-500">
+                          <span className="flex items-center gap-1">
+                            <Heart size={11} className="text-rose-500" />
+                            {post.likesCount || 0} likes
+                          </span>
+                        </div>
+                      </article>
+                    )) : (
+                      <p className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center text-[11px] text-slate-400">
+                        No posts yet.
+                      </p>
+                    )
                   ) : (
-                    <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-center text-[11px] text-slate-400">
-                      No comments yet.
-                    </p>
+                    myComments.length > 0 ? myComments.map((comment) => (
+                      <article
+                        key={`${comment.post.id}-${comment.id}`}
+                        className="rounded-2xl border border-slate-100 bg-violet-50/30 p-3"
+                      >
+                        <div className="flex items-center justify-between gap-3 text-[10px] font-mono text-slate-400">
+                          <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                          <span className="shrink-0">On a post</span>
+                        </div>
+                        <p className="mt-2 whitespace-pre-wrap break-words text-xs font-medium leading-relaxed text-slate-800">
+                          {comment.text}
+                        </p>
+                        <p className="mt-2 border-t border-violet-100 pt-2 text-[10px] leading-relaxed text-slate-500">
+                          On: {comment.post.text}
+                        </p>
+                      </article>
+                    )) : (
+                      <p className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center text-[11px] text-slate-400">
+                        No comments yet.
+                      </p>
+                    )
                   )}
-                </section>
                 </div>
 
                 {myResources.length > 0 && (
