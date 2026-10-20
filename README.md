@@ -8,9 +8,13 @@ Configure `backend/.env` from `backend/.env.example` and `frontend/.env` from
 
 Students can register from the app using either a unique registration number
 or their email address; each account still requires a unique email. They can
-sign in with the selected identifier. Email signup accepts a valid unique
-address but does not currently verify ownership or restrict the address to a
-campus domain. To create the first administrator, set
+sign in with the selected identifier. New student accounts must verify email
+ownership with a one-time link before signing in. Registration does not
+restrict addresses to a campus domain. Configure the SMTP settings shown in
+`backend/.env.example` to enable delivery.
+Verification links expire after 24 hours; resend requests are limited to one
+per minute per account. Existing accounts created before this requirement are
+not blocked from signing in. To create the first administrator, set
 `ADMIN_NAME`, `ADMIN_HANDLE`, `ADMIN_EMAIL`,
 `ADMIN_EMPLOYEE_ID`, and a strong `ADMIN_PASSWORD` in `backend/.env`, then run
 `npm run create-admin` from `backend`. No demo accounts are seeded.
@@ -49,6 +53,9 @@ start, environment, and storage settings with your hosting provider:
      value or commit production secrets.
    - `CLIENT_URL`: the deployed frontend's origin, including its scheme, such
      as `https://app.example.com`. CORS allows this configured origin.
+   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`,
+     and `MAIL_FROM`: SMTP credentials and sender used for student email
+     verification. Keep credentials in the hosting provider's secret settings.
    - `PORT`: only set this if your host does not supply it automatically.
 3. Set `VITE_API_URL` for the frontend build to the public backend API URL,
    including `/api` (for example, `https://api.example.com/api`). This is a

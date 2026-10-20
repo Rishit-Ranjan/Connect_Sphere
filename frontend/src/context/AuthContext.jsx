@@ -36,15 +36,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (query, password, identifierType) => {
-    const res = await fetch(`${API_URL}/auth/login`, {
+  const requestAuthEndpoint = async (endpoint, payload) => {
+    const res = await fetch(`${API_URL}/auth/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, password, identifierType })
+      body: JSON.stringify(payload)
     });
-    
+
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Login failed');
+    if (!res.ok) {
+      const error = new Error(data.message || 'Request failed');
+      error.code = data.code;
+      error.email = data.email;
+      throw error;
+    }
+    return data;
+  };
+
+  const login = async (query, password, identifierType) => {
+    const data = await requestAuthEndpoint('login', { query, password, identifierType });
 
     localStorage.setItem('token', data.token); // Save the real JWT token
     setCurrentUser(data.user);
@@ -54,16 +64,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (userData) => {
-    const res = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData)
-    });
-    
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Registration failed');
+    return requestAuthEndpoint('register', userData);
+  };
 
-    return data.user;
+  const verifyEmail = async (token) => {
+    return requestAuthEndpoint('verify-email', { token });
+  };
+
+  const resendVerification = async (email) => {
+    return requestAuthEndpoint('resend-verification', { email });
   };
 
   const logout = () => {
@@ -72,7 +81,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, setCurrentUser, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ currentUser, setCurrentUser, login, register, verifyEmail, resendVerification, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

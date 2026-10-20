@@ -6,8 +6,8 @@ import React, { useState } from 'react';
 import { ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-export default function LoginView() {
-  const { login, register, logout } = useAuth();
+export default function LoginView({ verificationNotice }) {
+  const { login, register, resendVerification, logout } = useAuth();
 
   const [activeTab, setActiveTab] = useState('signin');
 
@@ -34,6 +34,9 @@ export default function LoginView() {
   const [signInError, setSignInError] = useState('');
   const [createError, setCreateError] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState('');
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [verificationError, setVerificationError] = useState('');
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [empId, setEmpId] = useState(
     () => localStorage.getItem('connectsphere.employeeId') || ''
   );
@@ -46,6 +49,25 @@ export default function LoginView() {
     setLoginIdentifierType(type);
     localStorage.setItem('connectsphere.loginIdentifierType', type);
     setRegNo(localStorage.getItem(type === 'email' ? 'connectsphere.email' : 'connectsphere.registrationNumber') || '');
+  };
+
+  const handleResendVerification = async () => {
+    const emailToVerify = pendingVerificationEmail || regNo.trim();
+    if (!emailToVerify) {
+      setVerificationError('Enter your email address to request another verification link.');
+      return;
+    }
+
+    try {
+      setIsResendingVerification(true);
+      const result = await resendVerification(emailToVerify);
+      setRegistrationSuccess(result.message);
+      setVerificationError('');
+    } catch (error) {
+      setVerificationError(error.message || 'Unable to resend the verification email.');
+    } finally {
+      setIsResendingVerification(false);
+    }
   };
 
   const handleSignIn = async (e) => {
@@ -63,6 +85,9 @@ export default function LoginView() {
     } catch (error) {
       console.error('Login error:', error);
       setSignInError(error.message || 'Login failed.');
+      setPendingVerificationEmail(error.code === 'EMAIL_NOT_VERIFIED'
+        ? error.email || (loginIdentifierType === 'email' ? regNo.trim() : '')
+        : '');
     } finally {
       setIsSubmitting(false);
     }
@@ -90,7 +115,7 @@ export default function LoginView() {
 
     try {
       setIsSubmitting(true);
-      await register(newUser);
+      const registrationResult = await register(newUser);
       const nextLoginIdentifier = signupMethod === 'registrationNumber'
         ? newUser.registrationNumber
         : newUser.email;
@@ -106,7 +131,8 @@ export default function LoginView() {
       setSignInPassword('');
       setPassword('');
       setCreateError('');
-      setRegistrationSuccess(`Account created. Sign in with your ${signupMethod === 'email' ? 'email address' : 'registration number'} and password.`);
+      setRegistrationSuccess(registrationResult.message);
+      setPendingVerificationEmail(newUser.email);
       setActiveTab('signin');
     } catch (error) {
       console.error('Registration error:', error);
@@ -274,12 +300,51 @@ export default function LoginView() {
                 {signInError && (
                   <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs px-3.5 py-2.5 rounded-xl font-medium">
                     ⚠️ {signInError}
+                    {pendingVerificationEmail && (
+                      <button
+                        type="button"
+                        onClick={handleResendVerification}
+                        disabled={isResendingVerification}
+                        className="block mt-2 font-bold underline disabled:opacity-60"
+                      >
+                        {isResendingVerification ? 'Sending...' : 'Resend verification email'}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {verificationError && (
+                  <div role="alert" className="bg-rose-50 border border-rose-200 text-rose-800 text-xs px-3.5 py-2.5 rounded-xl font-medium">
+                    {verificationError}
                   </div>
                 )}
 
                 {registrationSuccess && (
                   <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-3.5 py-2.5 rounded-xl font-medium">
                     {registrationSuccess}
+                    {pendingVerificationEmail && (
+                      <button
+                        type="button"
+                        onClick={handleResendVerification}
+                        disabled={isResendingVerification}
+                        className="block mt-2 font-bold underline disabled:opacity-60"
+                      >
+                        {isResendingVerification ? 'Sending...' : 'Resend verification email'}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {verificationNotice && (
+                  <div
+                    role={verificationNotice.type === 'error' ? 'alert' : 'status'}
+                    className={`border text-xs px-3.5 py-2.5 rounded-xl font-medium ${
+                      verificationNotice.type === 'error'
+                        ? 'bg-rose-50 border-rose-200 text-rose-800'
+                        : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    }`}
+                  >
+                    {verificationNotice.message}
                   </div>
                 )}
 

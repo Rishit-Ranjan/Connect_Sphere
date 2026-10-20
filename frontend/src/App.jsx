@@ -21,7 +21,7 @@ import { useAuth } from './context/AuthContext';
 import { API_URL } from './config/api';
 
 export default function App() {
-  const { currentUser, setCurrentUser, logout, loading } = useAuth();
+  const { currentUser, setCurrentUser, logout, loading, verifyEmail } = useAuth();
 
   const [users, setUsers] = useState([]);
   const [posts, setPosts] = useState([]);
@@ -47,8 +47,29 @@ export default function App() {
   });
   const [noticeCount, setNoticeCount] = useState(0);
   const [relationshipError, setRelationshipError] = useState('');
+  const [emailVerificationNotice, setEmailVerificationNotice] = useState(null);
+  const verificationStartedRef = useRef(false);
 
   const isAdmin = currentUser?.role === 'admin';
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const token = new URLSearchParams(url.hash.slice(1)).get('verifyEmail') ||
+      url.searchParams.get('verifyEmail');
+    if (!token || verificationStartedRef.current) return;
+
+    verificationStartedRef.current = true;
+    url.searchParams.delete('verifyEmail');
+    url.hash = '';
+    window.history.replaceState({}, document.title, `${url.pathname}${url.search}`);
+
+    verifyEmail(token)
+      .then((result) => setEmailVerificationNotice({ type: 'success', message: result.message }))
+      .catch((error) => setEmailVerificationNotice({
+        type: 'error',
+        message: error.message || 'This verification link is invalid or expired.'
+      }));
+  }, [verifyEmail]);
 
   const handleNavbarTabChange = (tab) => {
     if (tab === 'profile') {
@@ -1069,11 +1090,23 @@ export default function App() {
   }
 
   if (!currentUser) {
-    return <LoginView />;
+    return <LoginView verificationNotice={emailVerificationNotice} />;
   }
 
   return (
     <>
+      {emailVerificationNotice && (
+        <div
+          role={emailVerificationNotice.type === 'error' ? 'alert' : 'status'}
+          className={`fixed top-20 left-1/2 -translate-x-1/2 z-[70] max-w-[calc(100%-2rem)] rounded-xl border px-4 py-3 text-sm font-medium shadow-lg ${
+            emailVerificationNotice.type === 'error'
+              ? 'border-rose-200 bg-rose-50 text-rose-800'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+          }`}
+        >
+          {emailVerificationNotice.message}
+        </div>
+      )}
       <div className="flex flex-col h-[100dvh] bg-slate-50 overflow-hidden font-sans">
         <Navbar
           currentUser={currentUser}

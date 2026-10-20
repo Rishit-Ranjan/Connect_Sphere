@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { after, test } from 'node:test';
@@ -7,17 +8,25 @@ import jwt from 'jsonwebtoken';
 import { POST_IMAGES_DIR } from '../src/config/uploads.js';
 
 process.env.JWT_SECRET = 'connect-sphere-test-secret';
+process.env.CLIENT_URL = 'http://localhost:5173';
+process.env.SMTP_HOST = 'smtp.example.com';
+process.env.SMTP_PORT = '587';
+process.env.SMTP_USER = 'test-user';
+process.env.SMTP_PASSWORD = 'test-password';
+process.env.MAIL_FROM = 'ConnectSphere <noreply@example.com>';
 
 const [
   { default: app },
   { default: User },
   { default: Post },
-  { default: NotificationStatus }
+  { default: NotificationStatus },
+  { default: emailService }
 ] = await Promise.all([
   import('../src/app.js'),
   import('../src/models/User.js'),
   import('../src/models/Post.js'),
-  import('../src/models/NotificationStatus.js')
+  import('../src/models/NotificationStatus.js'),
+  import('../src/services/emailService.js')
 ]);
 
 const server = app.listen(0);
@@ -102,11 +111,16 @@ test('sign-in returns a token and public user details for valid credentials', as
 
 test('students can register with either a registration number or email and sign in with email', async (t) => {
   const createdUsers = [];
-  t.mock.method(User, 'findOne', async () => null);
+  let findOneHandler = async () => null;
+  const verificationUrls = [];
+  t.mock.method(User, 'findOne', (...args) => findOneHandler(...args));
   t.mock.method(User, 'create', async (fields) => {
-    const user = { ...fields, _id: `new-user-${createdUsers.length}` };
+    const user = { ...fields, _id: `new-user-${createdUsers.length}`, async save() {} };
     createdUsers.push(user);
     return user;
+  });
+  t.mock.method(emailService, 'sendVerificationEmail', async (message) => {
+    verificationUrls.push(message.verificationUrl);
   });
 
   const emailRegistration = await request('/api/auth/register', {
@@ -123,6 +137,9 @@ test('students can register with either a registration number or email and sign 
   assert.equal(createdUsers[0].handle, 'emailstudent');
   assert.equal('registrationNumber' in createdUsers[0], false);
   assert.equal(createdUsers[0].role, 'student');
+  assert.equal(createdUsers[0].emailVerified, false);
+  assert.equal(emailRegistration.data.verificationEmailSent, true);
+  assert.match(verificationUrls[0], /#verifyEmail=[a-f\d]{64}/);
 
   const registrationNumberSignup = await request('/api/auth/register', {
     method: 'POST',
@@ -149,16 +166,66 @@ test('students can register with either a registration number or email and sign 
   assert.equal(invalidEmail.response.status, 400);
 
   const emailPasswordHash = await bcrypt.hash('email-password', 4);
-  t.mock.method(User, 'findOne', async (query) => {
+  findOneHandler = async (query) => {
     assert.deepEqual(query, { email: 'email@example.com', role: 'student' });
     return { ...createdUsers[0], password: emailPasswordHash };
-  });
+  };
   const emailLogin = await request('/api/auth/login', {
     method: 'POST',
     body: { query: 'EMAIL@example.com', password: 'email-password', identifierType: 'email' }
   });
-  assert.equal(emailLogin.response.status, 200);
-  assert.equal(emailLogin.data.user.email, 'email@example.com');
+  assert.equal(emailLogin.response.status, 403);
+  assert.equal(emailLogin.data.code, 'EMAIL_NOT_VERIFIED');
+  assert.equal(emailLogin.data.email, 'email@example.com');
+
+  let verificationQuery;
+  t.mock.method(User, 'findOneAndUpdate', async (query, update) => {
+    verificationQuery = query;
+    assert.equal(update.$set.emailVerified, true);
+    assert.equal(update.$unset.emailVerificationTokenHash, 1);
+    return { ...createdUsers[0], emailVerified: true };
+  });
+  const token = new URLSearchParams(new URL(verificationUrls[0]).hash.slice(1)).get('verifyEmail');
+  const verified = await request('/api/auth/verify-email', {
+    method: 'POST',
+    body: { token }
+  });
+  assert.equal(verified.response.status, 200);
+  assert.equal(verified.data.message, 'Email verified. You can now sign in.');
+  assert.equal(
+    verificationQuery.emailVerificationTokenHash,
+    createHash('sha256').update(token).digest('hex')
+  );
+  assert.ok(verificationQuery.emailVerificationExpires.$gt instanceof Date);
+
+  findOneHandler = async (query) => ({ ...createdUsers[0], password: emailPasswordHash, emailVerified: true });
+  const emailLoginAfterVerification = await request('/api/auth/login', {
+    method: 'POST',
+    body: { query: 'EMAIL@example.com', password: 'email-password', identifierType: 'email' }
+  });
+  assert.equal(emailLoginAfterVerification.response.status, 200);
+  assert.equal(emailLoginAfterVerification.data.user.email, 'email@example.com');
+
+  const resendUser = {
+    ...createdUsers[0],
+    emailVerified: false,
+    emailVerificationSentAt: new Date(Date.now() - 61 * 1000),
+    async save() {}
+  };
+  findOneHandler = async (query) => {
+    assert.deepEqual(query, { email: 'email@example.com', role: 'student' });
+    return resendUser;
+  };
+  const resent = await request('/api/auth/resend-verification', {
+    method: 'POST',
+    body: { email: ' EMAIL@example.com ' }
+  });
+  assert.equal(resent.response.status, 200);
+  assert.equal(verificationUrls.length, 3);
+  assert.notEqual(
+    new URLSearchParams(new URL(verificationUrls[0]).hash.slice(1)).get('verifyEmail'),
+    new URLSearchParams(new URL(verificationUrls[2]).hash.slice(1)).get('verifyEmail')
+  );
 });
 
 test('posting requires text and returns a created post', async (t) => {
