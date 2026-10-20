@@ -285,7 +285,6 @@ export default function ProfileView({
                   className="absolute bottom-0 right-0 bg-indigo-600 text-white p-1 rounded-full border border-white shadow-sm"
                   title="Active Student"
                 >
-                  <Sparkles size={12} className="animate-pulse" />
                 </span>
               )}
             </div>
