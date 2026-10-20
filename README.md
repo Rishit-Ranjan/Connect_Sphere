@@ -15,6 +15,13 @@ Resource uploads accept PDF, ZIP, EPUB, PPTX, and DOCX files up to 25 MB. Files
 are stored in `backend/uploads`, so preserve that directory when backing up or
 moving the backend.
 
+### Tests
+
+Run the backend API tests with `npm test` from the `backend` directory. They use
+the Node.js built-in test runner and mock database calls, so MongoDB is not
+required. Notification read and dismissed status is stored per account in
+MongoDB and follows that account across browsers and refreshes.
+
 ### Production deployment
 
 There are no platform-specific deployment manifests in this repository. Deploy

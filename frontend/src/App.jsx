@@ -136,6 +136,25 @@ export default function App() {
     }
   };
 
+  const fetchNotificationStatuses = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch notification statuses');
+      }
+
+      const statuses = await res.json();
+      setReadNotificationIds(statuses.filter((status) => status.read).map((status) => status.notificationId));
+      setDismissedNotificationIds(statuses.filter((status) => status.dismissed).map((status) => status.notificationId));
+    } catch (error) {
+      console.error('Error fetching notification statuses:', error);
+    }
+  };
+
   const fetchResources = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -225,6 +244,7 @@ export default function App() {
       fetchPosts();
       fetchUsers();
       fetchNotices();
+      fetchNotificationStatuses();
       fetchResources();
       fetchRooms();
       fetchDirectMessages();
@@ -886,11 +906,41 @@ export default function App() {
 
   const urgentNotices = notices.filter((n) => n.isUrgent);
 
-  // Notifications feed derived from existing app data (notices, likes, comments).
-  // Read/unread tracked locally by id so "Mark all read" works without backend changes.
   const [readNotificationIds, setReadNotificationIds] = useState([]);
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState([]);
   const [notificationTarget, setNotificationTarget] = useState(null);
+
+  const persistNotificationStatus = async (notificationIds, status) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/notifications`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ notificationIds, ...status })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to update notification status');
+      }
+
+      if (typeof status.read === 'boolean') {
+        setReadNotificationIds((previous) => [
+          ...new Set([...previous, ...notificationIds])
+        ]);
+      }
+      if (typeof status.dismissed === 'boolean') {
+        setDismissedNotificationIds((previous) => [
+          ...new Set([...previous, ...notificationIds])
+        ]);
+      }
+    } catch (error) {
+      console.error('Error updating notification status:', error);
+    }
+  };
 
   const notifications = [
     ...notices.slice(0, 5).map((notice) => ({
@@ -938,16 +988,14 @@ export default function App() {
   const unreadNotificationsCount = notifications.filter((n) => n.unread).length;
 
   const handleMarkAllNotificationsRead = () => {
-    setReadNotificationIds(notifications.map((n) => n.id));
+    const notificationIds = notifications.filter((notification) => notification.unread).map((notification) => notification.id);
+    if (notificationIds.length > 0) {
+      persistNotificationStatus(notificationIds, { read: true });
+    }
   };
 
   const handleNotificationClick = (notification) => {
-    setReadNotificationIds((previous) =>
-      previous.includes(notification.id) ? previous : [...previous, notification.id],
-    );
-    setDismissedNotificationIds((previous) =>
-      previous.includes(notification.id) ? previous : [...previous, notification.id],
-    );
+    persistNotificationStatus([notification.id], { read: true, dismissed: true });
     setNotificationTarget(notification);
     setActiveTab(notification.type === 'notice' ? 'notices' : 'feed');
   };

@@ -12,6 +12,7 @@ import resourceRoutes from './routes/resourceRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import errorMiddleware from './middlewares/errorMiddleware.js';
 import directMessageRoutes from './routes/directMessageRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 import { AVATARS_DIR } from './config/uploads.js';
 
 config();
@@ -39,6 +40,7 @@ app.use('/api/notices', noticeRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/direct-messages', directMessageRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use(errorMiddleware);
 
