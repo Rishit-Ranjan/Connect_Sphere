@@ -1,4 +1,5 @@
 import { unlink } from 'fs/promises';
+import { isValidObjectId } from 'mongoose';
 import User from '../models/User.js';
 
 const allowedAvatarPresets = new Set([
@@ -55,6 +56,8 @@ const uploadAvatar = async (req, res, next) => {
 const getUsers = async (req, res, next) => {
   try {
     const users = await User.find().sort({ createdAt: -1 }).select('-password');
+    const followingIds = new Set((req.user.following || []).map(String));
+    const connectionIds = new Set((req.user.connections || []).map(String));
     
     // Normalize _id to id for the frontend
     const normalizedUsers = users.map(user => ({
@@ -66,11 +69,90 @@ const getUsers = async (req, res, next) => {
       department: user.department,
       bio: user.bio,
       avatarUrl: user.avatarUrl,
-      connected: false,
-      following: false
+      connected: connectionIds.has(String(user._id)),
+      following: followingIds.has(String(user._id))
     }));
     
     res.json(normalizedUsers);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateFollow = async (req, res, next) => {
+  const { userId } = req.params;
+  const { following } = req.body;
+
+  if (typeof following !== 'boolean') {
+    return res.status(400).json({ message: 'Following status must be a boolean.' });
+  }
+  if (!isValidObjectId(userId)) {
+    return res.status(404).json({ message: 'User not found.' });
+  }
+  const normalizedUserId = userId.toLowerCase();
+  if (String(req.user._id) === normalizedUserId) {
+    return res.status(400).json({ message: 'You cannot follow yourself.' });
+  }
+
+  let session;
+  try {
+    session = await User.startSession();
+    await session.withTransaction(async () => {
+      const target = await User.findById(normalizedUserId).session(session);
+      if (!target) {
+        const error = new Error('User not found.');
+        error.statusCode = 404;
+        throw error;
+      }
+
+      const ownUpdate = following
+        ? { $addToSet: { following: normalizedUserId } }
+        : { $pull: { following: normalizedUserId } };
+      const targetUpdate = following
+        ? { $addToSet: { followers: req.user._id } }
+        : { $pull: { followers: req.user._id } };
+
+      await User.updateOne({ _id: req.user._id }, ownUpdate, { session });
+      await User.updateOne({ _id: normalizedUserId }, targetUpdate, { session });
+    });
+
+    res.json({ following });
+  } catch (error) {
+    next(error);
+  } finally {
+    if (session) {
+      await session.endSession();
+    }
+  }
+};
+
+const updateConnection = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const { connected } = req.body;
+
+    if (typeof connected !== 'boolean') {
+      return res.status(400).json({ message: 'Connection status must be a boolean.' });
+    }
+    if (!isValidObjectId(userId)) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+    const normalizedUserId = userId.toLowerCase();
+    if (String(req.user._id) === normalizedUserId) {
+      return res.status(400).json({ message: 'You cannot connect with yourself.' });
+    }
+
+    const target = await User.findById(normalizedUserId);
+    if (!target) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const update = connected
+      ? { $addToSet: { connections: normalizedUserId } }
+      : { $pull: { connections: normalizedUserId } };
+    await User.updateOne({ _id: req.user._id }, update);
+
+    res.json({ connected });
   } catch (error) {
     next(error);
   }
@@ -109,11 +191,26 @@ const deleteUser = async (req, res, next) => {
 
     const { userId } = req.params;
 
-    const user = await User.findByIdAndDelete(userId);
+    if (!isValidObjectId(userId)) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
 
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
+
+    await User.updateMany(
+      { _id: { $ne: userId } },
+      {
+        $pull: {
+          following: userId,
+          followers: userId,
+          connections: userId
+        }
+      }
+    );
+    await User.findByIdAndDelete(userId);
 
     res.json({ message: 'User deleted successfully', id: userId });
   } catch (error) {
@@ -124,6 +221,8 @@ const deleteUser = async (req, res, next) => {
 export default {
   getMe,
   getUsers,
+  updateFollow,
+  updateConnection,
   updateAvatarPreset,
   uploadAvatar,
   updateUserRole,

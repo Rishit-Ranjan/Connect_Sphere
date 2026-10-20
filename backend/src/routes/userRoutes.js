@@ -45,6 +45,8 @@ router.get('/me', protect, userController.getMe);
 router.patch('/me/avatar', protect, userController.updateAvatarPreset);
 router.post('/me/avatar/upload', protect, handleAvatarUpload, userController.uploadAvatar);
 router.get('/', protect, userController.getUsers);
+router.patch('/:userId/follow', protect, userController.updateFollow);
+router.patch('/:userId/connection', protect, userController.updateConnection);
 router.patch('/:userId/role', protect, userController.updateUserRole);
 router.delete('/:userId', protect, userController.deleteUser);
 

@@ -11,6 +11,11 @@ create the first administrator, set `ADMIN_NAME`, `ADMIN_HANDLE`, `ADMIN_EMAIL`,
 `ADMIN_EMPLOYEE_ID`, and a strong `ADMIN_PASSWORD` in `backend/.env`, then run
 `npm run create-admin` from `backend`. No demo accounts are seeded.
 
+Following and adding contacts are saved to the signed-in user's account and
+remain in place after refreshing or signing in on another device. Follow
+updates also maintain the followed user's follower list in a MongoDB
+transaction, so the database must support transactions (as MongoDB Atlas does).
+
 Resource uploads accept PDF, ZIP, EPUB, PPTX, and DOCX files up to 25 MB. Files
 are stored in `backend/uploads`, so preserve that directory when backing up or
 moving the backend.

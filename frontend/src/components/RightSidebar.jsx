@@ -6,7 +6,7 @@ import React from 'react';
 import { UserPlus, XCircle, Bell, MessageSquare } from 'lucide-react';
 import NotificationsCard from './NotificationsCard';
 
-export default function RightSidebar({ currentUser, users, onConnect, onFollow, urgentNotices, onStartDirectMessage, notifications, unreadNotificationsCount, onMarkAllRead, onNavigateTab, onNotificationClick }) {
+export default function RightSidebar({ currentUser, users, relationshipError, onConnect, onFollow, urgentNotices, onStartDirectMessage, notifications, unreadNotificationsCount, onMarkAllRead, onNavigateTab, onNotificationClick }) {
   // Helper function to compare two user objects based on various unique identifiers
   const isSameUser = (userA, userB) => {
     if (!userA || !userB) return false;
@@ -68,6 +68,12 @@ export default function RightSidebar({ currentUser, users, onConnect, onFollow, 
           <h3 className="font-display font-bold text-slate-900 text-xs uppercase tracking-wider">Discover People</h3>
           <span className="text-[10px] font-mono text-slate-400 font-medium">{connectCandidates.length} Suggestion(s)</span>
         </div>
+
+        {relationshipError && (
+          <p role="alert" className="mb-3 text-[10px] font-medium text-rose-600">
+            {relationshipError}
+          </p>
+        )}
 
         {connectCandidates.length > 0 ? (<div className="space-y-3">
             {connectCandidates.map((user) => (<div key={user.id} className="flex items-center justify-between gap-2 p-2 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">

@@ -43,6 +43,7 @@ export default function App() {
   });
   const [unreadCount, setUnreadCount] = useState(0);
   const [noticeCount, setNoticeCount] = useState(0);
+  const [relationshipError, setRelationshipError] = useState('');
 
   const isAdmin = currentUser?.role === 'admin';
 
@@ -814,23 +815,62 @@ export default function App() {
     }
   };
 
-  const handleConnectWithUser = (userId) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, connected: true } : u))
-    );
+  const handleConnectWithUser = async (userId) => {
+    try {
+      setRelationshipError('');
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/users/${userId}/connection`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ connected: true })
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to connect with user.');
+      }
+
+      setUsers((previous) =>
+        previous.map((user) => user.id === userId
+          ? { ...user, connected: result.connected }
+          : user)
+      );
+    } catch (error) {
+      console.error('Error connecting with user:', error);
+      setRelationshipError(error.message || 'Unable to connect with this user.');
+    }
   };
 
-  const handleFollowUser = (userId) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === userId ? { ...u, following: !u.following } : u
-      )
-    );
+  const handleFollowUser = async (userId) => {
+    const user = users.find((candidate) => candidate.id === userId);
+    if (!user) return;
 
-    if (currentUser && currentUser.id === userId) {
-      setCurrentUser((prev) =>
-        prev ? { ...prev, following: !prev.following } : null
+    try {
+      setRelationshipError('');
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/users/${userId}/follow`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ following: !user.following })
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to update follow status.');
+      }
+
+      setUsers((previous) =>
+        previous.map((candidate) => candidate.id === userId
+          ? { ...candidate, following: result.following }
+          : candidate)
       );
+    } catch (error) {
+      console.error('Error updating follow status:', error);
+      setRelationshipError(error.message || 'Unable to update follow status.');
     }
   };
 
@@ -1132,6 +1172,7 @@ export default function App() {
             <RightSidebar
               currentUser={currentUser}
               users={users}
+              relationshipError={relationshipError}
               onConnect={handleConnectWithUser}
               onFollow={handleFollowUser}
               urgentNotices={urgentNotices}

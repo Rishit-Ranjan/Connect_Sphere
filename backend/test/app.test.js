@@ -282,3 +282,118 @@ test('notification statuses are private to the signed-in user and can be persist
   });
   assert.equal(invalid.response.status, 400);
 });
+
+test('following and connections are authenticated and persist in the user relationships', async (t) => {
+  const viewer = {
+    ...student,
+    _id: '507f1f77bcf86cd799439011',
+    following: [],
+    connections: []
+  };
+  const target = {
+    ...student,
+    _id: '507f1f77bcf86cd799439012',
+    handle: 'targetuser',
+    followers: []
+  };
+  const relationshipUpdates = [];
+
+  t.mock.method(User, 'findById', (id) => {
+    const user = [viewer, target].find((candidate) => candidate._id === String(id)) || null;
+    return {
+      select: async () => user,
+      session: async () => user,
+      then(resolve, reject) {
+        return Promise.resolve(user).then(resolve, reject);
+      }
+    };
+  });
+  t.mock.method(User, 'find', () => ({
+    sort() {
+      return this;
+    },
+    select: async () => [viewer, target]
+  }));
+  t.mock.method(User, 'startSession', async () => ({
+    withTransaction: async (callback) => callback(),
+    endSession: async () => {}
+  }));
+  t.mock.method(User, 'updateOne', async (...args) => {
+    relationshipUpdates.push(args);
+    const user = [viewer, target].find((candidate) =>
+      candidate._id === String(args[0]._id)
+    );
+    for (const [operator, fields] of Object.entries(args[1])) {
+      for (const [field, value] of Object.entries(fields)) {
+        user[field] ||= [];
+        if (operator === '$addToSet' && !user[field].includes(value)) {
+          user[field].push(value);
+        }
+        if (operator === '$pull') {
+          user[field] = user[field].filter((id) => id !== value);
+        }
+      }
+    }
+  });
+
+  const token = tokenFor(viewer._id);
+  const followPath = `/api/users/${target._id}/follow`;
+  const followed = await request(followPath, {
+    method: 'PATCH',
+    token,
+    body: { following: true }
+  });
+  assert.equal(followed.response.status, 200);
+  assert.deepEqual(followed.data, { following: true });
+  assert.equal(relationshipUpdates.length, 2);
+  assert.deepEqual(relationshipUpdates[0][1], {
+    $addToSet: { following: target._id }
+  });
+  assert.deepEqual(relationshipUpdates[1][1], {
+    $addToSet: { followers: viewer._id }
+  });
+  assert.deepEqual(relationshipUpdates[0][2], { session: relationshipUpdates[1][2].session });
+  const usersAfterFollow = await request('/api/users', { token });
+  assert.equal(usersAfterFollow.response.status, 200);
+  assert.equal(usersAfterFollow.data.find((user) => user.id === target._id).following, true);
+
+  const unfollowed = await request(followPath, {
+    method: 'PATCH',
+    token,
+    body: { following: false }
+  });
+  assert.equal(unfollowed.response.status, 200);
+  assert.deepEqual(relationshipUpdates[2][1], {
+    $pull: { following: target._id }
+  });
+  assert.deepEqual(relationshipUpdates[3][1], {
+    $pull: { followers: viewer._id }
+  });
+  const usersAfterUnfollow = await request('/api/users', { token });
+  assert.equal(usersAfterUnfollow.data.find((user) => user.id === target._id).following, false);
+
+  const connected = await request(`/api/users/${target._id}/connection`, {
+    method: 'PATCH',
+    token,
+    body: { connected: true }
+  });
+  assert.equal(connected.response.status, 200);
+  assert.deepEqual(relationshipUpdates[4][1], {
+    $addToSet: { connections: target._id }
+  });
+  const usersAfterConnect = await request('/api/users', { token });
+  assert.equal(usersAfterConnect.data.find((user) => user.id === target._id).connected, true);
+
+  const selfFollow = await request(`/api/users/${viewer._id.toUpperCase()}/follow`, {
+    method: 'PATCH',
+    token,
+    body: { following: true }
+  });
+  assert.equal(selfFollow.response.status, 400);
+
+  const unauthenticated = await request(followPath, {
+    method: 'PATCH',
+    body: { following: true }
+  });
+  assert.equal(unauthenticated.response.status, 401);
+});
