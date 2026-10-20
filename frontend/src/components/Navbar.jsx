@@ -181,7 +181,7 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
               </span>
             ) : (
               <span className="absolute -bottom-1 -right-1 bg-indigo-600 text-white p-0.5 rounded-full border border-white shadow-sm">
-                <Sparkles size={8} />
+                
               </span>
             )}
           </span>
