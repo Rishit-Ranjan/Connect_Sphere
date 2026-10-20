@@ -3,16 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState } from 'react';
-import { Bell, Home, MessageSquare, Shield, Sparkles, LogOut, Search, X, Users, UserPlus, Sun, Moon } from 'lucide-react';
+import { Bell, Home, Shield, Sparkles, LogOut, Search, X, Users, UserPlus, Sun, Moon } from 'lucide-react';
 import logo from '../assets/ConnectSphere.png';
 import { useTheme } from '../context/ThemeContext';
 
-export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadCount, unreadNotificationsCount }) {
+export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout, unreadNotificationsCount }) {
   const { isDark, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const isHomeActive = activeTab === 'feed';
   const isRoomsActive = activeTab === 'rooms';
-  const isMessagesActive = activeTab === 'messages';
   const isProfileActive = activeTab === 'profile';
   const isNotificationsActive = activeTab === 'notifications';
   const isNetworkActive = activeTab === 'network';
@@ -64,7 +63,7 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
         </div>
       </div>
 
-      {/* Right: home + campus rooms + notifications + messages + profile section */}
+      {/* Right: home + campus rooms + notifications + profile section */}
       <div className="flex items-center gap-1.5 sm:gap-3">
         <button
           onClick={() => setActiveTab('feed')}
@@ -138,27 +137,6 @@ export default function Navbar({ currentUser, activeTab, setActiveTab, onLogout,
         >
           <Users size={16} className={isRoomsActive ? (isDark ? 'navbar-active-icon' : 'text-indigo-700') : 'text-slate-400'} />
           <span className="hidden sm:inline">Campus Rooms</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('messages')}
-          className={`relative flex flex-col items-center justify-center gap-0.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
-            isMessagesActive
-              ? isDark
-                ? 'navbar-active-item text-slate-900 border-white shadow-sm'
-                : 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
-          }`}
-          title="Direct Messages"
-          id="navbar-messages-btn"
-        >
-          <MessageSquare size={16} className={isMessagesActive ? (isDark ? 'navbar-active-icon' : 'text-indigo-700') : 'text-slate-400'} />
-          <span className="hidden sm:inline">Messages</span>
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white leading-none">
-              {unreadCount}
-            </span>
-          )}
         </button>
 
         <button

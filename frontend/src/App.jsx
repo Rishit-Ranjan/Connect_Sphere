@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Chatbot from './components/Chatbot';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
@@ -11,7 +11,7 @@ import FeedView from './components/FeedView';
 import NoticesView from './components/NoticesView';
 import ResourcesView from './components/ResourcesView';
 import RoomsView from './components/RoomsView';
-import MessagesView from './components/MessagesView';
+import MessagesDrawer from './components/MessagesDrawer';
 import AdminDashboard from './components/AdminDashboard';
 import LoginView from './components/LoginView';
 import ProfileView from './components/ProfileView';
@@ -34,6 +34,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('feed');
   const [viewedProfileUser, setViewedProfileUser] = useState(null);
   const [selectedRecipient, setSelectedRecipient] = useState(null);
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  const messagesReturnFocusRef = useRef(null);
   const [selectedRoomId, setSelectedRoomId] = useState('');
   // Private rooms the user has unlocked with a password (persisted per browser).
   const [unlockedRoomIds, setUnlockedRoomIds] = useState(() => {
@@ -43,7 +45,6 @@ export default function App() {
       return [];
     }
   });
-  const [unreadCount, setUnreadCount] = useState(0);
   const [noticeCount, setNoticeCount] = useState(0);
   const [relationshipError, setRelationshipError] = useState('');
 
@@ -74,6 +75,7 @@ export default function App() {
 
   const handleLogout = () => {
     logout();
+    setIsMessagesOpen(false);
     setSelectedRecipient(null);
     setSelectedRoomId('');
     setViewedProfileUser(null);
@@ -263,7 +265,6 @@ export default function App() {
   }, [rooms, selectedRoomId]);
 
   useEffect(() => {
-    if (activeTab === 'messages') setUnreadCount(0);
     if (activeTab === 'notices') setNoticeCount(0);
   }, [activeTab]);
 
@@ -763,7 +764,13 @@ export default function App() {
 
   const handleStartDirectMessage = (recipient) => {
     setSelectedRecipient(recipient);
-    setActiveTab('messages');
+    messagesReturnFocusRef.current = document.activeElement;
+    setIsMessagesOpen(true);
+  };
+
+  const handleOpenMessages = () => {
+    messagesReturnFocusRef.current = document.activeElement;
+    setIsMessagesOpen(true);
   };
 
   const handleRemoveUser = async (userId) => {
@@ -1073,7 +1080,6 @@ export default function App() {
           activeTab={activeTab}
           setActiveTab={handleNavbarTabChange}
           onLogout={handleLogout}
-          unreadCount={unreadCount}
           unreadNotificationsCount={unreadNotificationsCount}
         />
 
@@ -1083,6 +1089,8 @@ export default function App() {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             noticeCount={noticeCount}
+            messagesOpen={isMessagesOpen}
+            onOpenMessages={handleOpenMessages}
           />
 
           <main className="flex-1 min-w-0 overflow-y-auto bg-slate-50">
@@ -1160,17 +1168,6 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'messages' && (
-            <MessagesView
-              currentUser={currentUser}
-              users={users}
-              directMessages={directMessages}
-              onSendDirectMessage={handleSendDirectMessage}
-              selectedRecipient={selectedRecipient}
-              setSelectedRecipient={setSelectedRecipient}
-            />
-          )}
-
           {activeTab === 'admin' && isAdmin && (
             <AdminDashboard
               currentUser={currentUser}
@@ -1209,6 +1206,17 @@ export default function App() {
               onStartDirectMessage={handleStartDirectMessage}
             />
           </div>
+          <MessagesDrawer
+            isOpen={isMessagesOpen}
+            onClose={() => setIsMessagesOpen(false)}
+            returnFocusRef={messagesReturnFocusRef}
+            currentUser={currentUser}
+            users={users}
+            directMessages={directMessages}
+            onSendDirectMessage={handleSendDirectMessage}
+            selectedRecipient={selectedRecipient}
+            setSelectedRecipient={setSelectedRecipient}
+          />
         </div>
       </div>
       <Chatbot />

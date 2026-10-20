@@ -4,7 +4,7 @@
  */
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Search, CheckCheck, MessageSquare, Compass, ShieldCheck } from 'lucide-react';
-export default function MessagesView({ currentUser, users, directMessages, onSendDirectMessage, selectedRecipient, setSelectedRecipient }) {
+export default function MessagesView({ currentUser, users, directMessages, onSendDirectMessage, selectedRecipient, setSelectedRecipient, isDrawer = false }) {
     const [searchText, setSearchText] = useState('');
     const [typedMessage, setTypedMessage] = useState('');
     const messageEndRef = useRef(null);
@@ -36,7 +36,7 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
     };
     const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchText.toLowerCase()) ||
         c.handle.toLowerCase().includes(searchText.toLowerCase()));
-    return (<div className="flex-1 flex flex-col md:flex-row h-[calc(100dvh-4rem-2px)] overflow-hidden font-sans bg-white border border-slate-200 rounded-3xl m-2 sm:m-3 shadow-sm">
+    return (<div className={`flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden font-sans bg-white ${isDrawer ? 'h-full w-full' : 'h-[calc(100dvh-4rem-2px)] border border-slate-200 rounded-3xl m-2 sm:m-3 shadow-sm'}`}>
       
       {/* Messenger Contacts Sidebar */}
       <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200 flex flex-col bg-slate-50/50 shrink-0 max-h-[45vh] md:max-h-none">

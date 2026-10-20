@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React from 'react';
-import { Bell, BookOpen, Shield, ArrowRight } from 'lucide-react';
+import { Bell, BookOpen, MessageSquare, Shield, ArrowRight } from 'lucide-react';
 
-export default function Sidebar({ currentUser, activeTab, setActiveTab, noticeCount }) {
+export default function Sidebar({ currentUser, activeTab, setActiveTab, noticeCount, messagesOpen, onOpenMessages }) {
     const cards = [
         { id: 'notices', label: 'Notices & Schedules', description: 'Campus bulletins, exam tables & timetables', icon: Bell, badge: noticeCount },
         { id: 'resources', label: 'Resource Library', description: 'Study materials, notes & uploads', icon: BookOpen, badge: 0 },
+        { id: 'messages', label: 'Messages', description: 'Private conversations with your campus', icon: MessageSquare, badge: 0 },
     ];
     // Admin exclusive dashboard
     if (currentUser.role === 'admin') {
@@ -18,8 +19,9 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, noticeCo
       {/* Navigation Cards */}
       {cards.map((item) => {
             const IconComponent = item.icon;
-            const isActive = activeTab === item.id;
-            return (<button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full text-left bg-white border rounded-3xl p-5 shadow-sm transition-all cursor-pointer group hover:shadow-md ${isActive
+            const isActive = item.id === 'messages' ? messagesOpen : activeTab === item.id;
+            const handleClick = item.id === 'messages' ? onOpenMessages : () => setActiveTab(item.id);
+            return (<button key={item.id} onClick={handleClick} className={`w-full text-left bg-white border rounded-3xl p-5 shadow-sm transition-all cursor-pointer group hover:shadow-md ${isActive
                     ? 'border-indigo-300 ring-2 ring-indigo-100'
                     : 'border-slate-200 hover:border-slate-300'}`} title={item.label} id={`sidebar-tab-${item.id}`}>
                 <div className="flex items-start justify-between gap-3">
