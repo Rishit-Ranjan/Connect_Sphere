@@ -2,10 +2,9 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   Shield,
-  Sparkles,
   Mail,
   BookOpen,
   Calendar,
