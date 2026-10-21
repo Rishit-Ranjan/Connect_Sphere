@@ -250,40 +250,42 @@ export default function LoginView({ verificationNotice }) {
 
         <div className="md:col-span-3 p-5 sm:p-8 lg:p-10 flex flex-col justify-between bg-white">
           <div>
-            <div className="flex items-center gap-1 rounded-2xl border border-slate-100 bg-slate-50 p-1.5 mb-7 sm:mb-10">
-              <button
-                type="button"
-                onClick={() => {
-                  setSignInError('');
-                  setActiveTab('signin');
-                }}
-                aria-pressed={activeTab === 'signin'}
-                className={`flex-1 py-2.5 text-xs sm:text-sm font-semibold tracking-tight rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${
-                  activeTab === 'signin'
-                    ? 'text-indigo-700 bg-white shadow-sm ring-1 ring-slate-200/70'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                Sign In
-              </button>
+            {activeTab !== 'create' && (
+              <div className="flex items-center gap-1 rounded-2xl border border-slate-100 bg-slate-50 p-1.5 mb-7 sm:mb-10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSignInError('');
+                    setActiveTab('signin');
+                  }}
+                  aria-pressed={activeTab === 'signin'}
+                  className={`flex-1 py-2.5 text-xs sm:text-sm font-semibold tracking-tight rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${
+                    activeTab === 'signin'
+                      ? 'text-indigo-700 bg-white shadow-sm ring-1 ring-slate-200/70'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Sign In
+                </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setAdminError('');
-                  setActiveTab('admin');
-                }}
-                aria-pressed={activeTab === 'admin'}
-                className={`flex-1 py-2.5 text-xs sm:text-sm font-semibold tracking-tight rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${
-                  activeTab === 'admin'
-                    ? 'text-amber-700 bg-white shadow-sm ring-1 ring-slate-200/70'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                <ShieldCheck size={16} />
-                Admin
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdminError('');
+                    setActiveTab('admin');
+                  }}
+                  aria-pressed={activeTab === 'admin'}
+                  className={`flex-1 py-2.5 text-xs sm:text-sm font-semibold tracking-tight rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${
+                    activeTab === 'admin'
+                      ? 'text-amber-700 bg-white shadow-sm ring-1 ring-slate-200/70'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <ShieldCheck size={16} />
+                  Admin
+                </button>
+              </div>
+            )}
 
             {activeTab === 'signin' ? (
               <form onSubmit={handleSignIn} className="space-y-5 py-1 animate-fadeIn">
