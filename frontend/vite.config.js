@@ -4,7 +4,14 @@ import path from 'path';
 import { defineConfig } from 'vite';
 export default defineConfig(() => {
     return {
-        plugins: [react(), tailwindcss()],
+        plugins: [
+            react({
+                babel: {
+                    plugins: [['babel-plugin-react-compiler', { target: '19' }]],
+                },
+            }),
+            tailwindcss(),
+        ],
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, '.'),
