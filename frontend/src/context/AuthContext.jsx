@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { API_URL } from '../config/api';
+import { clearAuthToken, getAuthToken, storeAuthToken } from '../utils/authToken';
 
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
@@ -10,7 +11,7 @@ export const AuthProvider = ({ children }) => {
 
   // Run once when the app opens to check if the user is already logged in
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     if (token) {
       fetchCurrentUser(token);
     } else {
@@ -27,7 +28,7 @@ export const AuthProvider = ({ children }) => {
         const userData = await res.json();
         setCurrentUser(userData);
       } else {
-        localStorage.removeItem('token'); // Token is invalid/expired
+        clearAuthToken();
       }
     } catch (error) {
       console.error('API connection error:', error);
@@ -53,10 +54,10 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  const login = async (query, password, identifierType) => {
+  const login = async (query, password, identifierType, rememberMe = true) => {
     const data = await requestAuthEndpoint('login', { query, password, identifierType });
 
-    localStorage.setItem('token', data.token); // Save the real JWT token
+    storeAuthToken(data.token, rememberMe);
     setCurrentUser(data.user);
 
     // Returned so callers (e.g. the admin portal) can verify the account role.
@@ -76,7 +77,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    clearAuthToken();
     setCurrentUser(null);
   };
 

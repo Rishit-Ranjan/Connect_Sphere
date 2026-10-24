@@ -19,6 +19,7 @@ import NotificationsView from './components/NotificationsView';
 import NetworkView from './components/NetworkView';
 import { useAuth } from './context/AuthContext';
 import { API_URL } from './config/api';
+import { getAuthToken } from './utils/authToken';
 
 export default function App() {
   const { currentUser, setCurrentUser, logout, loading, verifyEmail } = useAuth();
@@ -104,7 +105,7 @@ export default function App() {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/users`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -124,7 +125,7 @@ export default function App() {
 
   const fetchPosts = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/posts`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -144,7 +145,7 @@ export default function App() {
 
   const fetchNotices = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/notices`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -164,7 +165,7 @@ export default function App() {
 
   const fetchNotificationStatuses = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -183,7 +184,7 @@ export default function App() {
 
   const fetchResources = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/resources`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -203,7 +204,7 @@ export default function App() {
 
   const fetchRooms = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/rooms`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -223,7 +224,7 @@ export default function App() {
 
   const fetchDirectMessages = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/direct-messages`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -243,7 +244,7 @@ export default function App() {
 
   const fetchRoomMessages = async (roomId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/rooms/${roomId}/messages`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -297,7 +298,7 @@ export default function App() {
 
   const handleAddPost = async ({ text, image }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const formData = new FormData();
       formData.append('text', text);
       if (image) {
@@ -327,7 +328,7 @@ export default function App() {
 
   const handleDeletePost = async (postId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       const res = await fetch(`${API_URL}/posts/${postId}`, {
         method: 'DELETE',
@@ -363,7 +364,7 @@ export default function App() {
 
   const handleLikePost = async (postId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       const res = await fetch(`${API_URL}/posts/${postId}/like`, {
         method: 'PATCH',
@@ -396,7 +397,7 @@ export default function App() {
 
   const handleAddComment = async (postId, commentText) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       const res = await fetch(`${API_URL}/posts/${postId}/comment`, {
         method: 'POST',
@@ -429,7 +430,7 @@ export default function App() {
   };
 
   const handleEditComment = async (postId, commentId, text) => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     const response = await fetch(`${API_URL}/posts/${postId}/comment/${commentId}`, {
       method: 'PATCH',
       headers: {
@@ -458,7 +459,7 @@ export default function App() {
   };
 
   const handleDeleteComment = async (postId, commentId) => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     const response = await fetch(`${API_URL}/posts/${postId}/comment/${commentId}`, {
       method: 'DELETE',
       headers: {
@@ -484,7 +485,7 @@ export default function App() {
 
   const handleAddNotice = async (notice) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       const payload = {
         title: notice.title,
@@ -517,7 +518,7 @@ export default function App() {
 
   const handleDeleteNotice = async (noticeId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       const res = await fetch(`${API_URL}/notices/${noticeId}`, {
         method: 'DELETE',
@@ -540,7 +541,7 @@ export default function App() {
 
   const handleAddResource = async (resource) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       const payload = new FormData();
       payload.append('title', resource.title);
@@ -571,7 +572,7 @@ export default function App() {
 
   const handleDeleteResource = async (resourceId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       const res = await fetch(`${API_URL}/resources/${resourceId}`, {
         method: 'DELETE',
@@ -594,7 +595,7 @@ export default function App() {
 
   const handleDownloadResource = async (resource) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/resources/${resource.id}/file`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -628,7 +629,7 @@ export default function App() {
 
   const handleCreateRoom = async ({ name, description, visibility, password }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       const res = await fetch(`${API_URL}/rooms`, {
         method: 'POST',
@@ -665,7 +666,7 @@ export default function App() {
 
   const handleVerifyRoomPassword = async (roomId, password) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       const res = await fetch(`${API_URL}/rooms/${roomId}/verify-password`, {
         method: 'POST',
@@ -696,7 +697,7 @@ export default function App() {
 
   const handleDeleteRoom = async (roomId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       const res = await fetch(`${API_URL}/rooms/${roomId}`, {
         method: 'DELETE',
@@ -733,7 +734,7 @@ export default function App() {
 
   const handleAddRoomMessage = async (roomId, messageText) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       const res = await fetch(`${API_URL}/rooms/${roomId}/messages`, {
         method: 'POST',
@@ -760,7 +761,7 @@ export default function App() {
     if (!currentUser) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       const res = await fetch(`${API_URL}/direct-messages`, {
         method: 'POST',
@@ -796,7 +797,7 @@ export default function App() {
 
   const handleRemoveUser = async (userId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/users/${userId}`, {
         method: 'DELETE',
         headers: {
@@ -821,7 +822,7 @@ export default function App() {
   };
 
   const handleDeleteMyAccount = async (password) => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     const response = await fetch(`${API_URL}/users/me`, {
       method: 'DELETE',
       headers: {
@@ -845,7 +846,7 @@ export default function App() {
 
   const handleUpdateUserRole = async (userId, newRole) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/users/${userId}/role`, {
         method: 'PATCH',
         headers: {
@@ -876,7 +877,7 @@ export default function App() {
   const handleConnectWithUser = async (userId, connected = true) => {
     try {
       setRelationshipError('');
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const response = await fetch(`${API_URL}/users/${userId}/connection`, {
         method: 'PATCH',
         headers: {
@@ -907,7 +908,7 @@ export default function App() {
 
     try {
       setRelationshipError('');
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const response = await fetch(`${API_URL}/users/${userId}/follow`, {
         method: 'PATCH',
         headers: {
@@ -940,7 +941,7 @@ export default function App() {
   };
 
   const handleUpdateAvatar = async (avatar) => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     const isFileUpload = avatar instanceof File;
     const requestBody = isFileUpload ? new FormData() : JSON.stringify({ avatarUrl: avatar });
     if (isFileUpload) requestBody.append('avatar', avatar);
@@ -1012,7 +1013,7 @@ export default function App() {
 
   const persistNotificationStatus = async (notificationIds, status) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/notifications`, {
         method: 'PATCH',
         headers: {

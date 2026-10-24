@@ -4,6 +4,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { API_URL, resolveApiAssetUrl } from '../config/api';
+import { getAuthToken } from '../utils/authToken';
 import {
   Heart,
   MessageCircle,
@@ -30,7 +31,7 @@ function PostImage({ imageUrl }) {
     const controller = new AbortController();
     let objectUrl;
     let cancelled = false;
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
 
     fetch(resolveApiAssetUrl(imageUrl), {
       headers: { Authorization: `Bearer ${token}` },

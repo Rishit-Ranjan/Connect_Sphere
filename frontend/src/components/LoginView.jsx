@@ -30,6 +30,7 @@ export default function LoginView({ verificationNotice }) {
         : 'connectsphere.registrationNumber'
     ) || ''
   );
+  const [rememberMe, setRememberMe] = useState(true);
   const [signInPassword, setSignInPassword] = useState('');
   const [signInError, setSignInError] = useState('');
   const [createError, setCreateError] = useState('');
@@ -81,7 +82,7 @@ export default function LoginView({ verificationNotice }) {
 
     try {
       setIsSubmitting(true);
-      await login(regNo.trim(), signInPassword.trim(), loginIdentifierType);
+      await login(regNo.trim(), signInPassword.trim(), loginIdentifierType, rememberMe);
     } catch (error) {
       console.error('Login error:', error);
       setSignInError(error.message || 'Login failed.');
@@ -413,6 +414,16 @@ export default function LoginView({ verificationNotice }) {
                     className="w-full text-sm px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-400"
                   />
                 </div>
+
+                <label className="flex w-fit cursor-pointer items-center gap-2 text-xs font-medium text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  Remember me
+                </label>
 
                 <button
                   type="submit"
