@@ -262,7 +262,7 @@ export default function LoginView({ verificationNotice }) {
                   aria-pressed={activeTab === 'signin'}
                   className={`flex-1 py-2.5 text-xs sm:text-sm font-semibold tracking-tight rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${
                     activeTab === 'signin'
-                      ? 'text-indigo-700 bg-white shadow-sm ring-1 ring-slate-200/70'
+                      ? 'text-indigo-700 !bg-white shadow-sm ring-1 ring-slate-200/70'
                       : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
@@ -278,7 +278,7 @@ export default function LoginView({ verificationNotice }) {
                   aria-pressed={activeTab === 'admin'}
                   className={`flex-1 py-2.5 text-xs sm:text-sm font-semibold tracking-tight rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${
                     activeTab === 'admin'
-                      ? 'text-amber-700 bg-white shadow-sm ring-1 ring-slate-200/70'
+                      ? 'text-amber-700 !bg-white shadow-sm ring-1 ring-slate-200/70'
                       : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
@@ -357,7 +357,7 @@ export default function LoginView({ verificationNotice }) {
                     aria-pressed={loginIdentifierType === 'registrationNumber'}
                     className={`flex-1 py-2 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
                       loginIdentifierType === 'registrationNumber'
-                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                        ? '!bg-white border-indigo-200 text-indigo-700'
                         : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-200'
                     }`}
                   >
@@ -369,7 +369,7 @@ export default function LoginView({ verificationNotice }) {
                     aria-pressed={loginIdentifierType === 'email'}
                     className={`flex-1 py-2 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
                       loginIdentifierType === 'email'
-                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                        ? '!bg-white border-indigo-200 text-indigo-700'
                         : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-200'
                     }`}
                   >
