@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { after, test } from 'node:test';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { POST_IMAGES_DIR } from '../src/config/uploads.js';
+import { MESSAGE_MEDIA_DIR, POST_IMAGES_DIR } from '../src/config/uploads.js';
 
 process.env.JWT_SECRET = 'connect-sphere-test-secret';
 process.env.CLIENT_URL = 'http://localhost:5173';
@@ -117,6 +117,61 @@ test('sign-in returns a token and public user details for valid credentials', as
     avatarUrl: student.avatarUrl
   });
   assert.equal('password' in data.user, false);
+});
+
+test('direct messages can include private media attachments', async (t) => {
+  const messageId = '507f1f77bcf86cd799439012';
+  const otherUser = { ...student, _id: 'other-user-id', handle: 'otheruser' };
+  let createdMessage;
+  mockAuthenticatedUsers(t, [student, otherUser]);
+  t.mock.method(DirectMessage, 'create', async (fields) => {
+    createdMessage = {
+      _id: messageId,
+      ...fields,
+      createdAt: new Date('2026-01-01T00:00:00.000Z')
+    };
+    return createdMessage;
+  });
+  t.mock.method(DirectMessage, 'findById', async () => createdMessage);
+
+  const body = new FormData();
+  body.append('receiverId', 'recipient-id');
+  body.append('text', '');
+  body.append('attachment', new Blob(['test-media-bytes'], { type: 'image/png' }), 'campus.png');
+
+  try {
+    const sent = await request('/api/direct-messages', {
+      method: 'POST',
+      token: tokenFor(student._id),
+      body
+    });
+
+    assert.equal(sent.response.status, 201);
+    assert.equal(sent.data.text, '');
+    assert.deepEqual(sent.data.attachment, {
+      url: `/api/direct-messages/${messageId}/media`,
+      filename: 'campus.png',
+      mimeType: 'image/png',
+      size: 16
+    });
+
+    const mediaResponse = await fetch(`${baseUrl}${sent.data.attachment.url}`, {
+      headers: { Authorization: `Bearer ${tokenFor(student._id)}` }
+    });
+    assert.equal(mediaResponse.status, 200);
+    assert.equal(await mediaResponse.text(), 'test-media-bytes');
+
+    const unauthorizedResponse = await fetch(`${baseUrl}${sent.data.attachment.url}`, {
+      headers: { Authorization: `Bearer ${tokenFor(otherUser._id)}` }
+    });
+    assert.equal(unauthorizedResponse.status, 404);
+  } finally {
+    if (createdMessage?.attachment?.filename) {
+      await unlink(join(MESSAGE_MEDIA_DIR, createdMessage.attachment.filename)).catch((error) => {
+        if (error.code !== 'ENOENT') throw error;
+      });
+    }
+  }
 });
 
 test('students can register with either a registration number or email and sign in with email', async (t) => {
@@ -656,7 +711,7 @@ test('account deletion requires the current password and removes only the signed
     deletedUsers.push(String(id));
     return account;
   });
-  for (const model of [Post, Resource, Room]) {
+  for (const model of [Post, Resource, Room, DirectMessage]) {
     t.mock.method(model, 'find', () => ({
       session() {
         return this;

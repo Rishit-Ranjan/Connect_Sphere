@@ -16,8 +16,9 @@ have additional tools to manage users and posts.
 - **Network:** Follow participants or add them as connections. Relationship
   changes are saved to the database.
 - **Messaging:** Send and view direct messages, and participate in rooms.
-  Messaging currently uses HTTP requests rather than WebSockets, so it does
-  not provide live push updates.
+  Direct messages support image, video, audio, and recorded voice-note
+  attachments. Messaging currently uses HTTP requests rather than WebSockets,
+  so it does not provide live push updates.
 - **Campus information:** Publish notices and share downloadable resources,
   such as course materials.
 - **Notifications:** Read and dismissed notification status is saved per
@@ -138,11 +139,14 @@ Uploaded files are stored on the backend filesystem under `backend/uploads`:
 
 - Post images: `backend/uploads/posts`
 - Profile avatars: `backend/uploads/avatars`
+- Direct-message media and voice notes: `backend/uploads/messages`
 - Shared resources: `backend/uploads`
 
 Post images and avatars accept JPG, PNG, and WebP files up to 5 MB. Resources
 accept PDF, ZIP, EPUB, PPTX, and DOCX files up to 25 MB. The backend creates
-the upload directories if they do not exist.
+the upload directories if they do not exist. Direct messages accept supported
+image, video, and audio formats up to 20 MB per attachment; media can only be
+retrieved by participants in that conversation.
 
 The app does not currently copy uploads to cloud object storage. For
 production, mount persistent storage at the backend's uploads directory and

@@ -3,13 +3,97 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Search, CheckCheck, MessageSquare, Compass, ShieldCheck } from 'lucide-react';
+import { Send, Search, CheckCheck, MessageSquare, Compass, ShieldCheck, Paperclip, Mic, Square, X } from 'lucide-react';
+import { resolveApiAssetUrl } from '../config/api';
+import { getAuthToken } from '../utils/authToken';
+
+function MessageAttachment({ attachment }) {
+    const [mediaUrl, setMediaUrl] = useState('');
+    const [loadError, setLoadError] = useState('');
+
+    useEffect(() => {
+        let objectUrl;
+        let cancelled = false;
+        setMediaUrl('');
+        setLoadError('');
+
+        fetch(resolveApiAssetUrl(attachment.url), {
+            headers: { Authorization: `Bearer ${getAuthToken()}` }
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error('Unable to load this attachment.');
+                return response.blob();
+            })
+            .then((blob) => {
+                if (cancelled) return;
+                objectUrl = URL.createObjectURL(blob);
+                setMediaUrl(objectUrl);
+            })
+            .catch((error) => {
+                if (!cancelled) setLoadError(error.message);
+            });
+
+        return () => {
+            cancelled = true;
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
+    }, [attachment.url]);
+
+    if (loadError) {
+        return <p role="alert" className="mt-2 text-[10px] text-rose-100">{loadError}</p>;
+    }
+    if (!mediaUrl) {
+        return <p className="mt-2 text-[10px] opacity-75">Loading attachment...</p>;
+    }
+
+    if (attachment.mimeType.startsWith('image/')) {
+        return (
+            <img
+                src={mediaUrl}
+                alt={attachment.filename}
+                className="mt-2 max-h-64 max-w-full rounded-xl object-contain"
+            />
+        );
+    }
+    if (attachment.mimeType.startsWith('video/')) {
+        return (
+            <video
+                src={mediaUrl}
+                controls
+                preload="metadata"
+                className="mt-2 max-h-64 max-w-full rounded-xl"
+              />
+        );
+    }
+    if (attachment.mimeType.startsWith('audio/')) {
+        return <audio src={mediaUrl} controls preload="metadata" className="mt-2 max-w-full" />;
+    }
+
+    return (
+        <a
+            href={mediaUrl}
+            download={attachment.filename}
+            className="mt-2 block text-xs font-semibold underline"
+        >
+            Download {attachment.filename}
+        </a>
+    );
+}
+
 export default function MessagesView({ currentUser, users, directMessages, onSendDirectMessage, selectedRecipient, setSelectedRecipient, isDrawer = false }) {
     const [searchText, setSearchText] = useState('');
     const [typedMessage, setTypedMessage] = useState('');
+    const [pendingAttachment, setPendingAttachment] = useState(null);
+    const [messageError, setMessageError] = useState('');
+    const [isSending, setIsSending] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
     const messageEndRef = useRef(null);
+    const fileInputRef = useRef(null);
+    const recorderRef = useRef(null);
+    const recordingStreamRef = useRef(null);
+    const recordingChunksRef = useRef([]);
     // Find contacts (excluding myself)
-    const contacts = users.filter((u) => u.id !== currentUser.id);
+    const contacts = users.filter((u) => String(u.id || u._id) !== String(currentUser.id || currentUser._id));
     // Set default recipient to first contact if none selected
     useEffect(() => {
         if (!selectedRecipient && contacts.length > 0) {
@@ -17,23 +101,105 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
         }
     }, [contacts, selectedRecipient, setSelectedRecipient]);
     // Messages between current user and selected recipient
-    const activeChatMessages = directMessages.filter((msg) => (msg.senderId === currentUser.id && msg.receiverId === selectedRecipient?.id) ||
-        (msg.senderId === selectedRecipient?.id && msg.receiverId === currentUser.id));
+    const currentUserId = String(currentUser.id || currentUser._id || '');
+    const recipientId = String(selectedRecipient?.id || selectedRecipient?._id || '');
+    const activeChatMessages = directMessages.filter((msg) =>
+        (String(msg.senderId) === currentUserId && String(msg.receiverId) === recipientId) ||
+        (String(msg.senderId) === recipientId && String(msg.receiverId) === currentUserId));
     // Scroll to bottom of chat
     useEffect(() => {
         messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [activeChatMessages]);
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (!typedMessage.trim() || !selectedRecipient)
+        if ((!typedMessage.trim() && !pendingAttachment) || !selectedRecipient || isRecording || isSending)
             return;
-        const currentRecipientId = selectedRecipient.id;
-        onSendDirectMessage(currentRecipientId, typedMessage);
-        const textSent = typedMessage;
-        setTypedMessage('');
-        // Note: Real-time chat responses should come from actual users
-        // Simulated persona-based responses removed to eliminate hardcoded placeholder data
+        setMessageError('');
+        setIsSending(true);
+        try {
+            await onSendDirectMessage(selectedRecipient.id || selectedRecipient._id, typedMessage, pendingAttachment);
+            setTypedMessage('');
+            setPendingAttachment(null);
+        } catch (error) {
+            setMessageError(error.message || 'Failed to send message.');
+        } finally {
+            setIsSending(false);
+        }
     };
+
+    const handleSelectAttachment = (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        if (!/^(image|video|audio)\//.test(file.type)) {
+            setMessageError('Choose an image, video, or audio file.');
+            return;
+        }
+        if (file.size > 20 * 1024 * 1024) {
+            setMessageError('Choose a media file no larger than 20 MB.');
+            return;
+        }
+        setMessageError('');
+        setPendingAttachment(file);
+    };
+
+    const startVoiceRecording = async () => {
+        setMessageError('');
+        if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+            setMessageError('Voice recording is not supported in this browser.');
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            recordingStreamRef.current = stream;
+            recordingChunksRef.current = [];
+            const recorder = new MediaRecorder(stream);
+            recorderRef.current = recorder;
+            recorder.ondataavailable = (event) => {
+                if (event.data.size > 0) recordingChunksRef.current.push(event.data);
+            };
+            recorder.onerror = () => {
+                setMessageError('Voice recording failed. Please try again.');
+                setIsRecording(false);
+                stream.getTracks().forEach((track) => track.stop());
+            };
+            recorder.onstop = () => {
+                const blob = new Blob(recordingChunksRef.current, {
+                    type: recorder.mimeType || 'audio/webm'
+                });
+                if (blob.size > 20 * 1024 * 1024) {
+                    setMessageError('This recording is over the 20 MB limit.');
+                } else if (blob.size > 0) {
+                    const extension = blob.type.includes('ogg') ? 'ogg'
+                        : blob.type.includes('mp4') ? 'm4a' : 'webm';
+                    setPendingAttachment(new File([blob], `voice-message-${Date.now()}.${extension}`, { type: blob.type }));
+                }
+                recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+                recordingStreamRef.current = null;
+                setIsRecording(false);
+            };
+            recorder.start();
+            setIsRecording(true);
+        } catch (error) {
+            setMessageError(error.message || 'Allow microphone access to record a voice message.');
+            recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+            recordingStreamRef.current = null;
+        }
+    };
+
+    const stopVoiceRecording = () => {
+        if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+    };
+
+    useEffect(() => () => {
+        const recorder = recorderRef.current;
+        if (recorder && recorder.state !== 'inactive') {
+            recorder.onstop = null;
+            recorder.stop();
+        }
+        recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+    }, []);
     const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchText.toLowerCase()) ||
         c.handle.toLowerCase().includes(searchText.toLowerCase()));
     return (<div className={`flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden font-sans bg-white ${isDrawer ? 'h-full w-full' : 'h-[calc(100dvh-4rem-2px)] border border-slate-200 rounded-3xl m-2 sm:m-3 shadow-sm'}`}>
@@ -63,9 +229,12 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
             const isSelected = selectedRecipient?.id === contact.id;
             // Get the last message preview
             const lastMsg = directMessages
-                .filter((m) => (m.senderId === currentUser.id && m.receiverId === contact.id) ||
-                (m.senderId === contact.id && m.receiverId === currentUser.id))
+                .filter((m) => (String(m.senderId) === currentUserId && String(m.receiverId) === String(contact.id || contact._id)) ||
+                (String(m.senderId) === String(contact.id || contact._id) && String(m.receiverId) === currentUserId))
                 .pop();
+            const lastMessagePreview = lastMsg?.text || (lastMsg?.attachment
+                ? (lastMsg.attachment.mimeType.startsWith('audio/') ? 'Voice message' : 'Media attachment')
+                : 'Start a friendly private chat...');
             return (<button key={contact.id} onClick={() => setSelectedRecipient(contact)} className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all relative ${isSelected
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-950 hover:bg-slate-100/50'}`}>
@@ -81,7 +250,7 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
                   </div>
                   <p className="text-[10px] truncate mt-0.5 opacity-80 font-mono">@{contact.handle}</p>
                   <p className={`text-[10px] truncate mt-1 leading-snug ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>
-                    {lastMsg ? lastMsg.text : 'Start a friendly private chat...'}
+                    {lastMessagePreview}
                   </p>
                 </div>
               </button>);
@@ -130,14 +299,15 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
               </div>
 
               {activeChatMessages.map((msg) => {
-                const isMe = msg.senderId === currentUser.id;
+                const isMe = String(msg.senderId) === currentUserId;
                 return (<div key={msg.id} className={`flex gap-2.5 max-w-[75%] ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
                     <img src={(isMe ? currentUser.avatarUrl : selectedRecipient.avatarUrl) || null} alt="Avatar" className="w-7 h-7 rounded-full object-cover border border-slate-100 shrink-0" referrerPolicy="no-referrer"/>
                     <div>
                       <div className={`text-xs p-3 rounded-2xl leading-relaxed whitespace-pre-wrap ${isMe
                         ? 'bg-indigo-600 text-slate-100 rounded-tr-none'
                         : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none shadow-sm'}`}>
-                        {msg.text}
+                        {msg.text && <p>{msg.text}</p>}
+                        {msg.attachment && <MessageAttachment attachment={msg.attachment} />}
                       </div>
                       
                       <div className={`flex items-center gap-1 mt-1 text-[8px] font-mono text-slate-400 ${isMe ? 'justify-end' : 'justify-start'}`}>
@@ -154,9 +324,70 @@ export default function MessagesView({ currentUser, users, directMessages, onSen
 
             {/* Message Composer Footer Input */}
             <div className="p-4 bg-white border-t border-slate-150">
-              <form onSubmit={handleSendMessage} className="flex gap-2">
-                <input type="text" placeholder={`Write a message to ${selectedRecipient.name.split(' ')[0]}...`} value={typedMessage} onChange={(e) => setTypedMessage(e.target.value)} className="flex-1 text-xs px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"/>
-                <button type="submit" disabled={!typedMessage.trim()} className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-45 text-white px-4 rounded-xl flex items-center justify-center cursor-pointer transition-all">
+              {pendingAttachment && (
+                <div className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-[11px] text-indigo-800">
+                  <span className="min-w-0 truncate">{pendingAttachment.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPendingAttachment(null)}
+                    className="shrink-0 rounded p-1 hover:bg-indigo-100"
+                    aria-label="Remove attachment"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              )}
+              {messageError && (
+                <p role="alert" className="mb-2 text-[11px] font-medium text-rose-600">{messageError}</p>
+              )}
+              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/x-wav,audio/ogg,audio/webm,audio/mp4,audio/x-m4a,audio/aac"
+                  onChange={handleSelectAttachment}
+                  className="hidden"
+                  aria-label="Choose image, video, or audio attachment"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSending || isRecording}
+                  className="shrink-0 rounded-xl border border-slate-200 p-2.5 text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50"
+                  aria-label="Attach media"
+                  title="Attach image, video, or audio"
+                >
+                  <Paperclip size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
+                  disabled={isSending}
+                  className={`shrink-0 rounded-xl border p-2.5 transition-colors disabled:opacity-50 ${
+                    isRecording
+                      ? 'border-rose-300 bg-rose-50 text-rose-600'
+                      : 'border-slate-200 text-slate-500 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600'
+                  }`}
+                  aria-label={isRecording ? 'Stop voice recording' : 'Record voice message'}
+                  aria-pressed={isRecording}
+                  title={isRecording ? 'Stop recording' : 'Record voice message'}
+                >
+                  {isRecording ? <Square size={15} /> : <Mic size={15} />}
+                </button>
+                <input
+                  type="text"
+                  placeholder={isRecording ? 'Recording voice message...' : `Write a message to ${selectedRecipient.name.split(' ')[0]}...`}
+                  value={typedMessage}
+                  onChange={(event) => setTypedMessage(event.target.value)}
+                  disabled={isRecording || isSending}
+                  className="min-w-0 flex-1 text-xs px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-60"
+                />
+                <button
+                  type="submit"
+                  disabled={(!typedMessage.trim() && !pendingAttachment) || isSending || isRecording}
+                  className="shrink-0 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-45 text-white px-4 py-2.5 rounded-xl flex items-center justify-center cursor-pointer transition-all"
+                  aria-label="Send message"
+                >
                   <Send size={13}/>
                 </button>
               </form>

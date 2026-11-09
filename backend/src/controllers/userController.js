@@ -10,7 +10,7 @@ import NotificationStatus from '../models/NotificationStatus.js';
 import Notice from '../models/Notice.js';
 import Room from '../models/Room.js';
 import RoomMessage from '../models/RoomMessage.js';
-import { AVATARS_DIR, POST_IMAGES_DIR, UPLOADS_DIR } from '../config/uploads.js';
+import { AVATARS_DIR, MESSAGE_MEDIA_DIR, POST_IMAGES_DIR, UPLOADS_DIR } from '../config/uploads.js';
 
 const { compare } = bcrypt;
 
@@ -260,15 +260,20 @@ const deleteMyAccount = async (req, res, next) => {
     const userIdString = String(userId);
     let posts = [];
     let resources = [];
+    let directMessages = [];
     session = await User.startSession();
     await session.withTransaction(async () => {
-      const [ownedPosts, ownedResources, rooms] = await Promise.all([
+      const [ownedPosts, ownedResources, rooms, ownedDirectMessages] = await Promise.all([
         Post.find({ author: userId }).session(session).select('imageName'),
         Resource.find({ uploadedBy: userId }).session(session).select('storageName'),
-        Room.find({ createdBy: userId }).session(session).select('_id')
+        Room.find({ createdBy: userId }).session(session).select('_id'),
+        DirectMessage.find({
+          $or: [{ senderId: userId }, { receiverId: userId }]
+        }).session(session).select('attachment.filename')
       ]);
       posts = ownedPosts;
       resources = ownedResources;
+      directMessages = ownedDirectMessages;
       const roomIds = rooms.map((room) => room._id);
 
       await Promise.all([
@@ -311,6 +316,11 @@ const deleteMyAccount = async (req, res, next) => {
         UPLOADS_DIR,
         resource.storageName,
         /^[a-f\d-]{36}\.[a-z\d]+$/i
+      )),
+      ...directMessages.map((message) => () => removeUploadedFile(
+        MESSAGE_MEDIA_DIR,
+        message.attachment?.filename,
+        /^[a-f\d-]{36}\.[a-z\d]{1,10}$/i
       ))
     ];
 

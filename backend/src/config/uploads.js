@@ -6,7 +6,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export const UPLOADS_DIR = join(__dirname, '..', '..', 'uploads');
 export const AVATARS_DIR = join(UPLOADS_DIR, 'avatars');
 export const POST_IMAGES_DIR = join(UPLOADS_DIR, 'posts');
+export const MESSAGE_MEDIA_DIR = join(UPLOADS_DIR, 'messages');
 
 mkdirSync(UPLOADS_DIR, { recursive: true });
 mkdirSync(AVATARS_DIR, { recursive: true });
 mkdirSync(POST_IMAGES_DIR, { recursive: true });
+mkdirSync(MESSAGE_MEDIA_DIR, { recursive: true });

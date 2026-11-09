@@ -758,19 +758,25 @@ export default function App() {
     }
   };
 
-  const handleSendDirectMessage = async (receiverId, text) => {
-    if (!currentUser) return;
+  const handleSendDirectMessage = async (receiverId, text, attachment) => {
+    if (!currentUser) throw new Error('Sign in before sending a message.');
 
     try {
       const token = getAuthToken();
+      const requestBody = attachment ? new FormData() : JSON.stringify({ receiverId, text });
+      if (attachment) {
+        requestBody.append('receiverId', receiverId);
+        requestBody.append('text', text);
+        requestBody.append('attachment', attachment);
+      }
 
       const res = await fetch(`${API_URL}/direct-messages`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          ...(attachment ? {} : { 'Content-Type': 'application/json' }),
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ receiverId, text })
+        body: requestBody
       });
 
       const data = await res.json();
@@ -780,8 +786,10 @@ export default function App() {
       }
 
       setDirectMessages((prev) => [...prev, data]);
+      return data;
     } catch (error) {
       console.error('Error sending direct message:', error);
+      throw error;
     }
   };
 

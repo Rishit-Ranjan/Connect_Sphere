@@ -15,8 +15,14 @@ const directMessageSchema = new Schema(
     },
     text: {
       type: String,
-      required: true,
+      default: '',
       trim: true
+    },
+    attachment: {
+      filename: { type: String, default: '' },
+      originalName: { type: String, default: '' },
+      mimeType: { type: String, default: '' },
+      size: { type: Number, default: 0 }
     }
   },
   { timestamps: true }
