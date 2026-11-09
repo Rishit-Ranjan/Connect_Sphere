@@ -717,13 +717,14 @@ export default function App() {
         }
         return { ok: false, message: data.message || 'Failed to delete room.' };
       }
-      setRoomMessages((prev) => prev.filter((msg) => msg.roomId !== roomId));
+      setRooms((prev) => prev.filter((room) => String(room.id) !== String(roomId)));
+      setRoomMessages((prev) => prev.filter((msg) => String(msg.roomId) !== String(roomId)));
       setUnlockedRoomIds((prev) => {
-        const next = prev.filter((id) => id !== roomId);
+        const next = prev.filter((id) => String(id) !== String(roomId));
         localStorage.setItem('unlocked_rooms', JSON.stringify(next));
         return next;
       });
-      setSelectedRoomId((prev) => (prev === roomId ? '' : prev));
+      setSelectedRoomId((prev) => (String(prev) === String(roomId) ? '' : prev));
 
       return { ok: true };
     } catch (error) {
