@@ -563,18 +563,6 @@ export default function RoomsView({
                       </span>
                     </div>
                   </button>
-                  <button
-                    onClick={() => {
-                      setDeleteError('');
-                      setPendingDeleteRoomId(room.id);
-                    }}
-                    disabled={!canDeleteRoom(room)}
-                    className="self-center px-2.5 shrink-0 text-slate-300 hover:text-rose-600 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-0"
-                    title={canDeleteRoom(room) ? 'Delete room' : 'Only the room creator or an admin can delete this room'}
-                    aria-label={`Delete ${room.name}`}
-                  >
-                    <Trash2 size={13} />
-                  </button>
                 </div>
               );
             })}
