@@ -4,7 +4,7 @@
  */
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Send, Users, Hash, Sparkles, Plus, Globe, Lock, Eye, EyeOff, Trash2, X, Check, Search, BookOpen, MessageCircle } from 'lucide-react';
+import { Send, Users, Hash, Sparkles, Plus, Globe, Lock, Eye, EyeOff, Trash2, X, Search, BookOpen, MessageCircle } from 'lucide-react';
 
 export default function RoomsView({
   currentUser,
@@ -137,10 +137,17 @@ export default function RoomsView({
     setDeleteError('');
     const result = await onDeleteRoom(roomId);
     setIsDeletingRoom(false);
-    setPendingDeleteRoomId('');
     if (result && result.ok === false) {
       setDeleteError(result.message || 'Failed to delete room.');
+      return;
     }
+    setPendingDeleteRoomId('');
+  };
+
+  const cancelDeleteRoom = () => {
+    if (isDeletingRoom) return;
+    setPendingDeleteRoomId('');
+    setDeleteError('');
   };
 
   const handleSendMessage = (e) => {
@@ -163,6 +170,17 @@ export default function RoomsView({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showCreateRoom, resetCreateRoomForm]);
+
+  useEffect(() => {
+    if (!pendingDeleteRoomId) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') cancelDeleteRoom();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [pendingDeleteRoomId, isDeletingRoom]);
 
   const createRoomDialog = showCreateRoom && createPortal((
     <div
@@ -310,6 +328,58 @@ export default function RoomsView({
     </div>
   ), document.body);
 
+  const pendingDeleteRoom = rooms.find((room) => room.id === pendingDeleteRoomId);
+  const deleteRoomDialog = pendingDeleteRoom && createPortal((
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) cancelDeleteRoom();
+      }}
+    >
+      <section
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="delete-room-title"
+        aria-describedby="delete-room-description"
+        className="w-full max-w-sm overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl"
+      >
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+          <Trash2 size={20} />
+        </div>
+        <h2 id="delete-room-title" className="mt-4 text-center font-display text-lg font-extrabold text-slate-900">
+          Delete this room?
+        </h2>
+        <p id="delete-room-description" className="mt-2 text-center text-sm leading-relaxed text-slate-500">
+          <span className="font-semibold text-slate-700">{pendingDeleteRoom.name}</span> and its messages will be permanently deleted.
+        </p>
+        {deleteError && (
+          <p role="alert" className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+            {deleteError}
+          </p>
+        )}
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={cancelDeleteRoom}
+            disabled={isDeletingRoom}
+            className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => confirmDeleteRoom(pendingDeleteRoom.id)}
+            disabled={isDeletingRoom}
+            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Trash2 size={13} />
+            {isDeletingRoom ? 'Deleting...' : 'Delete room'}
+          </button>
+        </div>
+      </section>
+    </div>
+  ), document.body);
+
   if (rooms.length === 0) {
     return (
       <div className="flex-1 min-h-0 overflow-y-auto bg-slate-50 p-4 sm:p-6 font-sans">
@@ -385,6 +455,7 @@ export default function RoomsView({
           </div>
         </div>
         {createRoomDialog}
+        {deleteRoomDialog}
       </div>
     );
   }
@@ -453,11 +524,6 @@ export default function RoomsView({
           </div>
 
           <div className="px-3 pb-3 space-y-1.5 overflow-y-auto flex-1 min-h-0">
-            {deleteError && (
-              <p className="text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
-                {deleteError}
-              </p>
-            )}
             {filteredRooms.length === 0 && (
               <p className="px-3 py-6 text-center text-xs text-slate-400">
                 No rooms match “{roomSearch}”.
@@ -466,37 +532,6 @@ export default function RoomsView({
             {filteredRooms.map((room) => {
               const isSelected = room.id === selectedRoomId;
               const isPrivateRoom = room.isPrivate || room.visibility === 'private';
-              const isPendingDelete = pendingDeleteRoomId === room.id;
-
-              if (isPendingDelete) {
-                return (
-                  <div
-                    key={room.id}
-                    className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-xs bg-rose-50 border border-rose-200"
-                  >
-                    <Trash2 size={13} className="text-rose-600 shrink-0" />
-                    <span className="flex-1 min-w-0 font-semibold text-rose-700 truncate">
-                      Delete &quot;{room.name}&quot;?
-                    </span>
-                    <button
-                      onClick={() => confirmDeleteRoom(room.id)}
-                      disabled={isDeletingRoom}
-                      className="p-1.5 rounded-lg bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 cursor-pointer shrink-0"
-                      title="Confirm delete"
-                    >
-                      <Check size={12} />
-                    </button>
-                    <button
-                      onClick={() => setPendingDeleteRoomId('')}
-                      disabled={isDeletingRoom}
-                      className="p-1.5 rounded-lg bg-white border border-rose-200 text-rose-600 hover:bg-rose-100 disabled:opacity-50 cursor-pointer shrink-0"
-                      title="Cancel"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                );
-              }
 
               return (
                 <div
@@ -529,7 +564,10 @@ export default function RoomsView({
                     </div>
                   </button>
                   <button
-                    onClick={() => setPendingDeleteRoomId(room.id)}
+                    onClick={() => {
+                      setDeleteError('');
+                      setPendingDeleteRoomId(room.id);
+                    }}
                     disabled={!canDeleteRoom(room)}
                     className="self-center px-2.5 shrink-0 text-slate-300 hover:text-rose-600 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-0"
                     title={canDeleteRoom(room) ? 'Delete room' : 'Only the room creator or an admin can delete this room'}
@@ -584,7 +622,10 @@ export default function RoomsView({
                 </div>
 
                 <button
-                  onClick={() => setPendingDeleteRoomId(selectedRoom.id)}
+                  onClick={() => {
+                    setDeleteError('');
+                    setPendingDeleteRoomId(selectedRoom.id);
+                  }}
                   className="flex items-center gap-1.5 text-[10px] font-bold bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 px-2.5 py-1 rounded-full text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
                   title={canDeleteRoom(selectedRoom) ? 'Delete room' : 'Delete room (admin or room creator only)'}
                 >
@@ -728,6 +769,7 @@ export default function RoomsView({
         )}
       </div>
       {createRoomDialog}
+      {deleteRoomDialog}
     </div>
     </div>
   );
