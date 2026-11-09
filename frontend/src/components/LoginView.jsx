@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState } from 'react';
-import { ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Moon, ShieldCheck, Sparkles, Sun } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function LoginView({ verificationNotice }) {
   const { login, register, resendVerification, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
 
   const [activeTab, setActiveTab] = useState('signin');
 
@@ -173,19 +175,34 @@ export default function LoginView({ verificationNotice }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f5f6fc] p-3 sm:p-6 relative overflow-hidden font-sans">
+    <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-950' : 'bg-[#f5f6fc]'} p-3 sm:p-6 relative overflow-hidden font-sans`}>
       <img
         src="/welcome-background.png"
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover opacity-95 pointer-events-none"
+        className={`absolute inset-0 h-full w-full object-cover pointer-events-none ${isDark ? 'opacity-35' : 'opacity-95'}`}
       />
-      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-indigo-50/25 to-slate-50/35 pointer-events-none" />
+      <div className={`absolute inset-0 pointer-events-none ${isDark ? 'bg-gradient-to-br from-slate-950/80 via-slate-950/65 to-indigo-950/75' : 'bg-gradient-to-br from-white/20 via-indigo-50/25 to-slate-50/35'}`} />
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-48 -left-40 w-[34rem] h-[34rem] rounded-full bg-indigo-200/35 blur-[110px]" />
         <div className="absolute -bottom-52 -right-40 w-[38rem] h-[38rem] rounded-full bg-violet-200/35 blur-[120px]" />
         <div className="absolute top-1/3 right-1/3 w-72 h-72 rounded-full bg-sky-100/50 blur-[100px]" />
       </div>
+
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className={`absolute right-4 top-4 z-20 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold shadow-sm backdrop-blur transition-colors ${
+          isDark
+            ? 'border-slate-700 bg-slate-900/90 text-slate-200 hover:bg-slate-800'
+            : 'border-slate-200 bg-white/90 text-slate-700 hover:bg-white'
+        }`}
+        title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {isDark ? <Moon size={15} className="text-amber-400" /> : <Sun size={15} className="text-slate-500" />}
+        <span>{isDark ? 'Dark mode' : 'Light mode'}</span>
+      </button>
 
       <div className="w-full max-w-5xl grid md:grid-cols-5 bg-white border border-white rounded-[1.75rem] shadow-[0_32px_90px_-35px_rgba(30,41,59,0.35)] overflow-hidden relative z-10 transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_40px_100px_-30px_rgba(30,41,59,0.42)] motion-reduce:transition-none motion-reduce:hover:transform-none">
         <div
