@@ -234,8 +234,14 @@ export default function FeedView({
     event.target.value = '';
   };
 
-  const canManagePost = (post) =>
-    currentUser?.role === 'admin' || currentUser?.id === post.author?.id;
+  const canManagePost = (post) => {
+    if (currentUser?.role === 'admin') return true;
+
+    const currentUserId = currentUser?.id || currentUser?._id;
+    const authorId = post.author?.id || post.author?._id;
+    return currentUserId != null && authorId != null &&
+      String(currentUserId) === String(authorId);
+  };
 
   const handleStartEdit = (post) => {
     setEditingPostId(post.id);
