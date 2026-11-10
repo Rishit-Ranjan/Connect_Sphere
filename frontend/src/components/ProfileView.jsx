@@ -26,6 +26,7 @@ import {
   Upload,
   Trash2,
   X,
+  Pencil,
 } from "lucide-react";
 
 const BANNER_GRADIENTS = [
@@ -80,6 +81,8 @@ export default function ProfileView({
   onUpdateProfile,
   onUpdateAvatar,
   onDeleteAccount,
+  onEditPost,
+  onDeletePost,
   onNavigateTab,
 }) {
   const currentUser = viewedUser || signedInUser;
@@ -91,6 +94,12 @@ export default function ProfileView({
   );
   const [activeSubTab, setActiveSubTab] = useState("overview");
   const [activeContributionTab, setActiveContributionTab] = useState("posts");
+  const [editingContributionPostId, setEditingContributionPostId] = useState("");
+  const [contributionPostText, setContributionPostText] = useState("");
+  const [pendingDeletePostId, setPendingDeletePostId] = useState("");
+  const [postActionError, setPostActionError] = useState("");
+  const [isSavingContributionPost, setIsSavingContributionPost] = useState(false);
+  const [isDeletingContributionPost, setIsDeletingContributionPost] = useState(false);
   // Edit Profile States
   const [name, setName] = useState(currentUser.name);
   const [bio, setBio] = useState(currentUser.bio || "");
@@ -130,6 +139,49 @@ export default function ProfileView({
   // Follower standing counts
   const followingCount = users.filter((u) => u.following).length;
   const connectionsCount = users.filter((u) => u.connected).length;
+  const canManageContributionPosts = isOwnProfile || signedInUser.role === "admin";
+
+  const handleSaveContributionPost = async (event, postId) => {
+    event.preventDefault();
+    const text = contributionPostText.trim();
+    if (!text) {
+      setPostActionError("Post text is required.");
+      return;
+    }
+
+    setIsSavingContributionPost(true);
+    setPostActionError("");
+    try {
+      const result = await onEditPost(postId, text);
+      if (result?.ok === false) {
+        setPostActionError(result.message || "Failed to edit post.");
+        return;
+      }
+      setEditingContributionPostId("");
+      setContributionPostText("");
+    } catch (error) {
+      setPostActionError(error.message || "Failed to edit post.");
+    } finally {
+      setIsSavingContributionPost(false);
+    }
+  };
+
+  const handleDeleteContributionPost = async (postId) => {
+    setIsDeletingContributionPost(true);
+    setPostActionError("");
+    try {
+      const result = await onDeletePost(postId);
+      if (result?.ok === false) {
+        setPostActionError(result.message || "Failed to delete post.");
+        return;
+      }
+      setPendingDeletePostId("");
+    } catch (error) {
+      setPostActionError(error.message || "Failed to delete post.");
+    } finally {
+      setIsDeletingContributionPost(false);
+    }
+  };
   const handleSave = (e) => {
     e.preventDefault();
     const updated = {
@@ -562,11 +614,114 @@ export default function ProfileView({
                       >
                         <div className="flex items-center justify-between gap-3 text-[10px] font-mono text-slate-400">
                           <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                          <span>{post.comments?.length || 0} comments</span>
+                          <div className="flex items-center gap-2">
+                            <span>{post.comments?.length || 0} comments</span>
+                            {canManageContributionPosts && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPostActionError("");
+                                    setPendingDeletePostId("");
+                                    setEditingContributionPostId(post.id);
+                                    setContributionPostText(post.text);
+                                  }}
+                                  className="rounded-md p-1 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
+                                  aria-label={`Edit post: ${post.text.slice(0, 40)}`}
+                                  title="Edit post"
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPostActionError("");
+                                    setEditingContributionPostId("");
+                                    setPendingDeletePostId(post.id);
+                                  }}
+                                  className="rounded-md p-1 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                                  aria-label={`Delete post: ${post.text.slice(0, 40)}`}
+                                  title="Delete post"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </div>
-                        <p className="mt-2 whitespace-pre-wrap break-words text-xs font-medium leading-relaxed text-slate-800">
-                          {post.text}
-                        </p>
+                        {editingContributionPostId === post.id ? (
+                          <form
+                            onSubmit={(event) => handleSaveContributionPost(event, post.id)}
+                            className="mt-2 space-y-2"
+                          >
+                            <textarea
+                              value={contributionPostText}
+                              onChange={(event) => setContributionPostText(event.target.value)}
+                              rows={3}
+                              maxLength={1000}
+                              aria-label="Edit post text"
+                              className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                            />
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingContributionPostId("");
+                                  setContributionPostText("");
+                                  setPostActionError("");
+                                }}
+                                disabled={isSavingContributionPost}
+                                className="rounded-lg border border-slate-200 px-3 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                disabled={isSavingContributionPost || !contributionPostText.trim()}
+                                className="rounded-lg bg-indigo-600 px-3 py-1.5 text-[10px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                              >
+                                {isSavingContributionPost ? "Saving..." : "Save"}
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <p className="mt-2 whitespace-pre-wrap break-words text-xs font-medium leading-relaxed text-slate-800">
+                            {post.text}
+                          </p>
+                        )}
+                        {pendingDeletePostId === post.id && (
+                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2">
+                            <span className="text-[11px] font-semibold text-rose-700">
+                              Delete this post?
+                            </span>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPendingDeletePostId("");
+                                  setPostActionError("");
+                                }}
+                                disabled={isDeletingContributionPost}
+                                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteContributionPost(post.id)}
+                                disabled={isDeletingContributionPost}
+                                className="rounded-lg bg-rose-600 px-3 py-1.5 text-[10px] font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                              >
+                                {isDeletingContributionPost ? "Deleting..." : "Delete"}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        {postActionError && (editingContributionPostId === post.id || pendingDeletePostId === post.id) && (
+                          <p role="alert" className="mt-2 text-[10px] font-medium text-rose-600">
+                            {postActionError}
+                          </p>
+                        )}
                         <div className="mt-2 flex items-center gap-4 border-t border-slate-100 pt-2 text-[10px] font-mono text-slate-500">
                           <span className="flex items-center gap-1">
                             <Heart size={11} className="text-rose-500" />

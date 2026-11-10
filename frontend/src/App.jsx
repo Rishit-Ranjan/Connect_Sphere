@@ -344,22 +344,38 @@ export default function App() {
       }
 
       setPosts((prev) => prev.filter((post) => post.id !== postId));
+      return { ok: true };
     } catch (error) {
       console.error('Error deleting post:', error);
+      return { ok: false, message: error.message || 'Failed to delete post.' };
     }
   };
 
-  const handleEditPost = (postId, updatedText) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              text: updatedText
-            }
-          : post
-      )
-    );
+  const handleEditPost = async (postId, updatedText) => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_URL}/posts/${postId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ text: updatedText })
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to edit post.');
+      }
+
+      setPosts((previous) =>
+        previous.map((post) => post.id === postId ? { ...post, ...data } : post)
+      );
+      return { ok: true };
+    } catch (error) {
+      console.error('Error editing post:', error);
+      return { ok: false, message: error.message || 'Failed to edit post.' };
+    }
   };
 
   const handleLikePost = async (postId) => {
@@ -1257,6 +1273,8 @@ export default function App() {
               onUpdateProfile={handleUpdateProfile}
               onUpdateAvatar={handleUpdateAvatar}
               onDeleteAccount={handleDeleteMyAccount}
+              onEditPost={handleEditPost}
+              onDeletePost={handleDeletePost}
               onNavigateTab={setActiveTab}
             />
           )}

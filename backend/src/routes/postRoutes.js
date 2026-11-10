@@ -44,6 +44,7 @@ const handlePostImageUpload = (req, res, next) => {
 router.get('/images/:imageName', protect, postController.getPostImage);
 router.get('/', protect, postController.getPosts);
 router.post('/', protect, handlePostImageUpload, postController.createPost);
+router.patch('/:postId', protect, postController.updatePost);
 router.patch('/:postId/like', protect, postController.toggleLikePost);
 router.post('/:postId/comment', protect, postController.addCommentToPost);
 router.patch('/:postId/comment/:commentId', protect, postController.updateComment);

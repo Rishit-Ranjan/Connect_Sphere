@@ -343,6 +343,70 @@ test('posting requires text and returns a created post', async (t) => {
   assert.deepEqual(created.data.comments, []);
 });
 
+test('post edits persist and are restricted to the author or an admin', async (t) => {
+  const otherStudent = { ...student, _id: 'other-student-id', handle: 'otherstudent' };
+  const admin = { ...student, _id: 'admin-id', handle: 'admin', role: 'admin' };
+  const postId = '507f1f77bcf86cd799439012';
+  const post = {
+    _id: postId,
+    author: student._id,
+    text: 'Original post',
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    async save() {
+      this.saved = true;
+    }
+  };
+  mockAuthenticatedUsers(t, [student, otherStudent, admin]);
+  t.mock.method(Post, 'findById', async (id) => id === postId ? post : null);
+
+  const authorEdit = await request(`/api/posts/${postId}`, {
+    method: 'PATCH',
+    token: tokenFor(student._id),
+    body: { text: '  Updated post  ' }
+  });
+  assert.equal(authorEdit.response.status, 200);
+  assert.equal(authorEdit.data.text, 'Updated post');
+  assert.equal(post.text, 'Updated post');
+  assert.equal(post.saved, true);
+
+  const unauthorizedEdit = await request(`/api/posts/${postId}`, {
+    method: 'PATCH',
+    token: tokenFor(otherStudent._id),
+    body: { text: 'Unauthorized edit' }
+  });
+  assert.equal(unauthorizedEdit.response.status, 403);
+  assert.equal(post.text, 'Updated post');
+
+  const adminEdit = await request(`/api/posts/${postId}`, {
+    method: 'PATCH',
+    token: tokenFor(admin._id),
+    body: { text: 'Admin edit' }
+  });
+  assert.equal(adminEdit.response.status, 200);
+  assert.equal(post.text, 'Admin edit');
+
+  const blankEdit = await request(`/api/posts/${postId}`, {
+    method: 'PATCH',
+    token: tokenFor(student._id),
+    body: { text: '   ' }
+  });
+  assert.equal(blankEdit.response.status, 400);
+
+  const longEdit = await request(`/api/posts/${postId}`, {
+    method: 'PATCH',
+    token: tokenFor(student._id),
+    body: { text: 'x'.repeat(1001) }
+  });
+  assert.equal(longEdit.response.status, 400);
+
+  const missingPost = await request('/api/posts/507f1f77bcf86cd799439013', {
+    method: 'PATCH',
+    token: tokenFor(student._id),
+    body: { text: 'Updated post' }
+  });
+  assert.equal(missingPost.response.status, 404);
+});
+
 test('post images upload as files and are served from persistent upload storage', async (t) => {
   mockAuthenticatedUsers(t);
   const imageBytes = Buffer.from(

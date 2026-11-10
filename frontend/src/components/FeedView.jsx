@@ -99,6 +99,8 @@ export default function FeedView({
   const [expandedComments, setExpandedComments] = useState({});
   const [editingPostId, setEditingPostId] = useState(null);
   const [editPostText, setEditPostText] = useState('');
+  const [postActionError, setPostActionError] = useState('');
+  const [savingPostId, setSavingPostId] = useState(null);
   const [highlightedCommentId, setHighlightedCommentId] = useState(null);
   const [editingComment, setEditingComment] = useState(null);
   const [editCommentText, setEditCommentText] = useState('');
@@ -244,15 +246,40 @@ export default function FeedView({
   };
 
   const handleStartEdit = (post) => {
+    setPostActionError(null);
     setEditingPostId(post.id);
     setEditPostText(post.text);
   };
 
-  const handleSaveEdit = (postId) => {
+  const handleSaveEdit = async (postId) => {
     if (!editPostText.trim()) return;
-    onEditPost(postId, editPostText.trim());
-    setEditingPostId(null);
-    setEditPostText('');
+    setSavingPostId(postId);
+    setPostActionError(null);
+    try {
+      const result = await onEditPost(postId, editPostText.trim());
+      if (result?.ok === false) {
+        setPostActionError({ postId, message: result.message || 'Failed to edit post.' });
+        return;
+      }
+      setEditingPostId(null);
+      setEditPostText('');
+    } catch (error) {
+      setPostActionError({ postId, message: error.message || 'Failed to edit post.' });
+    } finally {
+      setSavingPostId(null);
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    setPostActionError(null);
+    try {
+      const result = await onDeletePost(postId);
+      if (result?.ok === false) {
+        setPostActionError({ postId, message: result.message || 'Failed to delete post.' });
+      }
+    } catch (error) {
+      setPostActionError({ postId, message: error.message || 'Failed to delete post.' });
+    }
   };
 
   const handleCancelEdit = () => {
@@ -455,7 +482,7 @@ export default function FeedView({
 
                       <button
                         type="button"
-                        onClick={() => onDeletePost(post.id)}
+                        onClick={() => handleDeletePost(post.id)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50/50 transition-colors cursor-pointer"
                         title="Remove post"
                       >
@@ -464,6 +491,12 @@ export default function FeedView({
                     </div>
                   )}
                 </div>
+
+                {postActionError?.postId === post.id && (
+                  <p role="alert" className="text-[11px] font-medium text-rose-600">
+                    {postActionError.message}
+                  </p>
+                )}
 
                 {editingPostId === post.id ? (
                   <div className="space-y-2">
@@ -477,9 +510,10 @@ export default function FeedView({
                       <button
                         type="button"
                         onClick={() => handleSaveEdit(post.id)}
+                        disabled={savingPostId === post.id}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded-xl cursor-pointer"
                       >
-                        Save
+                        {savingPostId === post.id ? 'Saving...' : 'Save'}
                       </button>
                       <button
                         type="button"

@@ -139,6 +139,44 @@ const createPost = async (req, res, next) => {
   }
 };
 
+const updatePost = async (req, res, next) => {
+  try {
+    const { postId } = req.params;
+    const { text } = req.body;
+
+    if (typeof text !== 'string' || !text.trim()) {
+      return res.status(400).json({ message: 'Post text is required.' });
+    }
+
+    if (text.trim().length > 1000) {
+      return res.status(400).json({ message: 'Post text cannot exceed 1000 characters.' });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found.' });
+    }
+
+    const isAuthor = post.author.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    if (!isAuthor && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to edit this post.' });
+    }
+
+    post.text = text.trim();
+    await post.save();
+
+    res.json({
+      id: post._id,
+      text: post.text,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const toggleLikePost = async (req, res, next) => {
   try {
     const { postId } = req.params;
@@ -320,6 +358,7 @@ export default {
   getPosts,
   getPostImage,
   createPost, 
+  updatePost,
   toggleLikePost, 
   addCommentToPost,
   updateComment,
